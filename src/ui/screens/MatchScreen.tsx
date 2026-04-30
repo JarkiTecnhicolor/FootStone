@@ -309,6 +309,22 @@ export function MatchScreen() {
   const logRef = useRef<HTMLDivElement>(null)
   const prevScores = useRef({ my: 0, opp: 0 })
   const prevTurn = useRef(0)
+  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flashOverlay = (
+    next:
+      | { kind: 'goal-mine' | 'goal-opp' | 'save'; message: string }
+      | { kind: 'halftime' }
+      | { kind: 'extra-time'; half: 1 | 2 },
+    durationMs: number,
+  ) => {
+    if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current)
+    setOverlay(next)
+    overlayTimerRef.current = setTimeout(() => {
+      setOverlay(null)
+      overlayTimerRef.current = null
+    }, durationMs)
+  }
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
@@ -321,42 +337,39 @@ export function MatchScreen() {
       return
     }
     if (match.myScore > prevScores.current.my) {
-      setOverlay({ kind: 'goal-mine', message: '⚽ ГОЛ!' })
-      const t = setTimeout(() => setOverlay(null), 1400)
+      flashOverlay({ kind: 'goal-mine', message: '⚽ ГОЛ!' }, 1400)
       prevScores.current = { my: match.myScore, opp: match.oppScore }
-      return () => clearTimeout(t)
+      return
     }
     if (match.oppScore > prevScores.current.opp) {
-      setOverlay({ kind: 'goal-opp', message: 'ОПОНЕНТ ЗАБИВ' })
-      const t = setTimeout(() => setOverlay(null), 1400)
+      flashOverlay({ kind: 'goal-opp', message: 'ОПОНЕНТ ЗАБИВ' }, 1400)
       prevScores.current = { my: match.myScore, opp: match.oppScore }
-      return () => clearTimeout(t)
+      return
     }
     prevScores.current = { my: match.myScore, opp: match.oppScore }
-  }, [match?.myScore, match?.oppScore, match])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.myScore, match?.oppScore])
 
   useEffect(() => {
     if (!match) return
     if (prevTurn.current === 6 && match.turn === 7) {
-      setOverlay({ kind: 'halftime' })
-      const t = setTimeout(() => setOverlay(null), 2200)
+      flashOverlay({ kind: 'halftime' }, 2200)
       prevTurn.current = match.turn
-      return () => clearTimeout(t)
+      return
     }
     if (prevTurn.current === 5 && match.turn === 6) {
-      setOverlay({ kind: 'extra-time', half: 1 })
-      const t = setTimeout(() => setOverlay(null), 2000)
+      flashOverlay({ kind: 'extra-time', half: 1 }, 2000)
       prevTurn.current = match.turn
-      return () => clearTimeout(t)
+      return
     }
     if (prevTurn.current === 11 && match.turn === 12) {
-      setOverlay({ kind: 'extra-time', half: 2 })
-      const t = setTimeout(() => setOverlay(null), 2000)
+      flashOverlay({ kind: 'extra-time', half: 2 }, 2000)
       prevTurn.current = match.turn
-      return () => clearTimeout(t)
+      return
     }
     prevTurn.current = match.turn
-  }, [match?.turn, match])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.turn])
 
   if (!match) {
     return (
