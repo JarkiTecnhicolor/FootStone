@@ -40,6 +40,11 @@ export interface ForwardCard extends BaseCard {
   role: 'fwd'
   atk: number
   status?: ForwardStatus
+  morphedFrom?: {
+    hp: number
+    maxHp: number
+    perks: Perk[]
+  }
 }
 
 export type Card = DefenderCard | MidfielderCard | ForwardCard

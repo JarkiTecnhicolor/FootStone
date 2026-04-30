@@ -139,6 +139,20 @@ function cleanForDiscard(card: Card): Card {
     delete cleaned.turnPlaced
     return cleaned
   }
+  if (card.morphedFrom) {
+    const restored: DefenderCard = {
+      id: card.id,
+      name: card.name,
+      role: 'def',
+      cost: card.cost,
+      rarity: card.rarity,
+      unique: card.unique,
+      hp: card.morphedFrom.maxHp,
+      maxHp: card.morphedFrom.maxHp,
+      perks: card.morphedFrom.perks,
+    }
+    return restored
+  }
   const fwd: ForwardCard = { ...card }
   delete fwd.status
   return fwd
@@ -303,6 +317,7 @@ export function activateMorph(state: MatchState, cardId: string): PlayResult {
     return { ok: false, reason: 'no_morph_perk' }
   }
   const newAtk = Math.ceil(def.maxHp / morphPerk.effect.atkDivisor)
+  const baseMaxHp = def.baseMaxHp ?? def.maxHp
   const newFwd: ForwardCard = {
     id: def.id,
     name: def.name,
@@ -313,6 +328,11 @@ export function activateMorph(state: MatchState, cardId: string): PlayResult {
     atk: newAtk,
     perks: [],
     status: 'attacking_next',
+    morphedFrom: {
+      hp: baseMaxHp,
+      maxHp: baseMaxHp,
+      perks: def.perks,
+    },
   }
   return {
     ok: true,
