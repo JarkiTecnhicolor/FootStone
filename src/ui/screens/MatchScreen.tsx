@@ -213,6 +213,24 @@ function ExtraTimeOverlay({ half }: { half: 1 | 2 }) {
   )
 }
 
+function SniperStrike({ side }: { side: 'player' | 'opp' }) {
+  // side = the SIDE BEING SNIPED. Show crosses over the targeted half of pitch.
+  const top = side === 'player' ? '70%' : '20%'
+  return (
+    <motion.div
+      className="pointer-events-none absolute left-1/2 z-30 flex -translate-x-1/2 gap-3"
+      style={{ top, filter: 'drop-shadow(0_0_12px_rgba(220,38,38,0.9))' }}
+      initial={{ scale: 0.3, rotate: -25, opacity: 0 }}
+      animate={{ scale: 1.4, rotate: 0, opacity: 1 }}
+      exit={{ scale: 0.7, opacity: 0, rotate: 15 }}
+      transition={{ duration: 0.45, ease: 'backOut' }}
+    >
+      <span className="text-5xl">✖</span>
+      <span className="text-5xl">✖</span>
+    </motion.div>
+  )
+}
+
 function BallStrike({ side, outcome }: { side: 'player' | 'opp'; outcome: 'goal' | 'save' | 'hit' }) {
   const fromY = side === 'player' ? '80%' : '20%'
   const toY = side === 'player' ? '8%' : '92%'
@@ -340,11 +358,14 @@ export function MatchScreen() {
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const ballTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevFwdCount = useRef({ my: 0, opp: 0 })
+  const prevMidCount = useRef({ my: 0, opp: 0 })
   const prevDefCount = useRef({ my: 0, opp: 0 })
   const prevScoresForBall = useRef({ my: 0, opp: 0 })
+  const prevPendingSniper = useRef(false)
   const [ballEvent, setBallEvent] = useState<{
+    kind: 'ball' | 'sniper'
     side: 'player' | 'opp'
-    outcome: 'goal' | 'save' | 'hit'
+    outcome?: 'goal' | 'save' | 'hit'
     nonce: number
   } | null>(null)
   const ballNonceRef = useRef(0)
@@ -352,11 +373,21 @@ export function MatchScreen() {
   const fireBall = (side: 'player' | 'opp', outcome: 'goal' | 'save' | 'hit') => {
     if (ballTimerRef.current) clearTimeout(ballTimerRef.current)
     ballNonceRef.current += 1
-    setBallEvent({ side, outcome, nonce: ballNonceRef.current })
+    setBallEvent({ kind: 'ball', side, outcome, nonce: ballNonceRef.current })
     ballTimerRef.current = setTimeout(() => {
       setBallEvent(null)
       ballTimerRef.current = null
     }, 700)
+  }
+
+  const fireSniper = (sideSniped: 'player' | 'opp') => {
+    if (ballTimerRef.current) clearTimeout(ballTimerRef.current)
+    ballNonceRef.current += 1
+    setBallEvent({ kind: 'sniper', side: sideSniped, nonce: ballNonceRef.current })
+    ballTimerRef.current = setTimeout(() => {
+      setBallEvent(null)
+      ballTimerRef.current = null
+    }, 750)
   }
 
   const flashOverlay = (
@@ -407,10 +438,33 @@ export function MatchScreen() {
     const oppFwds = match.oppFwds.length
     const myDefs = match.myDefenders.length
     const oppDefs = match.oppDefenders.length
+    const myMids = match.myMids.length
+    const oppMids = match.oppMids.length
     const myScoreUp = match.myScore > prevScoresForBall.current.my
     const oppScoreUp = match.oppScore > prevScoresForBall.current.opp
+    const placementHappened =
+      myDefs > prevDefCount.current.my ||
+      oppDefs > prevDefCount.current.opp ||
+      myMids > prevMidCount.current.my ||
+      oppMids > prevMidCount.current.opp ||
+      myFwds > prevFwdCount.current.my ||
+      oppFwds > prevFwdCount.current.opp
+    const sniperResolved = !match.pendingSniper && prevPendingSniper.current
 
-    if (myFwds < prevFwdCount.current.my) {
+    const myCardLoss =
+      myFwds < prevFwdCount.current.my ||
+      myMids < prevMidCount.current.my ||
+      myDefs < prevDefCount.current.my
+    const oppCardLoss =
+      oppFwds < prevFwdCount.current.opp ||
+      oppMids < prevMidCount.current.opp ||
+      oppDefs < prevDefCount.current.opp
+
+    if ((placementHappened || sniperResolved) && (myCardLoss || oppCardLoss)) {
+      // Sniper takedown — display crosses on side that lost the card
+      if (myCardLoss) fireSniper('player')
+      else if (oppCardLoss) fireSniper('opp')
+    } else if (myFwds < prevFwdCount.current.my) {
       const outcome: 'goal' | 'save' | 'hit' = myScoreUp
         ? 'goal'
         : oppDefs < prevDefCount.current.opp
@@ -427,10 +481,20 @@ export function MatchScreen() {
     }
 
     prevFwdCount.current = { my: myFwds, opp: oppFwds }
+    prevMidCount.current = { my: myMids, opp: oppMids }
     prevDefCount.current = { my: myDefs, opp: oppDefs }
     prevScoresForBall.current = { my: match.myScore, opp: match.oppScore }
+    prevPendingSniper.current = !!match.pendingSniper
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match?.myFwds.length, match?.oppFwds.length, match?.myDefenders.length, match?.oppDefenders.length])
+  }, [
+    match?.myFwds.length,
+    match?.oppFwds.length,
+    match?.myMids.length,
+    match?.oppMids.length,
+    match?.myDefenders.length,
+    match?.oppDefenders.length,
+    match?.pendingSniper,
+  ])
 
   useEffect(() => {
     if (!match) return
@@ -549,12 +613,15 @@ export function MatchScreen() {
 
       <Pitch>
         <AnimatePresence>
-          {ballEvent && (
+          {ballEvent && ballEvent.kind === 'ball' && ballEvent.outcome && (
             <BallStrike
               key={ballEvent.nonce}
               side={ballEvent.side}
               outcome={ballEvent.outcome}
             />
+          )}
+          {ballEvent && ballEvent.kind === 'sniper' && (
+            <SniperStrike key={ballEvent.nonce} side={ballEvent.side} />
           )}
         </AnimatePresence>
         <div className="flex justify-center items-end gap-2">
