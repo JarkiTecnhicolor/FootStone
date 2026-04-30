@@ -84,6 +84,12 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d10', name: 'Mechanic', role: 'def', cost: 1,
+    rarity: 'bronze',
+    hp: 2, maxHp: 2,
+    perks: [],
+  },
+  {
     id: 'p_m1', name: 'Modruk', role: 'mid', cost: 5,
     rarity: 'legend',
     stamina: 3, maxStamina: 3,
@@ -202,6 +208,23 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_m10', name: 'Bunjaku', role: 'mid', cost: 2,
+    rarity: 'silver',
+    stamina: 1, maxStamina: 1,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
+        label: '+2 атаки форвардам',
+      },
+      {
+        trigger: 'aura',
+        effect: { kind: 'draw_bonus', amount: 1 },
+        label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
+      },
+    ],
+  },
+  {
     id: 'p_f1', name: 'Mbarre', role: 'fwd', cost: 5,
     rarity: 'legend',
     atk: 5,
@@ -277,6 +300,12 @@ export const PLAYER_DECK: Card[] = [
     id: 'p_f7', name: 'Shock', role: 'fwd', cost: 2,
     rarity: 'silver',
     atk: 3,
+    perks: [],
+  },
+  {
+    id: 'p_f11', name: 'Sosadin', role: 'fwd', cost: 1,
+    rarity: 'bronze',
+    atk: 1,
     perks: [],
   },
   {
