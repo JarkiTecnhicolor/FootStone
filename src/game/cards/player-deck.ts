@@ -273,6 +273,23 @@ export const PLAYER_DECK: Card[] = [
     perks: [],
   },
   {
+    id: 'p_f10', name: 'Bajan', role: 'fwd', cost: 2,
+    rarity: 'silver',
+    atk: 1,
+    perks: [
+      {
+        trigger: 'self_modifier',
+        effect: { kind: 'bypass_keeper' },
+        label: 'ПРОХІД НАСКРІЗЬ — атакує тільки воротаря',
+      },
+      {
+        trigger: 'self_modifier',
+        effect: { kind: 'instant_attack' },
+        label: 'АТАКА ПЕРШИМ ТЕМПОМ — б\'є на поточному ході',
+      },
+    ],
+  },
+  {
     id: 'p_f9', name: 'Insight', role: 'fwd', cost: 1,
     rarity: 'silver',
     atk: 2,

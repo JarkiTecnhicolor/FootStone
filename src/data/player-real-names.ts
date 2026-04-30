@@ -32,6 +32,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f7': 'Patrik Schick',
   'p_f8': 'Cristiano Ronaldo',
   'p_f9': 'Lorenzo Insigne',
+  'p_f10': 'Bojan Krkić',
 
   'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',
