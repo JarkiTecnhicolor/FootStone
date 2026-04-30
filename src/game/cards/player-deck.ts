@@ -3,7 +3,7 @@ import type { Card } from '../types'
 export const PLAYER_DECK: Card[] = [
   {
     id: 'p_d1', name: 'Van Dijra', role: 'def', cost: 3,
-    rarity: 'gold',
+    rarity: 'legend',
     hp: 4, maxHp: 4,
     perks: [{
       trigger: 'aura',
