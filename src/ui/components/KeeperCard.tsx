@@ -13,15 +13,15 @@ interface RaritySkin {
 
 const RARITY_SKINS: Record<Rarity, RaritySkin> = {
   bronze: {
-    box: 'bg-orange-200 border-orange-800 text-orange-950',
+    box: 'bg-orange-100 border-orange-800 text-orange-950',
     badge: 'bg-orange-800 text-white',
     avatarBorder: 'border-orange-800',
     glow: '',
   },
   silver: {
-    box: 'bg-slate-100 border-slate-400 text-slate-900',
-    badge: 'bg-slate-500 text-white',
-    avatarBorder: 'border-slate-400',
+    box: 'bg-slate-200 border-slate-500 text-slate-900',
+    badge: 'bg-slate-600 text-white',
+    avatarBorder: 'border-slate-500',
     glow: '',
   },
   gold: {
