@@ -148,6 +148,45 @@ function Pitch({ children }: { children: React.ReactNode }) {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
       <div className="pointer-events-none absolute inset-2 rounded-md border-2 border-white/30" />
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-2 z-0 -translate-x-1/2"
+        style={{ width: '55%', maxWidth: 360 }}
+      >
+        <div
+          className="rounded-b-md border-2 border-t-0 border-white/30"
+          style={{ height: 110 }}
+        />
+        <div
+          className="absolute left-1/2 top-0 -translate-x-1/2 rounded-b-md border-2 border-t-0 border-white/30"
+          style={{ width: '50%', maxWidth: 180, height: 36 }}
+        />
+        <div
+          className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/60 shadow"
+          style={{ width: 6, height: 6, top: 80 }}
+        />
+      </div>
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-2 left-1/2 z-0 -translate-x-1/2"
+        style={{ width: '55%', maxWidth: 360 }}
+      >
+        <div
+          className="rounded-t-md border-2 border-b-0 border-white/30"
+          style={{ height: 110 }}
+        />
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-t-md border-2 border-b-0 border-white/30"
+          style={{ width: '50%', maxWidth: 180, height: 36 }}
+        />
+        <div
+          className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/60 shadow"
+          style={{ width: 6, height: 6, bottom: 80 }}
+        />
+      </div>
+
       <div className="relative space-y-1.5 p-3">{children}</div>
     </div>
   )
