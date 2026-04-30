@@ -163,7 +163,8 @@ export function Card({
     }
   }, [realName, photoUrl])
 
-  const finalAvatarSrc = photoUrl && !photoFailed ? photoUrl : avatarUrl(card)
+  const useWikiPhoto = !!(photoUrl && !photoFailed)
+  const finalAvatarSrc = useWikiPhoto ? photoUrl : avatarUrl(card)
 
   return (
     <motion.div
@@ -253,7 +254,11 @@ export function Card({
           loading="lazy"
           onError={() => setPhotoFailed(true)}
           className={`flex-shrink-0 rounded-md border object-cover ${skin.avatarBorder} bg-white`}
-          style={{ width: avatarSize, height: avatarSize }}
+          style={{
+            width: avatarSize,
+            height: avatarSize,
+            objectPosition: useWikiPhoto ? 'center 20%' : 'center',
+          }}
         />
         <div className="min-w-0 flex-1">
           <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>

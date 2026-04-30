@@ -81,7 +81,8 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick }: Props)
     }
   }, [realName, photoUrl])
 
-  const finalSrc = photoUrl && !photoFailed ? photoUrl : fallbackAvatar(keeper.name)
+  const useWikiPhoto = !!(photoUrl && !photoFailed)
+  const finalSrc = useWikiPhoto ? photoUrl : fallbackAvatar(keeper.name)
   const cursor = onClick ? 'cursor-pointer' : 'cursor-default'
 
   return (
@@ -121,7 +122,11 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick }: Props)
           loading="lazy"
           onError={() => setPhotoFailed(true)}
           className={`flex-shrink-0 rounded-md border object-cover ${skin.avatarBorder} bg-white`}
-          style={{ width: avatarSize, height: avatarSize }}
+          style={{
+            width: avatarSize,
+            height: avatarSize,
+            objectPosition: useWikiPhoto ? 'center 20%' : 'center',
+          }}
         />
         <div className="min-w-0 flex-1">
           <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
