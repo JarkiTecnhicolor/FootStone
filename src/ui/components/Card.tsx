@@ -29,9 +29,9 @@ interface RaritySkin {
 
 const RARITY_SKINS: Record<Rarity, RaritySkin> = {
   bronze: {
-    box: 'bg-stone-100 border-stone-500 text-stone-900',
-    cost: 'bg-stone-600 text-white',
-    avatarBorder: 'border-stone-500',
+    box: 'bg-orange-100 border-orange-700 text-orange-950',
+    cost: 'bg-orange-700 text-white',
+    avatarBorder: 'border-orange-700',
     glow: '',
     label: 'Бронза',
   },
