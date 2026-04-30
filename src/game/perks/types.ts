@@ -28,6 +28,7 @@ export type PerkEffect =
   | { kind: 'morph_to_fwd'; atkDivisor: number }
   | { kind: 'forward_defender' }
   | { kind: 'invulnerable' }
+  | { kind: 'intimidate'; amount: number; threshold: number }
 
 export interface Perk {
   trigger: PerkTrigger

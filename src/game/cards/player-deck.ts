@@ -5,7 +5,11 @@ export const PLAYER_DECK: Card[] = [
     id: 'p_d1', name: 'Van Dijra', role: 'def', cost: 3,
     rarity: 'gold',
     hp: 4, maxHp: 4,
-    perks: [],
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'intimidate', amount: 2, threshold: 2 },
+      label: 'ЗАЛЯКУВАННЯ: -2 атаки усім ворожим форвардам якщо їх 2+',
+    }],
   },
   {
     id: 'p_d2', name: 'Saliboo', role: 'def', cost: 2,

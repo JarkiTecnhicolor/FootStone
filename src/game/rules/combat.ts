@@ -42,6 +42,7 @@ export function calculateAtk(
   attacker: ForwardCard,
   attackerMids: MidfielderCard[],
   enemyDefenders: DefenderCard[],
+  attackerFwdCount?: number,
 ): AtkCalculation {
   let atk = attacker.atk
   const buffs: AtkBuff[] = []
@@ -71,7 +72,19 @@ export function calculateAtk(
     buffs.push({ source: attacker.name, amount: perk.effect.amount, origin: 'self' })
   }
 
-  return { baseAtk: attacker.atk, buffs, finalAtk: atk }
+  if (attackerFwdCount !== undefined) {
+    for (const def of enemyDefenders) {
+      for (const perk of def.perks) {
+        if (perk.trigger !== 'aura') continue
+        if (perk.effect.kind !== 'intimidate') continue
+        if (attackerFwdCount < perk.effect.threshold) continue
+        atk -= perk.effect.amount
+        buffs.push({ source: def.name, amount: -perk.effect.amount, origin: 'aura' })
+      }
+    }
+  }
+
+  return { baseAtk: attacker.atk, buffs, finalAtk: Math.max(0, atk) }
 }
 
 export function hasBypass(card: ForwardCard): boolean {
@@ -129,6 +142,7 @@ export interface AttackInput {
   keeper: Keeper
   attackerMids: MidfielderCard[]
   defenderMids: MidfielderCard[]
+  attackerFwdCount?: number
   target: AttackTarget
   random?: () => number
 }
@@ -183,10 +197,10 @@ function applyKeeperAbilities(
 }
 
 export function resolveAttack(input: AttackInput): AttackResult {
-  const { attacker, defenders, keeper, attackerMids, defenderMids, target } = input
+  const { attacker, defenders, keeper, attackerMids, defenderMids, target, attackerFwdCount } = input
   const random = input.random ?? Math.random
 
-  const atk = calculateAtk(attacker, attackerMids, defenders)
+  const atk = calculateAtk(attacker, attackerMids, defenders, attackerFwdCount)
   const damageReduction = calculateDamageReduction(defenderMids)
   const damageDealt = Math.max(0, atk.finalAtk - damageReduction)
 
