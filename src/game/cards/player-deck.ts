@@ -225,6 +225,16 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_m11', name: "O'Real", role: 'mid', cost: 4,
+    rarity: 'gold',
+    stamina: 4, maxStamina: 4,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'draw_bonus', amount: 1 },
+      label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
+    }],
+  },
+  {
     id: 'p_f1', name: 'Mbarre', role: 'fwd', cost: 5,
     rarity: 'legend',
     atk: 5,
