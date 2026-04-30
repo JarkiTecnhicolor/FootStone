@@ -213,6 +213,34 @@ function ExtraTimeOverlay({ half }: { half: 1 | 2 }) {
   )
 }
 
+function BallStrike({ side, outcome }: { side: 'player' | 'opp'; outcome: 'goal' | 'save' | 'hit' }) {
+  const fromY = side === 'player' ? '80%' : '20%'
+  const toY = side === 'player' ? '8%' : '92%'
+  const tint =
+    outcome === 'goal'
+      ? 'drop-shadow(0_0_12px_rgba(34,197,94,0.9))'
+      : outcome === 'save'
+        ? 'drop-shadow(0_0_10px_rgba(220,38,38,0.7))'
+        : 'drop-shadow(0_0_8px_rgba(255,255,255,0.6))'
+  return (
+    <motion.div
+      className="pointer-events-none absolute left-1/2 z-30 -translate-x-1/2 text-4xl"
+      initial={{ top: fromY, scale: 0.6, opacity: 0, rotate: 0 }}
+      animate={{
+        top: toY,
+        scale: outcome === 'goal' ? 1.5 : 1.1,
+        opacity: 1,
+        rotate: side === 'player' ? 720 : -720,
+      }}
+      exit={{ opacity: 0, scale: 0.4 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+      style={{ filter: tint }}
+    >
+      ⚽
+    </motion.div>
+  )
+}
+
 function HalftimeOverlay() {
   return (
     <motion.div
@@ -310,6 +338,26 @@ export function MatchScreen() {
   const prevScores = useRef({ my: 0, opp: 0 })
   const prevTurn = useRef(0)
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ballTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevFwdCount = useRef({ my: 0, opp: 0 })
+  const prevDefCount = useRef({ my: 0, opp: 0 })
+  const prevScoresForBall = useRef({ my: 0, opp: 0 })
+  const [ballEvent, setBallEvent] = useState<{
+    side: 'player' | 'opp'
+    outcome: 'goal' | 'save' | 'hit'
+    nonce: number
+  } | null>(null)
+  const ballNonceRef = useRef(0)
+
+  const fireBall = (side: 'player' | 'opp', outcome: 'goal' | 'save' | 'hit') => {
+    if (ballTimerRef.current) clearTimeout(ballTimerRef.current)
+    ballNonceRef.current += 1
+    setBallEvent({ side, outcome, nonce: ballNonceRef.current })
+    ballTimerRef.current = setTimeout(() => {
+      setBallEvent(null)
+      ballTimerRef.current = null
+    }, 700)
+  }
 
   const flashOverlay = (
     next:
@@ -334,6 +382,9 @@ export function MatchScreen() {
     if (!match) {
       prevScores.current = { my: 0, opp: 0 }
       prevTurn.current = 0
+      prevFwdCount.current = { my: 0, opp: 0 }
+      prevDefCount.current = { my: 0, opp: 0 }
+      prevScoresForBall.current = { my: 0, opp: 0 }
       return
     }
     if (match.myScore > prevScores.current.my) {
@@ -349,6 +400,37 @@ export function MatchScreen() {
     prevScores.current = { my: match.myScore, opp: match.oppScore }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match?.myScore, match?.oppScore])
+
+  useEffect(() => {
+    if (!match) return
+    const myFwds = match.myFwds.length
+    const oppFwds = match.oppFwds.length
+    const myDefs = match.myDefenders.length
+    const oppDefs = match.oppDefenders.length
+    const myScoreUp = match.myScore > prevScoresForBall.current.my
+    const oppScoreUp = match.oppScore > prevScoresForBall.current.opp
+
+    if (myFwds < prevFwdCount.current.my) {
+      const outcome: 'goal' | 'save' | 'hit' = myScoreUp
+        ? 'goal'
+        : oppDefs < prevDefCount.current.opp
+          ? 'hit'
+          : 'save'
+      fireBall('player', outcome)
+    } else if (oppFwds < prevFwdCount.current.opp) {
+      const outcome: 'goal' | 'save' | 'hit' = oppScoreUp
+        ? 'goal'
+        : myDefs < prevDefCount.current.my
+          ? 'hit'
+          : 'save'
+      fireBall('opp', outcome)
+    }
+
+    prevFwdCount.current = { my: myFwds, opp: oppFwds }
+    prevDefCount.current = { my: myDefs, opp: oppDefs }
+    prevScoresForBall.current = { my: match.myScore, opp: match.oppScore }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.myFwds.length, match?.oppFwds.length, match?.myDefenders.length, match?.oppDefenders.length])
 
   useEffect(() => {
     if (!match) return
@@ -466,6 +548,15 @@ export function MatchScreen() {
       <PhaseBanner match={match} />
 
       <Pitch>
+        <AnimatePresence>
+          {ballEvent && (
+            <BallStrike
+              key={ballEvent.nonce}
+              side={ballEvent.side}
+              outcome={ballEvent.outcome}
+            />
+          )}
+        </AnimatePresence>
         <div className="flex justify-center items-end gap-2">
           <KeeperCard
             keeper={match.oppKeeper}
