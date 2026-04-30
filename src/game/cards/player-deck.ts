@@ -179,7 +179,7 @@ export const PLAYER_DECK: Card[] = [
   },
   {
     id: 'p_m9', name: 'Pohba', role: 'mid', cost: 3,
-    rarity: 'silver',
+    rarity: 'gold',
     stamina: 2, maxStamina: 2,
     perks: [
       {
