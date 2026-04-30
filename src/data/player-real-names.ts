@@ -13,6 +13,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_d6': 'Robert Huth',
   'p_d7': 'Fabio Cannavaro',
   'p_d8': 'Sergio Ramos',
+  'p_d9': 'Gerard Piqué',
   'p_m1': 'Luka Modrić',
   'p_m2': "N'Golo Kanté",
   'p_m3': 'Pedri',
@@ -21,6 +22,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_m6': 'Mykola Shaparenko',
   'p_m7': 'Beñat Etxebarria',
   'p_m8': 'Andrea Pirlo',
+  'p_m9': 'Paul Pogba',
   'p_f1': 'Kylian Mbappé',
   'p_f2': 'Erling Haaland',
   'p_f3': 'Vinícius Júnior',
@@ -29,6 +31,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f6': 'Eden Hazard',
   'p_f7': 'Patrik Schick',
   'p_f8': 'Cristiano Ronaldo',
+  'p_f9': 'Lorenzo Insigne',
 
   'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',

@@ -40,6 +40,7 @@ export interface ForwardCard extends BaseCard {
   role: 'fwd'
   atk: number
   status?: ForwardStatus
+  jokerArmed?: boolean
   morphedFrom?: {
     hp: number
     maxHp: number

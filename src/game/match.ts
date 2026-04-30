@@ -155,6 +155,7 @@ function cleanForDiscard(card: Card): Card {
   }
   const fwd: ForwardCard = { ...card }
   delete fwd.status
+  delete fwd.jokerArmed
   return fwd
 }
 
@@ -163,9 +164,20 @@ export function placeCardOnField(state: MatchState, side: Side, handIdx: number)
   const card = hand[handIdx]
   if (!card) throw new Error(`placeCardOnField: bad index ${handIdx}`)
 
-  const fresh = instantiate(card, state.turn)
+  let fresh = instantiate(card, state.turn)
   const newHand = hand.filter((_, i) => i !== handIdx)
   const actor = side === 'player' ? 'Ти' : 'Опонент'
+
+  if (fresh.role === 'fwd' && newHand.length === 0) {
+    const hasJoker = fresh.perks.some(
+      p =>
+        p.trigger === 'self_modifier' &&
+        p.effect.kind === 'atk_buff' &&
+        p.effect.scope === 'self' &&
+        p.effect.condition?.kind === 'last_in_hand',
+    )
+    if (hasJoker) fresh = { ...fresh, jokerArmed: true }
+  }
 
   let myDefs = side === 'player' ? state.myDefenders : state.oppDefenders
   let myMids = side === 'player' ? state.myMids : state.oppMids

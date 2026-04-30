@@ -19,6 +19,7 @@ export interface AtkCalculation {
 interface ConditionContext {
   attackerMids: MidfielderCard[]
   enemyDefenders: DefenderCard[]
+  attackerJokerArmed?: boolean
 }
 
 function matchesCondition(cond: PerkCondition | undefined, ctx: ConditionContext): boolean {
@@ -32,6 +33,8 @@ function matchesCondition(cond: PerkCondition | undefined, ctx: ConditionContext
       return ctx.attackerMids.some(m =>
         m.perks.some(p => p.trigger === 'aura' && p.effect.kind === 'draw_bonus'),
       )
+    case 'last_in_hand':
+      return ctx.attackerJokerArmed === true
   }
 }
 
@@ -42,7 +45,11 @@ export function calculateAtk(
 ): AtkCalculation {
   let atk = attacker.atk
   const buffs: AtkBuff[] = []
-  const ctx: ConditionContext = { attackerMids, enemyDefenders }
+  const ctx: ConditionContext = {
+    attackerMids,
+    enemyDefenders,
+    attackerJokerArmed: attacker.jokerArmed,
+  }
 
   for (const mid of attackerMids) {
     for (const perk of mid.perks) {

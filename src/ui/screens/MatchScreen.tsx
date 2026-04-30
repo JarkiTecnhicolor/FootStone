@@ -686,7 +686,7 @@ export function MatchScreen() {
             <SniperStrike key={ballEvent.nonce} side={ballEvent.side} />
           )}
         </AnimatePresence>
-        <div className="flex justify-center items-end gap-2">
+        <div className="relative flex justify-center items-end">
           <KeeperCard
             keeper={match.oppKeeper}
             highlighted={isAttackTargeting && match.oppDefenders.length === 0}
@@ -696,7 +696,7 @@ export function MatchScreen() {
                 : undefined
             }
           />
-          <div className="text-[10px] text-white/85 leading-tight pb-1">
+          <div className="absolute left-[calc(50%+80px)] bottom-1 text-[10px] text-white/85 leading-tight">
             рука {match.oppHand.length}
             <br />
             дека {match.oppDeck.length}

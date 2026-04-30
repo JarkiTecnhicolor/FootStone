@@ -64,6 +64,8 @@ function matchesCondition(cond: PerkCondition | undefined, field: FieldSnapshot)
       return field.ownMids.some(m =>
         m.perks.some(p => p.trigger === 'aura' && p.effect.kind === 'draw_bonus'),
       )
+    case 'last_in_hand':
+      return false
   }
 }
 

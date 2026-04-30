@@ -8,6 +8,7 @@ export type PerkCondition =
   | { kind: 'mid_present' }
   | { kind: 'enemy_def_hp_eq'; hp: number }
   | { kind: 'playmaker_present' }
+  | { kind: 'last_in_hand' }
 
 export type AtkBuffScope = 'all_my_fwds' | 'self'
 

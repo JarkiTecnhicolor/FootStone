@@ -74,6 +74,16 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d9', name: 'Paquet', role: 'def', cost: 3,
+    rarity: 'gold',
+    hp: 4, maxHp: 4,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'forward_defender' },
+      label: 'ВИСУНУТИЙ ЗАХИСНИК — форварди змушені атакувати його першим',
+    }],
+  },
+  {
     id: 'p_m1', name: 'Modruk', role: 'mid', cost: 4,
     rarity: 'legend',
     stamina: 3, maxStamina: 3,
@@ -168,6 +178,23 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_m9', name: 'Pohba', role: 'mid', cost: 3,
+    rarity: 'silver',
+    stamina: 2, maxStamina: 2,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'atk_buff', amount: 3, scope: 'all_my_fwds' },
+        label: '+3 атаки форвардам',
+      },
+      {
+        trigger: 'on_place',
+        effect: { kind: 'hp_buff', amount: 1, scope: 'other_defs' },
+        label: '+1 HP захисникам',
+      },
+    ],
+  },
+  {
     id: 'p_f1', name: 'Mbarre', role: 'fwd', cost: 5,
     rarity: 'legend',
     atk: 5,
@@ -244,6 +271,16 @@ export const PLAYER_DECK: Card[] = [
     rarity: 'silver',
     atk: 3,
     perks: [],
+  },
+  {
+    id: 'p_f9', name: 'Insight', role: 'fwd', cost: 1,
+    rarity: 'silver',
+    atk: 2,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'atk_buff', amount: 3, scope: 'self', condition: { kind: 'last_in_hand' } },
+      label: 'ДЖОКЕР: +3 атаки якщо це остання карта в руці',
+    }],
   },
   {
     id: 'p_f8', name: 'Cryspyano', role: 'fwd', cost: 6,
