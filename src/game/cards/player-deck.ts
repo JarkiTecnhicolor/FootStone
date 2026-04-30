@@ -309,11 +309,18 @@ export const PLAYER_DECK: Card[] = [
   {
     id: 'p_f8', name: 'Cryspyano', role: 'fwd', cost: 6,
     rarity: 'legend',
-    atk: 8,
-    perks: [{
-      trigger: 'aura',
-      effect: { kind: 'invulnerable' },
-      label: 'НЕВРАЗЛИВИЙ — точкові здібності опонента не діють',
-    }],
+    atk: 7,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'invulnerable' },
+        label: 'НЕВРАЗЛИВИЙ — точкові здібності опонента не діють',
+      },
+      {
+        trigger: 'self_modifier',
+        effect: { kind: 'atk_buff', amount: 2, scope: 'self', condition: { kind: 'playmaker_present' } },
+        label: '+2 атаки якщо плеймейкер на полі',
+      },
+    ],
   },
 ]
