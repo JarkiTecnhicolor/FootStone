@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { MatchState } from '../game/types'
+import type { MatchState, OpponentDeck } from '../game/types'
 import { hasBypass, type AttackTarget } from '../game/rules/combat'
 import type { SniperTargetSelection } from '../game/perks/dispatch'
 import {
@@ -18,6 +18,7 @@ import { pickAndPlaceOneOppCard } from '../game/ai/simple'
 import { PLAYER_DECK } from '../game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../game/keepers/player-keepers'
 import { SHAKHTAR } from '../game/cards/opponents/shakhtar'
+import { makeRandomOpponent } from '../game/cards/opponents/random'
 
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
 
@@ -27,7 +28,8 @@ interface Store {
   undoStack: MatchState[]
   turnStartSnapshot: MatchState | null
 
-  startMatch: () => void
+  startMatch: (opp?: OpponentDeck) => void
+  startQuickMatch: (kind: 'shakhtar' | 'random') => void
   resetMatch: () => void
   playCard: (handIdx: number) => void
   beginFwdTargeting: (fwdId: string) => void
@@ -52,8 +54,14 @@ export const useMatchStore = create<Store>((set, get) => ({
   undoStack: [],
   turnStartSnapshot: null,
 
-  startMatch: () => {
-    const fresh = makeFreshMatch(PLAYER_DECK, PLAYER_KEEPERS, SHAKHTAR)
+  startMatch: (opp = SHAKHTAR) => {
+    const fresh = makeFreshMatch(PLAYER_DECK, PLAYER_KEEPERS, opp)
+    set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh })
+  },
+  startQuickMatch: (kind) => {
+    const opp =
+      kind === 'random' ? makeRandomOpponent(PLAYER_DECK, PLAYER_KEEPERS) : SHAKHTAR
+    const fresh = makeFreshMatch(PLAYER_DECK, PLAYER_KEEPERS, opp)
     set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh })
   },
   resetMatch: () =>

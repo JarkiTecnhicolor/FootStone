@@ -295,7 +295,7 @@ function CenterLine() {
 }
 
 function MatchSetup({ onOpenGallery }: { onOpenGallery: () => void }) {
-  const startMatch = useMatchStore(s => s.startMatch)
+  const startQuickMatch = useMatchStore(s => s.startQuickMatch)
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -313,19 +313,32 @@ function MatchSetup({ onOpenGallery }: { onOpenGallery: () => void }) {
       <div className="text-xs text-stone-600">
         Стартова рука: 5 рандомних карт. Форварди атакують через хід після виставлення.
       </div>
-      <div className="rounded-md bg-amber-50 p-3 text-xs text-amber-900">
-        <div className="mb-1 font-medium">Опонент: Шахтар</div>
-        <div className="leading-relaxed">
-          Унікальні: <b>Steppanenko</b> (+2 атаки форвардам), <b>Mudruk</b> (+2 проти HP1),{' '}
-          <b>Rapunskiy</b> (підкат форварда).
+
+      <div className="rounded-lg border border-stone-300 bg-stone-50 p-3">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-stone-900">
+          ⚡ Швидкий матч
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => startQuickMatch('shakhtar')}
+            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-left text-xs hover:bg-amber-100"
+          >
+            <div className="font-medium text-amber-950">vs Шахтар</div>
+            <div className="mt-0.5 text-[10px] text-amber-800/80 leading-snug">
+              Unique: Steppanenko (+2 атаки), Mudruk (+2 vs HP1), Rapunskiy (підкат фарварда)
+            </div>
+          </button>
+          <button
+            onClick={() => startQuickMatch('random')}
+            className="rounded-md border border-purple-300 bg-purple-50 px-3 py-2 text-left text-xs hover:bg-purple-100"
+          >
+            <div className="font-medium text-purple-950">vs Випадкова</div>
+            <div className="mt-0.5 text-[10px] text-purple-800/80 leading-snug">
+              Команда з 12 рандомних карт твоєї колекції + випадковий воротар
+            </div>
+          </button>
         </div>
       </div>
-      <button
-        onClick={startMatch}
-        className="w-full rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white hover:bg-stone-800"
-      >
-        Почати матч
-      </button>
     </div>
   )
 }
