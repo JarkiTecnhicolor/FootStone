@@ -88,6 +88,16 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d11', name: 'Lugastiontiy', role: 'def', cost: 4,
+    rarity: 'legend',
+    hp: 2, maxHp: 2,
+    perks: [{
+      trigger: 'on_death',
+      effect: { kind: 'summon_def_from_hand' },
+      label: 'ПОМИРАЮЧИЙ КАПІТАН: при знищенні викликає випадкового захисника з руки',
+    }],
+  },
+  {
     id: 'p_d10', name: 'Mechanic', role: 'def', cost: 1,
     rarity: 'bronze',
     hp: 2, maxHp: 2,

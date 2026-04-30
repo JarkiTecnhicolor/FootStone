@@ -89,6 +89,64 @@ function pickRandomKeeper(keepers: readonly Keeper[]): Keeper {
   return { ...keepers[idx] }
 }
 
+function hasDyingCaptain(d: DefenderCard): boolean {
+  return d.perks.some(
+    p => p.trigger === 'on_death' && p.effect.kind === 'summon_def_from_hand',
+  )
+}
+
+function deployRandomDefFromHand(state: MatchState, side: Side): MatchState {
+  const hand = side === 'player' ? state.hand : state.oppHand
+  const defIndices: number[] = []
+  hand.forEach((c, i) => { if (c.role === 'def') defIndices.push(i) })
+  const owner = side === 'player' ? 'Ти' : 'Опонент'
+  if (defIndices.length === 0) {
+    return {
+      ...state,
+      log: [...state.log, `${owner}: ПОМИРАЮЧИЙ КАПІТАН — нема захисника в руці.`],
+    }
+  }
+  const pickIdx = defIndices[Math.floor(Math.random() * defIndices.length)]
+  const card = hand[pickIdx]
+  const next = placeCardOnField(state, side, pickIdx)
+  return {
+    ...next,
+    log: [...next.log, `${owner}: ПОМИРАЮЧИЙ КАПІТАН викликає ${card.name} на поле!`],
+  }
+}
+
+function drainDyingCaptains(state: MatchState, side: Side): MatchState {
+  const count = side === 'player'
+    ? state.pendingDyingCaptainPlayer ?? 0
+    : state.pendingDyingCaptainOpp ?? 0
+  if (count === 0) return state
+  let s: MatchState = side === 'player'
+    ? { ...state, pendingDyingCaptainPlayer: 0 }
+    : { ...state, pendingDyingCaptainOpp: 0 }
+  for (let i = 0; i < count; i++) {
+    s = deployRandomDefFromHand(s, side)
+  }
+  return s
+}
+
+function queueDyingCaptains(
+  state: MatchState,
+  before: readonly DefenderCard[],
+  after: readonly DefenderCard[],
+  ownerSide: Side,
+): MatchState {
+  let count = 0
+  for (const d of before) {
+    if (after.some(a => a.id === d.id)) continue
+    if (hasDyingCaptain(d)) count++
+  }
+  if (count === 0) return state
+  if (ownerSide === 'player') {
+    return { ...state, pendingDyingCaptainPlayer: (state.pendingDyingCaptainPlayer ?? 0) + count }
+  }
+  return { ...state, pendingDyingCaptainOpp: (state.pendingDyingCaptainOpp ?? 0) + count }
+}
+
 function fieldFor(state: MatchState, side: Side): FieldSnapshot {
   if (side === 'player') {
     return {
@@ -252,7 +310,8 @@ function applySniperSideEffects(
   const enemyMidsKey = enemySide === 'player' ? 'myMids' : 'oppMids'
   const enemyFwdsKey = enemySide === 'player' ? 'myFwds' : 'oppFwds'
 
-  return {
+  const beforeDefs = state[enemyDefsKey] as DefenderCard[]
+  let next: MatchState = {
     ...state,
     [enemyDefsKey]: placement.enemyDefenders,
     [enemyMidsKey]: placement.enemyMids,
@@ -262,6 +321,8 @@ function applySniperSideEffects(
       ...placement.enemyDiscard.map(cleanForDiscard),
     ],
   }
+  next = queueDyingCaptains(next, beforeDefs, placement.enemyDefenders, enemySide)
+  return next
 }
 
 export function isExtraTime(state: MatchState): boolean {
@@ -303,18 +364,17 @@ export function resolvePendingSniper(state: MatchState, target: SniperTargetSele
   if (!source) return { ok: false, reason: 'source_missing' }
 
   const result = applySniperChoice(source, fieldFor(state, 'player'), target)
-  return {
-    ok: true,
-    state: {
-      ...state,
-      oppDefenders: result.enemyDefenders,
-      oppMids: result.enemyMids,
-      oppFwds: result.enemyFwds,
-      oppDiscard: [...state.oppDiscard, cleanForDiscard(result.removed)],
-      log: [...state.log, ...result.log],
-      pendingSniper: null,
-    },
+  let nextState: MatchState = {
+    ...state,
+    oppDefenders: result.enemyDefenders,
+    oppMids: result.enemyMids,
+    oppFwds: result.enemyFwds,
+    oppDiscard: [...state.oppDiscard, cleanForDiscard(result.removed)],
+    log: [...state.log, ...result.log],
+    pendingSniper: null,
   }
+  nextState = queueDyingCaptains(nextState, state.oppDefenders, result.enemyDefenders, 'opp')
+  return { ok: true, state: nextState }
 }
 
 export function activateMorph(state: MatchState, cardId: string): PlayResult {
@@ -396,17 +456,16 @@ export function attackWithForward(
   else if (result.goal) log.push(`  ⚽ ГОЛ! (${result.keeperDamage} > save ${state.oppKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере (${result.keeperDamage} ≤ save ${state.oppKeeper.save}).`)
 
-  return {
-    ok: true,
-    state: {
-      ...state,
-      myFwds: state.myFwds.filter(f => f.id !== fwdId),
-      oppDefenders: result.newEnemyDefenders,
-      discard: [...state.discard, cleanForDiscard(fwd)],
-      myScore: state.myScore + (result.goal ? 1 : 0),
-      log: [...state.log, ...log],
-    },
+  let nextState: MatchState = {
+    ...state,
+    myFwds: state.myFwds.filter(f => f.id !== fwdId),
+    oppDefenders: result.newEnemyDefenders,
+    discard: [...state.discard, cleanForDiscard(fwd)],
+    myScore: state.myScore + (result.goal ? 1 : 0),
+    log: [...state.log, ...log],
   }
+  nextState = queueDyingCaptains(nextState, state.oppDefenders, result.newEnemyDefenders, 'opp')
+  return { ok: true, state: nextState }
 }
 
 export function autoTarget(state: MatchState, attackerSide: Side): AttackTarget {
@@ -465,17 +524,16 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
   if (result.keeperSavedRandom) log.push(`  🧤 ${state.myKeeper.name} відбиває в стрибку!`)
   else if (result.goal) log.push(`  ⚽ ОПОНЕНТ ЗАБИВАЄ! (${result.keeperDamage} > save ${state.myKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере.`)
-  return {
-    state: {
-      ...state,
-      oppFwds: state.oppFwds.filter(f => f.id !== ready.id),
-      myDefenders: result.newEnemyDefenders,
-      oppDiscard: [...state.oppDiscard, cleanForDiscard(ready)],
-      oppScore: state.oppScore + (result.goal ? 1 : 0),
-      log: [...state.log, ...log],
-    },
-    done: false,
+  let nextState: MatchState = {
+    ...state,
+    oppFwds: state.oppFwds.filter(f => f.id !== ready.id),
+    myDefenders: result.newEnemyDefenders,
+    oppDiscard: [...state.oppDiscard, cleanForDiscard(ready)],
+    oppScore: state.oppScore + (result.goal ? 1 : 0),
+    log: [...state.log, ...log],
   }
+  nextState = queueDyingCaptains(nextState, state.myDefenders, result.newEnemyDefenders, 'player')
+  return { state: nextState, done: false }
 }
 
 export function resolveOpponentForwards(state: MatchState): MatchState {
@@ -564,6 +622,7 @@ export function advanceTurn(state: MatchState): MatchState {
     next = applyHalftime(next)
   }
 
+  next = drainDyingCaptains(next, 'player')
   next = decayPlayerMids(next)
 
   const drawCount = calcDrawCount(next.myMids)
@@ -594,7 +653,8 @@ export function drawForOpponentTurn(state: MatchState): MatchState {
 }
 
 export function startOpponentTurn(state: MatchState): MatchState {
-  let s = decayOpponentMids(state)
+  let s = drainDyingCaptains(state, 'opp')
+  s = decayOpponentMids(s)
   s = drawForOpponentTurn(s)
   return s
 }

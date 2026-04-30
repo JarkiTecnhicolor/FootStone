@@ -15,6 +15,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_d8': 'Sergio Ramos',
   'p_d9': 'Gerard Piqué',
   'p_d10': 'Taras Mykhavko',
+  'p_d11': 'Oleh Luzhny',
   'p_m1': 'Luka Modrić',
   'p_m2': "N'Golo Kanté",
   'p_m3': 'Pedri',

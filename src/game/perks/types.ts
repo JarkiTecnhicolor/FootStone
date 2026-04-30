@@ -1,6 +1,7 @@
 export type PerkTrigger =
   | 'aura'
   | 'on_place'
+  | 'on_death'
   | 'self_modifier'
   | 'active'
 
@@ -29,6 +30,7 @@ export type PerkEffect =
   | { kind: 'forward_defender' }
   | { kind: 'invulnerable' }
   | { kind: 'intimidate'; amount: number; threshold: number }
+  | { kind: 'summon_def_from_hand' }
 
 export interface Perk {
   trigger: PerkTrigger

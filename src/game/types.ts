@@ -101,6 +101,8 @@ export interface MatchState {
   phase: Phase
   firstTurn: boolean
   pendingSniper: PendingSniper | null
+  pendingDyingCaptainPlayer?: number
+  pendingDyingCaptainOpp?: number
 }
 
 export interface PendingSniper {
