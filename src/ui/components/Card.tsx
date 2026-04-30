@@ -29,9 +29,9 @@ interface RaritySkin {
 
 const RARITY_SKINS: Record<Rarity, RaritySkin> = {
   bronze: {
-    box: 'bg-amber-50 border-amber-700 text-amber-950',
-    cost: 'bg-amber-700 text-white',
-    avatarBorder: 'border-amber-700',
+    box: 'bg-stone-100 border-stone-500 text-stone-900',
+    cost: 'bg-stone-600 text-white',
+    avatarBorder: 'border-stone-500',
     glow: '',
     label: 'Бронза',
   },
@@ -43,10 +43,10 @@ const RARITY_SKINS: Record<Rarity, RaritySkin> = {
     label: 'Срібло',
   },
   gold: {
-    box: 'bg-yellow-50 border-yellow-600 text-yellow-950',
+    box: 'border-yellow-600 text-yellow-950 bg-gradient-to-br from-yellow-50 via-amber-50 to-yellow-100',
     cost: 'bg-yellow-600 text-white',
     avatarBorder: 'border-yellow-600',
-    glow: 'shadow-[0_0_10px_rgba(234,179,8,0.45)]',
+    glow: 'shadow-[0_0_14px_rgba(234,179,8,0.65)]',
     label: 'Золото',
   },
   legend: {
