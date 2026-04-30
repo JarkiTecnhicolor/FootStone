@@ -26,6 +26,7 @@ export type PerkEffect =
   | { kind: 'isolation' }
   | { kind: 'morph_to_fwd'; atkDivisor: number }
   | { kind: 'forward_defender' }
+  | { kind: 'invulnerable' }
 
 export interface Perk {
   trigger: PerkTrigger

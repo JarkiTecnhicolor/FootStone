@@ -220,7 +220,7 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
-    id: 'p_f5', name: 'Vonyat', role: 'fwd', cost: 2,
+    id: 'p_f5', name: 'Vomit', role: 'fwd', cost: 2,
     rarity: 'silver',
     atk: 2,
     perks: [{
@@ -244,5 +244,15 @@ export const PLAYER_DECK: Card[] = [
     rarity: 'silver',
     atk: 3,
     perks: [],
+  },
+  {
+    id: 'p_f8', name: 'Cryspyano', role: 'fwd', cost: 6,
+    rarity: 'legend',
+    atk: 8,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'invulnerable' },
+      label: 'НЕВРАЗЛИВИЙ — точкові здібності опонента не діють',
+    }],
   },
 ]

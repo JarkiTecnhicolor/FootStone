@@ -7,6 +7,7 @@ import { useMatchStore } from '../../store/matchStore'
 import { canAfford } from '../../game/rules/cost'
 import { currentHalf, decideMatchResult, isBlockedInExtraTime, isExtraTime } from '../../game/match'
 import { calculateAtk, validAttackTargetIndices } from '../../game/rules/combat'
+import { isInvulnerable } from '../../game/perks/dispatch'
 import type { Card as CardData, MatchState } from '../../game/types'
 
 function StatBox({
@@ -596,17 +597,26 @@ export function MatchScreen() {
 
   const validDefTargets = validAttackTargetIndices(match.oppDefenders)
   const oppDefClick = (idx: number): (() => void) | undefined => {
-    if (isSniperMode) return () => selectSniperTarget({ kind: 'def', idx })
+    if (isSniperMode) {
+      if (isInvulnerable(match.oppDefenders[idx])) return undefined
+      return () => selectSniperTarget({ kind: 'def', idx })
+    }
     if (isAttackTargeting) {
       if (!validDefTargets.includes(idx)) return undefined
       return () => selectAttackTarget({ kind: 'defender', idx })
     }
     return undefined
   }
-  const oppMidClick = (idx: number): (() => void) | undefined =>
-    isSniperMode ? () => selectSniperTarget({ kind: 'mid', idx }) : undefined
-  const oppFwdClick = (idx: number): (() => void) | undefined =>
-    isSniperMode ? () => selectSniperTarget({ kind: 'fwd', idx }) : undefined
+  const oppMidClick = (idx: number): (() => void) | undefined => {
+    if (!isSniperMode) return undefined
+    if (isInvulnerable(match.oppMids[idx])) return undefined
+    return () => selectSniperTarget({ kind: 'mid', idx })
+  }
+  const oppFwdClick = (idx: number): (() => void) | undefined => {
+    if (!isSniperMode) return undefined
+    if (isInvulnerable(match.oppFwds[idx])) return undefined
+    return () => selectSniperTarget({ kind: 'fwd', idx })
+  }
 
   const myFwdClick = (fwdId: string): (() => void) | undefined => {
     if (!canInteract) return undefined

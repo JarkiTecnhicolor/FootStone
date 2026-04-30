@@ -28,6 +28,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f5': 'Vladyslav Vanat',
   'p_f6': 'Eden Hazard',
   'p_f7': 'Patrik Schick',
+  'p_f8': 'Cristiano Ronaldo',
 
   'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',

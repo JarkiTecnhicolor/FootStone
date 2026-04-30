@@ -141,6 +141,7 @@ export function Card({
   const isForwardDef = card.role === 'def' && card.perks.some(
     p => p.trigger === 'aura' && p.effect.kind === 'forward_defender',
   )
+  const isInvuln = card.perks.some(p => p.effect.kind === 'invulnerable')
 
   const realName = REAL_PLAYERS[card.id]
   const [photoUrl, setPhotoUrl] = useState<string | null>(() => {
@@ -232,6 +233,14 @@ export function Card({
           className="absolute -left-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-stone-800 text-[14px] shadow ring-2 ring-white/60"
         >
           🛡
+        </div>
+      )}
+      {isInvuln && (
+        <div
+          title="НЕВРАЗЛИВИЙ"
+          className="absolute -left-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 text-[14px] shadow ring-2 ring-white/80"
+        >
+          ✨
         </div>
       )}
 

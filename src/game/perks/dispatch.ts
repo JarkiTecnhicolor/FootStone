@@ -1,6 +1,10 @@
 import type { Card, DefenderCard, ForwardCard, MidfielderCard } from '../types'
 import type { PerkCondition } from './types'
 
+export function isInvulnerable(card: Card): boolean {
+  return card.perks.some(p => p.effect.kind === 'invulnerable')
+}
+
 export interface FieldSnapshot {
   ownDefenders: readonly DefenderCard[]
   ownMids: readonly MidfielderCard[]
@@ -145,21 +149,26 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
 
     if (perk.effect.kind === 'sniper') {
       if (perk.effect.target === 'enemy_fwd_first') {
-        if (enemyFwds.length > 0) {
-          const target = enemyFwds[0]
-          enemyFwds = enemyFwds.slice(1)
+        const targetIdx = enemyFwds.findIndex(f => !isInvulnerable(f))
+        if (targetIdx >= 0) {
+          const target = enemyFwds[targetIdx]
+          enemyFwds = enemyFwds.filter((_, i) => i !== targetIdx)
           enemyDiscard.push(target)
           log.push(`${card.name} знесе ${target.name}!`)
+        } else if (enemyFwds.length > 0) {
+          log.push(`${card.name}: ціль невразлива — перка пропадає.`)
         } else {
           log.push(`${card.name}: немає цілі.`)
         }
       } else if (perk.effect.target === 'any_enemy') {
         const hasTargets =
-          enemyDefenders.length + enemyMids.length + enemyFwds.length > 0
+          enemyDefenders.some(c => !isInvulnerable(c)) ||
+          enemyMids.some(c => !isInvulnerable(c)) ||
+          enemyFwds.some(c => !isInvulnerable(c))
         if (hasTargets) {
           pendingSniperChoice = true
         } else {
-          log.push(`${card.name}: немає цілі — перка пропадає.`)
+          log.push(`${card.name}: немає вразливої цілі — перка пропадає.`)
         }
       }
       continue
@@ -203,15 +212,18 @@ export function applySniperChoice(
 
   if (target.kind === 'def') {
     if (!enemyDefenders[target.idx]) throw new Error(`Sniper: bad def idx ${target.idx}`)
+    if (isInvulnerable(enemyDefenders[target.idx])) throw new Error('Sniper: target invulnerable')
     removed = enemyDefenders[target.idx]
     enemyDefenders = enemyDefenders.filter((_, i) => i !== target.idx)
     enemyDefenders = unwindHpBuffsFromRemoved(removed, enemyDefenders)
   } else if (target.kind === 'mid') {
     if (!enemyMids[target.idx]) throw new Error(`Sniper: bad mid idx ${target.idx}`)
+    if (isInvulnerable(enemyMids[target.idx])) throw new Error('Sniper: target invulnerable')
     removed = enemyMids[target.idx]
     enemyMids = enemyMids.filter((_, i) => i !== target.idx)
   } else {
     if (!enemyFwds[target.idx]) throw new Error(`Sniper: bad fwd idx ${target.idx}`)
+    if (isInvulnerable(enemyFwds[target.idx])) throw new Error('Sniper: target invulnerable')
     removed = enemyFwds[target.idx]
     enemyFwds = enemyFwds.filter((_, i) => i !== target.idx)
   }
