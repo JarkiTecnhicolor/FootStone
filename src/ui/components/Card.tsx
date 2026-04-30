@@ -1,0 +1,293 @@
+import { useEffect, useState } from 'react'
+import { motion } from 'motion/react'
+import type { Card as CardData, Rarity } from '../../game/types'
+import { categoryOf } from '../../game/perks/types'
+import { avatarUrl } from '../lib/avatar'
+import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
+import { REAL_PLAYERS } from '../../data/player-real-names'
+
+interface Props {
+  card: CardData
+  size?: 'sm' | 'lg'
+  showCost?: boolean
+  affordable?: boolean
+  ready?: boolean
+  targetable?: boolean
+  dimmed?: boolean
+  onClick?: () => void
+  layoutId?: string
+  effectiveAtk?: number
+}
+
+interface RaritySkin {
+  box: string
+  cost: string
+  avatarBorder: string
+  glow: string
+  label: string
+}
+
+const RARITY_SKINS: Record<Rarity, RaritySkin> = {
+  bronze: {
+    box: 'bg-amber-50 border-amber-700 text-amber-950',
+    cost: 'bg-amber-700 text-white',
+    avatarBorder: 'border-amber-700',
+    glow: '',
+    label: 'Бронза',
+  },
+  silver: {
+    box: 'bg-slate-100 border-slate-400 text-slate-900',
+    cost: 'bg-slate-500 text-white',
+    avatarBorder: 'border-slate-400',
+    glow: '',
+    label: 'Срібло',
+  },
+  gold: {
+    box: 'bg-yellow-50 border-yellow-600 text-yellow-950',
+    cost: 'bg-yellow-600 text-white',
+    avatarBorder: 'border-yellow-600',
+    glow: 'shadow-[0_0_10px_rgba(234,179,8,0.45)]',
+    label: 'Золото',
+  },
+  legend: {
+    box: 'border-purple-500 text-purple-950 bg-gradient-to-br from-purple-100 via-fuchsia-50 to-purple-100',
+    cost: 'bg-purple-600 text-white',
+    avatarBorder: 'border-purple-500',
+    glow: 'shadow-[0_0_14px_rgba(168,85,247,0.55)]',
+    label: 'Легенда',
+  },
+}
+
+const FALLBACK_SKIN: RaritySkin = {
+  box: 'bg-stone-50 border-stone-400 text-stone-900',
+  cost: 'bg-stone-500 text-white',
+  avatarBorder: 'border-stone-400',
+  glow: '',
+  label: '',
+}
+
+const ROLE_BADGE: Record<CardData['role'], string> = {
+  def: 'bg-blue-700 text-white',
+  mid: 'bg-amber-700 text-white',
+  fwd: 'bg-red-700 text-white',
+}
+
+const ROLE_LABEL: Record<CardData['role'], string> = { def: 'DEF', mid: 'MID', fwd: 'FWD' }
+
+function statText(
+  card: CardData,
+  effectiveAtk?: number,
+): { primary: string; status?: '⏳' | '⚡'; tone: 'normal' | 'buffed' | 'debuffed' } {
+  if (card.role === 'def') {
+    const base = card.baseMaxHp ?? card.maxHp
+    const tone = card.maxHp > base ? 'buffed' : card.maxHp < base ? 'debuffed' : 'normal'
+    return { primary: `${card.hp}/${card.maxHp} DEF`, tone }
+  }
+  if (card.role === 'mid') {
+    return { primary: `${card.stamina}/${card.maxStamina} STM`, tone: 'normal' }
+  }
+  const baseAtk = card.atk
+  const eff = effectiveAtk ?? baseAtk
+  const tone = eff > baseAtk ? 'buffed' : eff < baseAtk ? 'debuffed' : 'normal'
+  const result: { primary: string; status?: '⏳' | '⚡'; tone: 'normal' | 'buffed' | 'debuffed' } = {
+    primary: `${eff} ATK`,
+    tone,
+  }
+  if (card.status === 'attacking_next') result.status = '⏳'
+  else if (card.status === 'ready_to_attack') result.status = '⚡'
+  return result
+}
+
+const TONE_COLOR: Record<'normal' | 'buffed' | 'debuffed', string> = {
+  normal: '',
+  buffed: 'text-emerald-700 font-bold',
+  debuffed: 'text-red-700 font-bold',
+}
+
+function drawBonus(card: CardData): number {
+  let total = 0
+  for (const perk of card.perks) {
+    if (perk.trigger === 'aura' && perk.effect.kind === 'draw_bonus') {
+      total += perk.effect.amount
+    }
+  }
+  return total
+}
+
+export function Card({
+  card,
+  size = 'sm',
+  showCost = false,
+  affordable = true,
+  ready = false,
+  targetable = false,
+  dimmed = false,
+  onClick,
+  layoutId,
+  effectiveAtk,
+}: Props) {
+  const skin: RaritySkin = card.rarity ? RARITY_SKINS[card.rarity] : FALLBACK_SKIN
+  const isLg = size === 'lg'
+
+  const outline = ''
+  const targetOpacity = !affordable ? 0.45 : dimmed ? 0.5 : 1
+  const cursor = onClick ? 'cursor-pointer' : 'cursor-default'
+
+  const widthClass = isLg ? 'w-[180px]' : 'w-[150px]'
+  const avatarSize = isLg ? 56 : 40
+  const stat = statText(card, effectiveAtk)
+  const statColor = TONE_COLOR[stat.tone]
+  const draw = drawBonus(card)
+  const isForwardDef = card.role === 'def' && card.perks.some(
+    p => p.trigger === 'aura' && p.effect.kind === 'forward_defender',
+  )
+
+  const realName = REAL_PLAYERS[card.id]
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() => {
+    if (!realName) return null
+    const cached = getCachedWikiPhoto(realName)
+    return cached === undefined ? null : cached
+  })
+  const [photoFailed, setPhotoFailed] = useState(false)
+
+  useEffect(() => {
+    if (!realName) return
+    if (photoUrl) return
+    let cancelled = false
+    fetchWikiPhoto(realName).then(url => {
+      if (!cancelled && url) setPhotoUrl(url)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [realName, photoUrl])
+
+  const finalAvatarSrc = photoUrl && !photoFailed ? photoUrl : avatarUrl(card)
+
+  return (
+    <motion.div
+      layout
+      layoutId={layoutId}
+      initial={{ opacity: 0, scale: 0.85, y: -4 }}
+      animate={{ opacity: targetOpacity, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14 } }}
+      transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.6 }}
+      whileTap={onClick ? { scale: 0.96 } : undefined}
+      onClick={onClick}
+      title={skin.label || undefined}
+      className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} select-none p-2 shadow-sm ${skin.glow}`}
+    >
+      {ready && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute -inset-0.5 rounded-lg"
+          animate={{
+            boxShadow: [
+              '0 0 0 2px rgba(34,197,94,0.95)',
+              '0 0 0 8px rgba(34,197,94,0)',
+              '0 0 0 2px rgba(34,197,94,0.95)',
+            ],
+          }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {targetable && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute -inset-0.5 rounded-lg"
+          animate={{
+            boxShadow: [
+              '0 0 0 2px rgba(220,38,38,0.95)',
+              '0 0 0 6px rgba(220,38,38,0.2)',
+              '0 0 0 2px rgba(220,38,38,0.95)',
+            ],
+          }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {!ready && !targetable && card.perks.some(p => p.trigger === 'aura') && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute -inset-0.5 rounded-lg"
+          animate={{
+            boxShadow: [
+              '0 0 0 0 rgba(234,179,8,0)',
+              '0 0 12px 1px rgba(234,179,8,0.30)',
+              '0 0 0 0 rgba(234,179,8,0)',
+            ],
+          }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {showCost && card.cost > 0 && (
+        <div
+          className={`absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold shadow ${skin.cost}`}
+        >
+          {card.cost}
+        </div>
+      )}
+      {isForwardDef && (
+        <div
+          title="ВИСУНУТИЙ ЗАХИСНИК"
+          className="absolute -left-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-stone-800 text-[14px] shadow ring-2 ring-white/60"
+        >
+          🛡
+        </div>
+      )}
+
+      <div className="flex items-start gap-2">
+        <img
+          src={finalAvatarSrc}
+          alt=""
+          width={avatarSize}
+          height={avatarSize}
+          loading="lazy"
+          onError={() => setPhotoFailed(true)}
+          className={`flex-shrink-0 rounded-md border object-cover ${skin.avatarBorder} bg-white`}
+          style={{ width: avatarSize, height: avatarSize }}
+        />
+        <div className="min-w-0 flex-1">
+          <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
+            {card.name}
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className={`font-medium ${statColor} ${isLg ? 'text-base' : 'text-[13px]'}`}>
+              {stat.primary}
+            </span>
+            {stat.status && <span className="text-sm leading-none">{stat.status}</span>}
+          </div>
+          <div className="mt-1 flex items-center gap-1">
+            <span className={`rounded px-1 text-[9px] font-medium ${ROLE_BADGE[card.role]}`}>
+              {ROLE_LABEL[card.role]}
+            </span>
+            {draw > 0 && (
+              <span className="rounded bg-emerald-700 px-1 text-[9px] font-medium text-white">
+                +{draw} draw
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {card.perks.length > 0 && (() => {
+        const bonuses = card.perks.filter(p => categoryOf(p) === 'bonus')
+        const perks = card.perks.filter(p => categoryOf(p) === 'perk')
+        const baseSize = isLg ? 'text-[11px]' : 'text-[10px]'
+        return (
+          <div className={`mt-1.5 border-t border-current/15 pt-1 leading-snug ${baseSize}`}>
+            {bonuses.length > 0 && (
+              <div className="italic opacity-80">
+                {bonuses.map(p => p.label).join(' · ')}
+              </div>
+            )}
+            {perks.length > 0 && (
+              <div className={`font-semibold ${bonuses.length > 0 ? 'mt-0.5' : ''}`}>
+                {perks.map(p => p.label).join(' · ')}
+              </div>
+            )}
+          </div>
+        )
+      })()}
+    </motion.div>
+  )
+}

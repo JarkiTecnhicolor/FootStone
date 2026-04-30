@@ -1,0 +1,573 @@
+import {
+  ACTION_PROGRESSION,
+  EXTRA_TIME_TURNS,
+  HALFTIME_AFTER_TURN,
+  HALFTIME_DRAW_BONUS,
+  INITIAL_HAND,
+  MAX_TURN,
+  OPP_HAND_START,
+} from '../data/constants'
+import { cloneCard, shuffle } from './lib'
+import { calcDrawCount, drawN } from './rules/draw'
+import { canAfford, payCost } from './rules/cost'
+import { decayMids } from './rules/stamina'
+import {
+  hasBypass,
+  hasInstantAttack,
+  resolveAttack,
+  validAttackTargetIndices,
+  type AttackTarget,
+} from './rules/combat'
+import {
+  applyOnPlacePerks,
+  applySniperChoice,
+  type FieldSnapshot,
+  type SniperTargetSelection,
+} from './perks/dispatch'
+import type {
+  Card,
+  DefenderCard,
+  ForwardCard,
+  ForwardStatus,
+  Keeper,
+  MatchState,
+  MidfielderCard,
+  OpponentDeck,
+  Side,
+} from './types'
+
+export type PlayResult =
+  | { ok: true; state: MatchState }
+  | { ok: false; reason: string }
+
+export function makeFreshMatch(
+  playerCollection: readonly Card[],
+  playerKeepers: readonly Keeper[],
+  opp: OpponentDeck,
+): MatchState {
+  const targetSize = Math.min(opp.cards.length, playerCollection.length)
+  const playerShuffled = shuffle(playerCollection)
+    .slice(0, targetSize)
+    .map(cloneCard)
+  const oppShuffled = shuffle(opp.cards.map(cloneCard))
+  const myKeeper = pickRandomKeeper(playerKeepers)
+  const oppKeeper = pickRandomKeeper(opp.keepers)
+  return {
+    turn: 1,
+    maxTurn: MAX_TURN,
+    actions: ACTION_PROGRESSION[0],
+    maxActions: ACTION_PROGRESSION[0],
+    myKeeper,
+    oppKeeper,
+    myScore: 0,
+    oppScore: 0,
+    myDefenders: [],
+    myMids: [],
+    myFwds: [],
+    oppDefenders: [],
+    oppMids: [],
+    oppFwds: [],
+    hand: playerShuffled.slice(0, INITIAL_HAND),
+    deck: playerShuffled.slice(INITIAL_HAND),
+    discard: [],
+    oppHand: oppShuffled.slice(0, OPP_HAND_START),
+    oppDeck: oppShuffled.slice(OPP_HAND_START),
+    oppDiscard: [],
+    log: [`Матч проти ${opp.name}.`],
+    gameOver: false,
+    phase: 'player',
+    firstTurn: true,
+    pendingSniper: null,
+  }
+}
+
+function pickRandomKeeper(keepers: readonly Keeper[]): Keeper {
+  if (keepers.length === 0) {
+    throw new Error('makeFreshMatch: keepers collection is empty')
+  }
+  const idx = Math.floor(Math.random() * keepers.length)
+  return { ...keepers[idx] }
+}
+
+function fieldFor(state: MatchState, side: Side): FieldSnapshot {
+  if (side === 'player') {
+    return {
+      ownDefenders: state.myDefenders,
+      ownMids: state.myMids,
+      ownFwds: state.myFwds,
+      enemyDefenders: state.oppDefenders,
+      enemyMids: state.oppMids,
+      enemyFwds: state.oppFwds,
+    }
+  }
+  return {
+    ownDefenders: state.oppDefenders,
+    ownMids: state.oppMids,
+    ownFwds: state.oppFwds,
+    enemyDefenders: state.myDefenders,
+    enemyMids: state.myMids,
+    enemyFwds: state.myFwds,
+  }
+}
+
+function instantiate(card: Card, turn: number): Card {
+  if (card.role === 'def') {
+    const base = card.baseMaxHp ?? card.maxHp
+    return {
+      ...card,
+      hp: base,
+      maxHp: base,
+      baseMaxHp: base,
+      appliedHpBuffs: [],
+    }
+  }
+  if (card.role === 'mid') return { ...card, stamina: card.maxStamina, turnPlaced: turn }
+  const status: ForwardStatus = hasInstantAttack(card) ? 'ready_to_attack' : 'attacking_next'
+  return { ...card, status }
+}
+
+function cleanForDiscard(card: Card): Card {
+  if (card.role === 'def') {
+    const base = card.baseMaxHp ?? card.maxHp
+    const cleaned: DefenderCard = { ...card, hp: base, maxHp: base }
+    delete cleaned.baseMaxHp
+    delete cleaned.appliedHpBuffs
+    return cleaned
+  }
+  if (card.role === 'mid') {
+    const cleaned: MidfielderCard = { ...card, stamina: card.maxStamina }
+    delete cleaned.turnPlaced
+    return cleaned
+  }
+  const fwd: ForwardCard = { ...card }
+  delete fwd.status
+  return fwd
+}
+
+export function placeCardOnField(state: MatchState, side: Side, handIdx: number): MatchState {
+  const hand = side === 'player' ? state.hand : state.oppHand
+  const card = hand[handIdx]
+  if (!card) throw new Error(`placeCardOnField: bad index ${handIdx}`)
+
+  const fresh = instantiate(card, state.turn)
+  const newHand = hand.filter((_, i) => i !== handIdx)
+  const actor = side === 'player' ? 'Ти' : 'Опонент'
+
+  let myDefs = side === 'player' ? state.myDefenders : state.oppDefenders
+  let myMids = side === 'player' ? state.myMids : state.oppMids
+  let myFwds = side === 'player' ? state.myFwds : state.oppFwds
+  if (fresh.role === 'def') myDefs = [...myDefs, fresh]
+  else if (fresh.role === 'mid') myMids = [...myMids, fresh]
+  else myFwds = [...myFwds, fresh]
+
+  const intermediate: MatchState = {
+    ...state,
+    [side === 'player' ? 'hand' : 'oppHand']: newHand,
+    [side === 'player' ? 'myDefenders' : 'oppDefenders']: myDefs,
+    [side === 'player' ? 'myMids' : 'oppMids']: myMids,
+    [side === 'player' ? 'myFwds' : 'oppFwds']: myFwds,
+    log: [...state.log, `${actor}: виставив ${fresh.name} (${fresh.role.toUpperCase()}).`],
+  }
+
+  const placement = applyOnPlacePerks(fresh, fieldFor(intermediate, side))
+
+  let after: MatchState =
+    side === 'player'
+      ? { ...intermediate, myDefenders: placement.ownDefenders }
+      : { ...intermediate, oppDefenders: placement.ownDefenders }
+
+  if (placement.card !== fresh && placement.card.role !== 'def') {
+    after = replaceOnField(after, side, fresh.id, placement.card)
+  }
+
+  if (placement.enemyDiscard.length > 0) {
+    after = applySniperSideEffects(after, side, placement)
+  }
+
+  after = {
+    ...after,
+    log: [...after.log, ...placement.log],
+  }
+
+  if (placement.pendingSniperChoice) {
+    after = { ...after, pendingSniper: { sourceId: fresh.id } }
+  }
+
+  return after
+}
+
+function replaceOnField(state: MatchState, side: Side, cardId: string, replacement: Card): MatchState {
+  const replace = <T extends Card>(arr: T[]): T[] =>
+    arr.map(c => (c.id === cardId ? (replacement as T) : c))
+  if (side === 'player') {
+    return {
+      ...state,
+      myDefenders: replace(state.myDefenders),
+      myMids: replace(state.myMids),
+      myFwds: replace(state.myFwds),
+    }
+  }
+  return {
+    ...state,
+    oppDefenders: replace(state.oppDefenders),
+    oppMids: replace(state.oppMids),
+    oppFwds: replace(state.oppFwds),
+  }
+}
+
+function applySniperSideEffects(
+  state: MatchState,
+  placerSide: Side,
+  placement: ReturnType<typeof applyOnPlacePerks>,
+): MatchState {
+  const enemySide: Side = placerSide === 'player' ? 'opp' : 'player'
+  const enemyDiscardKey = enemySide === 'player' ? 'discard' : 'oppDiscard'
+  const enemyDefsKey = enemySide === 'player' ? 'myDefenders' : 'oppDefenders'
+  const enemyMidsKey = enemySide === 'player' ? 'myMids' : 'oppMids'
+  const enemyFwdsKey = enemySide === 'player' ? 'myFwds' : 'oppFwds'
+
+  return {
+    ...state,
+    [enemyDefsKey]: placement.enemyDefenders,
+    [enemyMidsKey]: placement.enemyMids,
+    [enemyFwdsKey]: placement.enemyFwds,
+    [enemyDiscardKey]: [
+      ...state[enemyDiscardKey],
+      ...placement.enemyDiscard.map(cleanForDiscard),
+    ],
+  }
+}
+
+export function isExtraTime(state: MatchState): boolean {
+  return (EXTRA_TIME_TURNS as readonly number[]).includes(state.turn)
+}
+
+export function currentHalf(state: MatchState): 1 | 2 {
+  return state.turn <= HALFTIME_AFTER_TURN ? 1 : 2
+}
+
+export function isBlockedInExtraTime(card: Card, state: MatchState): boolean {
+  if (!isExtraTime(state)) return false
+  if (card.role !== 'fwd') return false
+  return !hasInstantAttack(card)
+}
+
+export function playPlayerCard(state: MatchState, handIdx: number): PlayResult {
+  if (state.phase !== 'player') return { ok: false, reason: 'not_player_turn' }
+  if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
+  const card = state.hand[handIdx]
+  if (!card) return { ok: false, reason: 'invalid_index' }
+  if (!canAfford(state.actions, card)) return { ok: false, reason: 'cant_afford' }
+  if (isBlockedInExtraTime(card, state)) {
+    return { ok: false, reason: 'extra_time_no_regular_fwd' }
+  }
+
+  let next = { ...state, actions: payCost(state.actions, card) }
+  next = placeCardOnField(next, 'player', handIdx)
+  return { ok: true, state: next }
+}
+
+export function resolvePendingSniper(state: MatchState, target: SniperTargetSelection): PlayResult {
+  if (!state.pendingSniper) return { ok: false, reason: 'no_pending_sniper' }
+  const sourceId = state.pendingSniper.sourceId
+  const source =
+    state.myMids.find(c => c.id === sourceId) ??
+    state.myDefenders.find(c => c.id === sourceId) ??
+    state.myFwds.find(c => c.id === sourceId)
+  if (!source) return { ok: false, reason: 'source_missing' }
+
+  const result = applySniperChoice(source, fieldFor(state, 'player'), target)
+  return {
+    ok: true,
+    state: {
+      ...state,
+      oppDefenders: result.enemyDefenders,
+      oppMids: result.enemyMids,
+      oppFwds: result.enemyFwds,
+      oppDiscard: [...state.oppDiscard, cleanForDiscard(result.removed)],
+      log: [...state.log, ...result.log],
+      pendingSniper: null,
+    },
+  }
+}
+
+export function activateMorph(state: MatchState, cardId: string): PlayResult {
+  if (state.phase !== 'player') return { ok: false, reason: 'not_player_turn' }
+  if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
+  const def = state.myDefenders.find(d => d.id === cardId)
+  if (!def) return { ok: false, reason: 'card_not_found' }
+  const morphPerk = def.perks.find(
+    p => p.trigger === 'active' && p.effect.kind === 'morph_to_fwd',
+  )
+  if (!morphPerk || morphPerk.effect.kind !== 'morph_to_fwd') {
+    return { ok: false, reason: 'no_morph_perk' }
+  }
+  const newAtk = Math.ceil(def.maxHp / morphPerk.effect.atkDivisor)
+  const newFwd: ForwardCard = {
+    id: def.id,
+    name: def.name,
+    role: 'fwd',
+    cost: def.cost,
+    rarity: def.rarity,
+    unique: def.unique,
+    atk: newAtk,
+    perks: [],
+    status: 'attacking_next',
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      myDefenders: state.myDefenders.filter(d => d.id !== cardId),
+      myFwds: [...state.myFwds, newFwd],
+      log: [
+        ...state.log,
+        `${def.name}: ВСІ В АТАКУ! Стає форвардом (atk ${newAtk}, з MaxHP ${def.maxHp}).`,
+      ],
+    },
+  }
+}
+
+export function attackWithForward(
+  state: MatchState,
+  fwdId: string,
+  target: AttackTarget,
+): PlayResult {
+  if (state.phase !== 'player') return { ok: false, reason: 'not_player_turn' }
+  if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
+  const fwd = state.myFwds.find(f => f.id === fwdId)
+  if (!fwd) return { ok: false, reason: 'fwd_not_found' }
+  if (fwd.status !== 'ready_to_attack') return { ok: false, reason: 'fwd_not_ready' }
+  if (target.kind === 'defender' && !hasBypass(fwd)) {
+    const valid = validAttackTargetIndices(state.oppDefenders)
+    if (!valid.includes(target.idx)) {
+      return { ok: false, reason: 'forced_target_taunt' }
+    }
+  }
+
+  const result = resolveAttack({
+    attacker: fwd,
+    defenders: state.oppDefenders,
+    keeper: state.oppKeeper,
+    attackerMids: state.myMids,
+    defenderMids: state.oppMids,
+    target,
+  })
+
+  const log: string[] = []
+  log.push(`Ти: ${fwd.name} б'є на ${result.atk.finalAtk}${result.atk.buffs.length ? ` (${result.atk.buffs.map(b => `${b.source} +${b.amount}`).join(', ')})` : ''}.`)
+  if (result.bypass) log.push('  Прохід наскрізь.')
+  if (result.defenderRemoved) log.push(`  Захисник пробитий.`)
+  if (result.buffsStripped > 0) log.push(`  ${state.oppKeeper.name} зриває aura-бафи (-${result.buffsStripped}).`)
+  if (result.keeperSavedRandom) log.push(`  🧤 ${state.oppKeeper.name} відбиває в стрибку!`)
+  else if (result.goal) log.push(`  ⚽ ГОЛ! (${result.keeperDamage} > save ${state.oppKeeper.save})`)
+  else if (result.reachedKeeper) log.push(`  Воротар бере (${result.keeperDamage} ≤ save ${state.oppKeeper.save}).`)
+
+  return {
+    ok: true,
+    state: {
+      ...state,
+      myFwds: state.myFwds.filter(f => f.id !== fwdId),
+      oppDefenders: result.newEnemyDefenders,
+      discard: [...state.discard, cleanForDiscard(fwd)],
+      myScore: state.myScore + (result.goal ? 1 : 0),
+      log: [...state.log, ...log],
+    },
+  }
+}
+
+export function autoTarget(state: MatchState, attackerSide: Side): AttackTarget {
+  const enemyDefs = attackerSide === 'player' ? state.oppDefenders : state.myDefenders
+  if (enemyDefs.length === 0) return { kind: 'keeper' }
+  const valid = validAttackTargetIndices(enemyDefs)
+  return { kind: 'defender', idx: valid[0] }
+}
+
+export function nextPlayerAutoAttack(state: MatchState): { state: MatchState; done: boolean } {
+  if (state.phase !== 'player') return { state, done: true }
+  const ready = state.myFwds.find(f => f.status === 'ready_to_attack')
+  if (!ready) return { state, done: true }
+  const target: AttackTarget = hasBypass(ready)
+    ? { kind: 'keeper' }
+    : autoTarget(state, 'player')
+  const r = attackWithForward(state, ready.id, target)
+  if (!r.ok) return { state, done: true }
+  return { state: r.state, done: false }
+}
+
+export function finalizePlayerTurn(state: MatchState): MatchState {
+  if (state.phase !== 'player') return state
+  return { ...state, phase: 'opponent' }
+}
+
+export function endPlayerTurn(state: MatchState): MatchState {
+  let s = state
+  for (let safety = 10; safety > 0; safety--) {
+    const r = nextPlayerAutoAttack(s)
+    if (r.done) break
+    s = r.state
+  }
+  return finalizePlayerTurn(s)
+}
+
+export function resolveOneOpponentForward(state: MatchState): { state: MatchState; done: boolean } {
+  const ready = state.oppFwds.find(f => f.status === 'ready_to_attack')
+  if (!ready) return { state, done: true }
+  const target: AttackTarget = hasBypass(ready)
+    ? { kind: 'keeper' }
+    : autoTarget(state, 'opp')
+  const result = resolveAttack({
+    attacker: ready,
+    defenders: state.myDefenders,
+    keeper: state.myKeeper,
+    attackerMids: state.oppMids,
+    defenderMids: state.myMids,
+    target,
+  })
+  const log: string[] = []
+  log.push(`Опонент: ${ready.name} б'є на ${result.atk.finalAtk}.`)
+  if (result.defenderRemoved) log.push(`  Захисник пробитий.`)
+  if (result.buffsStripped > 0) log.push(`  ${state.myKeeper.name} зриває aura-бафи (-${result.buffsStripped}).`)
+  if (result.keeperSavedRandom) log.push(`  🧤 ${state.myKeeper.name} відбиває в стрибку!`)
+  else if (result.goal) log.push(`  ⚽ ОПОНЕНТ ЗАБИВАЄ! (${result.keeperDamage} > save ${state.myKeeper.save})`)
+  else if (result.reachedKeeper) log.push(`  Воротар бере.`)
+  return {
+    state: {
+      ...state,
+      oppFwds: state.oppFwds.filter(f => f.id !== ready.id),
+      myDefenders: result.newEnemyDefenders,
+      oppDiscard: [...state.oppDiscard, cleanForDiscard(ready)],
+      oppScore: state.oppScore + (result.goal ? 1 : 0),
+      log: [...state.log, ...log],
+    },
+    done: false,
+  }
+}
+
+export function resolveOpponentForwards(state: MatchState): MatchState {
+  let s: MatchState = state
+  for (let safety = 20; safety > 0; safety--) {
+    const r = resolveOneOpponentForward(s)
+    if (r.done) break
+    s = r.state
+  }
+  return s
+}
+
+export function decayPlayerMids(state: MatchState): MatchState {
+  const result = decayMids(state.myMids, state.turn)
+  if (result.toDiscard.length === 0 && result.remaining.length === state.myMids.length) {
+    return { ...state, myMids: result.remaining }
+  }
+  const log = [...state.log]
+  for (const m of result.toDiscard) log.push(`${m.name} (твій) у відбій.`)
+  return {
+    ...state,
+    myMids: result.remaining,
+    discard: [...state.discard, ...result.toDiscard.map(cleanForDiscard)],
+    log,
+  }
+}
+
+export function decayOpponentMids(state: MatchState): MatchState {
+  const result = decayMids(state.oppMids, state.turn)
+  if (result.toDiscard.length === 0 && result.remaining.length === state.oppMids.length) {
+    return { ...state, oppMids: result.remaining }
+  }
+  const log = [...state.log]
+  for (const m of result.toDiscard) log.push(`${m.name} (опон.) у відбій.`)
+  return {
+    ...state,
+    oppMids: result.remaining,
+    oppDiscard: [...state.oppDiscard, ...result.toDiscard.map(cleanForDiscard)],
+    log,
+  }
+}
+
+function applyHalftime(state: MatchState): MatchState {
+  const playerDraw = drawN(state.hand, state.deck, state.discard, HALFTIME_DRAW_BONUS)
+  const oppDraw = drawN(state.oppHand, state.oppDeck, state.oppDiscard, HALFTIME_DRAW_BONUS)
+  return {
+    ...state,
+    hand: playerDraw.hand,
+    deck: playerDraw.deck,
+    discard: playerDraw.discard,
+    oppHand: oppDraw.hand,
+    oppDeck: oppDraw.deck,
+    oppDiscard: oppDraw.discard,
+    log: [
+      ...state.log,
+      `🟡 ПЕРЕРВА — обидві команди беруть +${HALFTIME_DRAW_BONUS} карт.`,
+    ],
+  }
+}
+
+export function advanceTurn(state: MatchState): MatchState {
+  const newTurn = state.turn + 1
+  if (newTurn > state.maxTurn) {
+    return { ...state, gameOver: true, phase: 'player', firstTurn: false }
+  }
+  const newMaxActions = ACTION_PROGRESSION[Math.min(newTurn - 1, ACTION_PROGRESSION.length - 1)]
+  const myFwdsTransitioned = state.myFwds.map(f =>
+    f.status === 'attacking_next' ? { ...f, status: 'ready_to_attack' as const } : f,
+  )
+  const oppFwdsTransitioned = state.oppFwds.map(f =>
+    f.status === 'attacking_next' ? { ...f, status: 'ready_to_attack' as const } : f,
+  )
+
+  let next: MatchState = {
+    ...state,
+    turn: newTurn,
+    actions: newMaxActions,
+    maxActions: newMaxActions,
+    myFwds: myFwdsTransitioned,
+    oppFwds: oppFwdsTransitioned,
+    phase: 'player',
+    firstTurn: false,
+  }
+
+  if (newTurn === HALFTIME_AFTER_TURN + 1) {
+    next = applyHalftime(next)
+  }
+
+  next = decayPlayerMids(next)
+
+  const drawCount = calcDrawCount(next.myMids)
+  const drew = drawN(next.hand, next.deck, next.discard, drawCount)
+  next = {
+    ...next,
+    hand: drew.hand,
+    deck: drew.deck,
+    discard: drew.discard,
+    log: drew.drawnCount > 0
+      ? [...next.log, `Хід ${newTurn}: тягнеш ${drew.drawnCount} карт.`]
+      : next.log,
+  }
+
+  return next
+}
+
+export function drawForOpponentTurn(state: MatchState): MatchState {
+  if (state.firstTurn) return state
+  const count = calcDrawCount(state.oppMids)
+  const drew = drawN(state.oppHand, state.oppDeck, state.oppDiscard, count)
+  return {
+    ...state,
+    oppHand: drew.hand,
+    oppDeck: drew.deck,
+    oppDiscard: drew.discard,
+  }
+}
+
+export function startOpponentTurn(state: MatchState): MatchState {
+  let s = decayOpponentMids(state)
+  s = drawForOpponentTurn(s)
+  return s
+}
+
+export function decideMatchResult(state: MatchState): 'win' | 'loss' | 'draw' | null {
+  if (!state.gameOver) return null
+  if (state.myScore > state.oppScore) return 'win'
+  if (state.myScore < state.oppScore) return 'loss'
+  return 'draw'
+}

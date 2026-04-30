@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Football Card Roguelike — Prototype v8.1</title>
+<style>
+  :root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f5f4ee;
+    --color-background-tertiary: #ebe9e0;
+    --color-background-info: #E6F1FB;
+    --color-background-warning: #FAEEDA;
+    --color-background-success: #EAF3DE;
+    --color-background-danger: #FCEBEB;
+    --color-text-primary: #2C2C2A;
+    --color-text-secondary: #5F5E5A;
+    --color-text-tertiary: #888780;
+    --color-text-info: #185FA5;
+    --color-text-warning: #BA7517;
+    --color-text-success: #639922;
+    --color-text-danger: #A32D2D;
+    --color-border-tertiary: rgba(0,0,0,0.15);
+    --color-border-secondary: rgba(0,0,0,0.3);
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--color-background-tertiary);
+    color: var(--color-text-primary);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  #game-root {
+    width: 100%;
+    max-width: 720px;
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  button {
+    background: transparent;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    transition: background 0.1s;
+  }
+  button:hover:not(:disabled) { background: var(--color-background-secondary); }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  h2 { margin: 0 0 12px 0; font-size: 18px; font-weight: 500; }
+  .sr-only { position: absolute; left: -9999px; }
+</style>
+</head>
+<body>
+<div id="game-root">
+  <h2 class="sr-only">Прототип v8.1 — фікс затемнення</h2>
+
+  <div id="setup-screen" style="display: block;">
+    <div style="font-size:16px;margin-bottom:8px;font-weight:500;">Перший матч</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">Стартова рука: 5 рандомних карт. Форварди атакують через хід після виставлення.</div>
+    <div style="background:var(--color-background-warning);border-radius:var(--border-radius-md);padding:10px 12px;margin-bottom:12px;">
+      <div style="color:var(--color-text-warning);font-weight:500;font-size:13px;margin-bottom:6px;">Опонент: Шахтар</div>
+      <div style="color:var(--color-text-warning);font-size:11px;line-height:1.5;">
+        Унікальні: <span style="font-weight:500;">Stepanenko</span> (+2 атаки форвардам), <span style="font-weight:500;">Mudruk</span> (+2 проти HP1), <span style="font-weight:500;">Кривцов</span> (знос форварда).
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;">Твоя дека (13 карт):</div>
+    <div id="setup-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-bottom:16px;"></div>
+    <button id="start-match" style="width:100%;">Почати матч</button>
+  </div>
+
+  <div id="match-screen" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0.75rem;">
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:6px 10px;"><div style="font-size:10px;color:var(--color-text-secondary);">Хід</div><div id="turn-counter" style="font-size:16px;font-weight:500;">1 / 5</div></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:6px 10px;"><div style="font-size:10px;color:var(--color-text-secondary);">Дії</div><div id="actions-counter" style="font-size:16px;font-weight:500;">2 / 2</div></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:6px 10px;"><div style="font-size:10px;color:var(--color-text-secondary);">Ти</div><div id="score-you" style="font-size:16px;font-weight:500;">0</div></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:6px 10px;"><div style="font-size:10px;color:var(--color-text-secondary);">Опон.</div><div id="score-opp" style="font-size:16px;font-weight:500;">0</div></div>
+    </div>
+
+    <div id="phase-banner" style="background:var(--color-background-info);color:var(--color-text-info);border-radius:var(--border-radius-md);padding:8px 12px;margin-bottom:8px;font-size:12px;text-align:center;">Твій хід</div>
+
+    <div style="display:flex;justify-content:center;margin-bottom:6px;">
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:4px 12px;font-size:11px;">
+        Воротар опонента: <span id="opp-keeper-hp" style="font-weight:500;">save 2</span> · рука: <span id="opp-hand-count">0</span> · дека: <span id="opp-deck-count">0</span>
+      </div>
+    </div>
+
+    <div id="opp-defenders" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;margin-bottom:6px;min-height:56px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;">Захист опонента</div>
+      <div id="opp-def-row" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div id="opp-mids" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;margin-bottom:6px;min-height:56px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;">Півзахист опонента</div>
+      <div id="opp-mid-row" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div id="opp-fwds" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;margin-bottom:6px;min-height:56px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;">Атакувальна зона опонента</div>
+      <div id="opp-fwd-row" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+
+    <div style="height:2px;background:var(--color-border-secondary);margin:12px 0;"></div>
+
+    <div id="my-fwds-zone" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;margin-bottom:6px;min-height:56px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;">Твоя атакувальна зона · клік на ⚡-форварда щоб атакувати</div>
+      <div id="my-fwd-row" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div id="my-mids-zone" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;margin-bottom:6px;min-height:56px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;">Твій півзахист</div>
+      <div id="my-mid-row" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div id="my-defenders-zone" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;margin-bottom:6px;min-height:56px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;">Твій захист</div>
+      <div id="my-def-row" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-bottom:10px;">
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:4px 12px;font-size:11px;">Твій воротар: <span id="my-keeper-hp" style="font-weight:500;">save 3</span></div>
+    </div>
+
+    <div id="targeting-hint" style="display:none;background:var(--color-background-info);border-radius:var(--border-radius-md);padding:8px 12px;margin-bottom:8px;font-size:11px;text-align:center;color:var(--color-text-info);"></div>
+
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:10px;margin-bottom:10px;">
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:6px;">Твоя рука · клік для розіграшу · дека: <span id="deck-count">0</span></div>
+      <div id="my-hand" style="display:flex;gap:6px;flex-wrap:wrap;min-height:60px;"></div>
+    </div>
+
+    <div style="display:flex;gap:6px;">
+      <button id="undo-btn" disabled style="flex:0 0 auto;">↶</button>
+      <button id="reset-turn-btn" disabled style="flex:0 0 auto;">⟲</button>
+      <button id="cancel-target-btn" disabled style="flex:0 0 auto;">Скасувати</button>
+      <button id="end-turn" style="flex:1;">Завершити хід</button>
+      <button id="reset" style="flex:0 0 auto;">↺</button>
+    </div>
+
+    <div id="log" style="margin-top:10px;max-height:130px;overflow-y:auto;font-size:11px;color:var(--color-text-secondary);padding:8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var ROLE_COLORS = {
+    def:{bg:'#E6F1FB',border:'#185FA5',text:'#0C447C',label:'DEF'},
+    mid:{bg:'#FAEEDA',border:'#BA7517',text:'#854F0B',label:'MID'},
+    fwd:{bg:'#FCEBEB',border:'#A32D2D',text:'#791F1F',label:'FWD'}
+  };
+
+  var PLAYER_DECK = [
+    {id:'p_d1',name:'Van Dijra',role:'def',cost:3,hp:4,max_hp:4,perk:'',drawBonus:0},
+    {id:'p_d2',name:'Saliboo',role:'def',cost:2,hp:2,max_hp:2,perk:'',drawBonus:0},
+    {id:'p_d3',name:'Rudidiger',role:'def',cost:3,hp:3,max_hp:3,perk:'+1 HP при виставленні поруч з півзах.',drawBonus:0},
+    {id:'p_d4',name:'Acerbe',role:'def',cost:1,hp:1,max_hp:1,perk:'дешевий filler',drawBonus:0},
+    {id:'p_m1',name:'Modruk',role:'mid',cost:4,stamina:3,max_stamina:3,perk:'+2 атаки усім твоїм форвардам',drawBonus:0},
+    {id:'p_m2',name:'Kantee',role:'mid',cost:2,stamina:2,max_stamina:2,perk:'-1 damage опонента щоход',drawBonus:0},
+    {id:'p_m3',name:'Pedrri',role:'mid',cost:3,stamina:3,max_stamina:3,perk:'плеймейкер',drawBonus:1},
+    {id:'p_m4',name:'Bellinghame',role:'mid',cost:3,stamina:2,max_stamina:2,perk:'+1 атаки форвардам',drawBonus:0},
+    {id:'p_m5',name:'Arvalo Rios',role:'mid',cost:5,stamina:1,max_stamina:1,perk:'СНАЙПЕР: знеси будь-яку карту опонента',drawBonus:0,sniper:true},
+    {id:'p_f1',name:'Mbarre',role:'fwd',cost:4,atk:5,perk:'',drawBonus:0},
+    {id:'p_f2',name:'Holande',role:'fwd',cost:3,atk:4,perk:'',drawBonus:0},
+    {id:'p_f3',name:'Vinicus',role:'fwd',cost:1,atk:2,perk:'+3 атаки якщо є півзах. на полі (hidden gem)',drawBonus:0},
+    {id:'p_f4',name:'Mossi',role:'fwd',cost:5,atk:3,perk:'ПРОХІД НАСКРІЗЬ — атакує тільки воротаря',drawBonus:0,bypass:true}
+  ];
+
+  var OPP_DECK = [
+    {id:'o_d1',name:'Krychowiak',role:'def',cost:2,hp:2,max_hp:2,perk:'',drawBonus:0},
+    {id:'o_d2',name:'Bondar',role:'def',cost:1,hp:1,max_hp:1,perk:'',drawBonus:0},
+    {id:'o_d3',name:'Marlos',role:'def',cost:3,hp:3,max_hp:3,perk:'',drawBonus:0},
+    {id:'o_d4',name:'Кривцов',role:'def',cost:4,hp:2,max_hp:2,perk:'СНАЙПЕР: знеси виставленого форварда опонента',drawBonus:0,sniperFwd:true},
+    {id:'o_m1',name:'Stepanenko',role:'mid',cost:3,stamina:3,max_stamina:3,perk:'УНІКАЛЬНА: +2 атаки форвардам Шахтаря',drawBonus:0},
+    {id:'o_m2',name:'Maycon',role:'mid',cost:2,stamina:2,max_stamina:2,perk:'+1 атаки форвардам',drawBonus:0},
+    {id:'o_m3',name:'Patrick',role:'mid',cost:3,stamina:3,max_stamina:3,perk:'плеймейкер',drawBonus:1},
+    {id:'o_f1',name:'Mudruk',role:'fwd',cost:2,atk:3,perk:'+2 атаки проти HP1 захисників',drawBonus:0},
+    {id:'o_f2',name:'Junior Moraes',role:'fwd',cost:3,atk:4,perk:'',drawBonus:0},
+    {id:'o_f3',name:'Ferreyra',role:'fwd',cost:4,atk:5,perk:'',drawBonus:0},
+    {id:'o_f4',name:'Solomon',role:'fwd',cost:1,atk:2,perk:'+1 атаки',drawBonus:0},
+    {id:'o_f5',name:'Dentinho',role:'fwd',cost:3,atk:3,perk:'+1 атаки якщо є півзах. на полі',drawBonus:0}
+  ];
+
+  var ACTION_PROGRESSION = [2,3,4,5,6];
+  var HAND_LIMIT = 8;
+  var BASE_DRAW = 1;
+  var INITIAL_HAND = 5;
+  var OPP_HAND_START = 5;
+
+  var state = null;
+  var undoStack = [];
+  var turnStartSnapshot = null;
+  var targetingMode = null;
+
+  function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+  function cloneCard(c){return JSON.parse(JSON.stringify(c));}
+  function snapshot(){return JSON.parse(JSON.stringify(state));}
+
+  function makeFreshState(){
+    var sp=shuffle(PLAYER_DECK).map(cloneCard);
+    var so=shuffle(OPP_DECK).map(cloneCard);
+    return {
+      turn:1,maxTurn:5,
+      actions:ACTION_PROGRESSION[0],maxActions:ACTION_PROGRESSION[0],
+      myKeeper:3,oppKeeper:2,
+      myScore:0,oppScore:0,
+      myDefenders:[],myMids:[],myFwds:[],
+      oppDefenders:[],oppMids:[],oppFwds:[],
+      hand:sp.slice(0,INITIAL_HAND),deck:sp.slice(INITIAL_HAND),discard:[],
+      oppHand:so.slice(0,OPP_HAND_START),oppDeck:so.slice(OPP_HAND_START),oppDiscard:[],
+      log:['Матч стартує. Грай як хочеш!'],
+      gameOver:false,phase:'player',firstTurn:true
+    };
+  }
+
+  function logMsg(m){state.log.push(m);if(state.log.length>60)state.log.shift();}
+
+  function calcDraw(side){
+    var t=BASE_DRAW;
+    var mids=side==='opp'?state.oppMids:state.myMids;
+    mids.forEach(function(m){t+=m.drawBonus||0;});
+    return t;
+  }
+
+  function tryDraw(side,cb){
+    var d=side==='opp'?state.oppDeck:state.deck;
+    var dc=side==='opp'?state.oppDiscard:state.discard;
+    var h=side==='opp'?state.oppHand:state.hand;
+    if(d.length===0){
+      if(dc.length===0){if(cb)cb();return;}
+      var rs=shuffle(dc);
+      if(side==='opp'){state.oppDeck=rs;state.oppDiscard=[];d=state.oppDeck;}
+      else{state.deck=rs;state.discard=[];d=state.deck;logMsg('Дека перетасована.');}
+    }
+    var c=d.shift();
+    if(h.length<HAND_LIMIT){h.push(c);if(side!=='opp')logMsg('Тягнеш '+c.name+'.');if(cb)cb();}
+    else{dc.push(c);if(side!=='opp')logMsg('Рука повна, '+c.name+' у відбій.');if(cb)cb();}
+  }
+  function drawN(side,n,done){if(n<=0){if(done)done();return;}tryDraw(side,function(){drawN(side,n-1,done);});}
+
+  function startPlayerTurn(){
+    state.maxActions=ACTION_PROGRESSION[Math.min(state.turn-1,ACTION_PROGRESSION.length-1)];
+    state.actions=state.maxActions;
+    state.myFwds.forEach(function(f){if(f.status==='attacking_next')f.status='ready_to_attack';});
+    state.oppFwds.forEach(function(f){if(f.status==='attacking_next')f.status='ready_to_attack';});
+    if(state.turn>1){
+      var dc=calcDraw('player');
+      logMsg('Хід '+state.turn+': тягнеш '+dc+' карт.');
+      drawN('player',dc,function(){
+        state.phase='player';turnStartSnapshot=snapshot();undoStack=[];render();
+      });
+      return;
+    }
+    state.phase='player';turnStartSnapshot=snapshot();undoStack=[];
+  }
+
+  function calcAtk(card,side){
+    var atk=card.atk;
+    var mids=side==='opp'?state.oppMids:state.myMids;
+    var enemyDefs=side==='opp'?state.myDefenders:state.oppDefenders;
+    var buffs=[];
+    mids.forEach(function(m){
+      if(m.perk.indexOf('+2 атаки усім твоїм форвардам')!==-1){atk+=2;buffs.push(m.name+' +2');}
+      else if(m.perk.indexOf('+1 атаки форвардам')!==-1){atk+=1;buffs.push(m.name+' +1');}
+      else if(m.perk.indexOf('+2 атаки форвардам Шахтаря')!==-1&&side==='opp'){atk+=2;buffs.push(m.name+' +2');}
+    });
+    if(card.perk.indexOf('+3 атаки якщо є півзах. на полі')!==-1&&mids.length>0){atk+=3;buffs.push('hidden gem +3');}
+    if(card.perk.indexOf('+1 атаки якщо є півзах. на полі')!==-1&&mids.length>0){atk+=1;buffs.push('перка +1');}
+    if(card.perk==='+1 атаки'){atk+=1;}
+    if(card.perk.indexOf('+2 атаки проти HP1 захисників')!==-1){
+      var has=enemyDefs.some(function(d){return d.hp===1;});
+      if(has){atk+=2;buffs.push('Mudruk +2');}
+    }
+    return {atk:atk,buffs:buffs};
+  }
+
+  function executeAttack(fwd,side,targetType,targetIdx){
+    var actor=side==='opp'?'Опонент':'Ти';
+    var enemyDefs=side==='opp'?state.myDefenders:state.oppDefenders;
+    var enemyKeeper=side==='opp'?state.myKeeper:state.oppKeeper;
+    var enemyMids=side==='opp'?state.myMids:state.oppMids;
+    var discardPile=side==='opp'?state.oppDiscard:state.discard;
+    var fwdsArr=side==='opp'?state.oppFwds:state.myFwds;
+
+    var calc=calcAtk(fwd,side);var atk=calc.atk;var dmg=atk;
+    var reducer=null;
+    enemyMids.forEach(function(m){if(m.perk.indexOf('-1 damage')!==-1)reducer=m;});
+    if(reducer&&dmg>0){dmg-=1;logMsg('  '+reducer.name+' нейтралізує -1.');}
+
+    if(fwd.bypass){
+      logMsg(actor+': '+fwd.name+' йде НАСКРІЗЬ, бє воротаря на '+atk+'.');
+      if(dmg>enemyKeeper){
+        if(side==='opp'){state.oppScore++;logMsg('  ОПОНЕНТ ЗАБИВАЄ! '+dmg+' > save '+enemyKeeper+'.');}
+        else{state.myScore++;logMsg('  ГОЛ! '+dmg+' > save '+enemyKeeper+'.');}
+      }else logMsg('  Воротар бере (save '+enemyKeeper+').');
+    }else if(targetType==='defender'&&enemyDefs[targetIdx]){
+      var def=enemyDefs[targetIdx];var before=def.hp;
+      if(dmg>=def.hp){
+        dmg-=def.hp;
+        enemyDefs.splice(targetIdx,1);
+        logMsg(actor+': '+fwd.name+' бє на '+atk+(calc.buffs.length?' ('+calc.buffs.join(',')+')':'')+', пробиває '+def.name+' (HP '+before+')!');
+        if(dmg>0){
+          if(dmg>enemyKeeper){
+            if(side==='opp'){state.oppScore++;logMsg('  ОПОНЕНТ ЗАБИВАЄ! '+dmg+' > save '+enemyKeeper+'.');}
+            else{state.myScore++;logMsg('  ГОЛ! '+dmg+' > save '+enemyKeeper+'.');}
+          }else logMsg('  Воротар тримає.');
+        }
+      }else{
+        def.hp-=dmg;
+        logMsg(actor+': '+fwd.name+' бє на '+atk+', '+def.name+' тримається (HP '+def.hp+').');
+      }
+    }else if(targetType==='keeper'){
+      logMsg(actor+': '+fwd.name+' бє у воротаря на '+atk+'.');
+      if(dmg>enemyKeeper){
+        if(side==='opp'){state.oppScore++;logMsg('  ОПОНЕНТ ЗАБИВАЄ!');}
+        else{state.myScore++;logMsg('  ГОЛ!');}
+      }else logMsg('  Воротар бере.');
+    }
+    var idx=fwdsArr.indexOf(fwd);
+    if(idx!==-1)fwdsArr.splice(idx,1);
+    discardPile.push(cloneCard(fwd));
+  }
+
+  function placeCardLogic(handIdx,side,onDone){
+    var hand=side==='opp'?state.oppHand:state.hand;
+    var card=hand[handIdx];
+    var actor=side==='opp'?'Опонент':'Ти';
+    var defs=side==='opp'?state.oppDefenders:state.myDefenders;
+    var mids=side==='opp'?state.oppMids:state.myMids;
+    var fwds=side==='opp'?state.oppFwds:state.myFwds;
+
+    if(card.role==='def'){
+      var nc=cloneCard(card);nc.hp=card.max_hp;
+      if(card.perk.indexOf('+1 HP при виставленні поруч з півзах.')!==-1&&mids.length>0){
+        nc.hp+=1;nc.max_hp+=1;
+        logMsg(actor+': '+card.name+' +1 HP від синергії.');
+      }
+      defs.push(nc);hand.splice(handIdx,1);
+      logMsg(actor+': виставив '+card.name+' (DEF, HP '+nc.hp+').');
+      if(card.sniperFwd){
+        var enemyFwds=side==='opp'?state.myFwds:state.oppFwds;
+        if(enemyFwds.length>0){
+          var t=enemyFwds[0];
+          logMsg('  Кривцов знесе '+t.name+'!');
+          enemyFwds.splice(0,1);
+          (side==='opp'?state.discard:state.oppDiscard).push(cloneCard(t));
+        }else logMsg('  Кривцов: нема ціли.');
+      }
+      if(onDone)onDone();
+    }else if(card.role==='mid'){
+      var mc=cloneCard(card);mc.stamina=card.max_stamina;
+      mids.push(mc);hand.splice(handIdx,1);
+      logMsg(actor+': виставив '+card.name+' (MID).'+(card.drawBonus>0?' Дроу +'+card.drawBonus+'.':''));
+      if(card.sniper&&side==='player'){
+        var hasTargets=state.oppDefenders.length>0||state.oppMids.length>0||state.oppFwds.length>0;
+        if(!hasTargets){
+          logMsg('  Arvalo Rios: нема ціли — перка пропадає.');
+          if(onDone)onDone();
+          return;
+        }
+        targetingMode={kind:'sniper',source:mc,onDone:onDone};
+        render();
+        return;
+      }
+      if(onDone)onDone();
+    }else if(card.role==='fwd'){
+      var fc=cloneCard(card);fc.status='attacking_next';
+      fwds.push(fc);hand.splice(handIdx,1);
+      logMsg(actor+': виставив '+card.name+' (FWD, атакує наступного ходу).');
+      if(onDone)onDone();
+    }
+  }
+
+  function playMyCard(handIdx){
+    var card=state.hand[handIdx];
+    if(state.actions<card.cost){logMsg('Не вистачає дій: треба '+card.cost+', є '+state.actions+'.');return;}
+    if(targetingMode)return;
+    undoStack.push(snapshot());
+    state.actions-=card.cost;
+    placeCardLogic(handIdx,'player',function(){render();});
+    render();
+  }
+
+  function startFwdTargeting(fwd){
+    if(fwd.status!=='ready_to_attack')return;
+    if(fwd.bypass){
+      undoStack.push(snapshot());
+      executeAttack(fwd,'player','keeper',-1);
+      render();
+      return;
+    }
+    targetingMode={kind:'fwd',source:fwd};
+    render();
+  }
+
+  function pickFwdTarget(targetType,targetIdx){
+    var fwd=targetingMode.source;
+    undoStack.push(snapshot());
+    targetingMode=null;
+    executeAttack(fwd,'player',targetType,targetIdx);
+    render();
+  }
+
+  function pickSniperTarget(kind,idx){
+    var arr=kind==='def'?state.oppDefenders:kind==='mid'?state.oppMids:state.oppFwds;
+    var card=arr[idx];
+    arr.splice(idx,1);
+    state.oppDiscard.push(cloneCard(card));
+    logMsg('  Arvalo Rios знесе '+card.name+'!');
+    var done=targetingMode.onDone;
+    targetingMode=null;
+    if(done)done();
+    render();
+  }
+
+  function cancelTargeting(){
+    if(targetingMode&&targetingMode.kind==='sniper'){
+      if(undoStack.length>0){
+        state=undoStack.pop();
+        logMsg('↶ Скасовано виставлення Arvalo Rios.');
+      }
+    }
+    targetingMode=null;
+    render();
+  }
+
+  function undoLastAction(){
+    if(undoStack.length===0)return;
+    state=undoStack.pop();
+    targetingMode=null;
+    logMsg('↶ Відмінено.');render();
+  }
+  function resetTurn(){
+    if(!turnStartSnapshot)return;
+    state=JSON.parse(JSON.stringify(turnStartSnapshot));undoStack=[];targetingMode=null;
+    logMsg('⟲ Хід скинуто.');render();
+  }
+
+  function autoPickOppTarget(side){
+    var enemyDefs=side==='opp'?state.myDefenders:state.oppDefenders;
+    if(enemyDefs.length>0)return {type:'defender',idx:0};
+    return {type:'keeper',idx:-1};
+  }
+
+  function resolveOppFwds(done){
+    var ready=state.oppFwds.filter(function(f){return f.status==='ready_to_attack';});
+    if(ready.length===0){if(done)done();return;}
+    var next=ready[0];
+    if(next.bypass){
+      executeAttack(next,'opp','keeper',-1);
+    }else{
+      var pick=autoPickOppTarget('opp');
+      executeAttack(next,'opp',pick.type,pick.idx);
+    }
+    render();
+    setTimeout(function(){resolveOppFwds(done);},400);
+  }
+
+  function runOppTurn(done){
+    var oppActions=state.maxActions;
+    function tryPlay(){
+      var hand=state.oppHand;
+      if(hand.length===0||oppActions===0){if(done)done();return;}
+      var sniper=null;
+      if(state.myFwds.length>0){
+        for(var s=0;s<hand.length;s++){
+          if(hand[s].sniperFwd&&hand[s].cost<=oppActions){sniper=s;break;}
+        }
+      }
+      if(sniper!==null){
+        var sCard=hand[sniper];
+        oppActions-=sCard.cost;
+        placeCardLogic(sniper,'opp',function(){render();setTimeout(tryPlay,500);});
+        return;
+      }
+      var priority=['fwd','mid','def'];
+      var picked=-1;
+      for(var p=0;p<priority.length;p++){
+        for(var i=0;i<hand.length;i++){
+          if(hand[i].role===priority[p]&&hand[i].cost<=oppActions){picked=i;break;}
+        }
+        if(picked!==-1)break;
+      }
+      if(picked===-1){if(done)done();return;}
+      var c=hand[picked];
+      oppActions-=c.cost;
+      placeCardLogic(picked,'opp',function(){render();setTimeout(tryPlay,500);});
+    }
+    tryPlay();
+  }
+
+  function decayMids(){
+    state.myMids.forEach(function(m){m.stamina--;});
+    var t=state.myMids.filter(function(m){return m.stamina<=0;});
+    t.forEach(function(m){logMsg(m.name+' (твій) у відбій.');var c=cloneCard(m);c.stamina=m.max_stamina;state.discard.push(c);});
+    state.myMids=state.myMids.filter(function(m){return m.stamina>0;});
+    state.oppMids.forEach(function(m){m.stamina--;});
+    var to=state.oppMids.filter(function(m){return m.stamina<=0;});
+    to.forEach(function(m){logMsg(m.name+' (опон.) у відбій.');var c=cloneCard(m);c.stamina=m.max_stamina;state.oppDiscard.push(c);});
+    state.oppMids=state.oppMids.filter(function(m){return m.stamina>0;});
+  }
+
+  function endTurn(){
+    if(state.gameOver||targetingMode)return;
+    var unattacked=state.myFwds.filter(function(f){return f.status==='ready_to_attack';});
+    if(unattacked.length>0){
+      logMsg('Увага: '+unattacked.length+' форвард(и) не атакували — пропускають.');
+      unattacked.forEach(function(f){
+        var idx=state.myFwds.indexOf(f);
+        if(idx!==-1)state.myFwds.splice(idx,1);
+        state.discard.push(cloneCard(f));
+      });
+    }
+    state.phase='opponent';undoStack=[];turnStartSnapshot=null;render();
+    setTimeout(function(){
+      var od=state.turn===1?0:calcDraw('opp');
+      drawN('opp',od,function(){
+        runOppTurn(function(){
+          resolveOppFwds(function(){
+            decayMids();
+            state.firstTurn=false;
+            state.turn++;
+            if(state.turn>state.maxTurn){
+              state.gameOver=true;
+              var r=state.myScore>state.oppScore?'ПЕРЕМОГА':state.myScore<state.oppScore?'ПОРАЗКА':'НІЧИЯ';
+              logMsg('=== '+r+'! '+state.myScore+':'+state.oppScore+' ===');
+              render();return;
+            }
+            startPlayerTurn();render();
+          });
+        });
+      });
+    },400);
+  }
+
+  function isValidTarget(card,kind,idx){
+    if(!targetingMode)return false;
+    if(targetingMode.kind==='fwd'){
+      if(state.oppDefenders.length>0)return kind==='oppDef';
+      return kind==='oppKeeper';
+    }
+    if(targetingMode.kind==='sniper'){
+      return kind==='oppDef'||kind==='oppMid'||kind==='oppFwd';
+    }
+    return false;
+  }
+
+  function makeCardEl(card,opts){
+    opts=opts||{};
+    var c=ROLE_COLORS[card.role]||{bg:'#fff',border:'#888',text:'#333',label:'?'};
+    var el=document.createElement('div');
+    var affordable=!opts.requireCost||(state&&state.actions>=card.cost);
+    var notAffordable=opts.requireCost&&!affordable;
+    var blockedByTargeting=opts.requireCost&&!!targetingMode;
+    var isTargetable=opts.targetKind&&isValidTarget(card,opts.targetKind,opts.targetIdx);
+    var isReadyFwd=opts.fwdSelfClick&&card.status==='ready_to_attack';
+    var canClickAsHand=opts.clickable&&affordable&&!blockedByTargeting&&!opts.targetKind;
+
+    var outline='';
+    if(isTargetable){outline='outline:3px solid var(--color-text-danger);';}
+    if(isReadyFwd&&!targetingMode){outline='outline:2px solid var(--color-text-success);';}
+
+    var opacity='1';
+    if(notAffordable)opacity='0.45';
+    else if(targetingMode&&!isTargetable&&!isReadyFwd&&opts.handCard)opacity='0.5';
+    else if(targetingMode&&!isTargetable&&!opts.handCard&&!isReadyFwd)opacity='0.4';
+
+    var cursor='default';
+    if(canClickAsHand)cursor='pointer';
+    else if(isTargetable)cursor='pointer';
+    else if(isReadyFwd&&!targetingMode)cursor='pointer';
+
+    el.style.cssText='background:'+c.bg+';border:1px solid '+c.border+';border-radius:var(--border-radius-md);padding:6px 8px;font-size:11px;min-width:95px;max-width:135px;cursor:'+cursor+';color:'+c.text+';opacity:'+opacity+';'+outline;
+
+    var stat='';
+    if(card.role==='def')stat='HP '+card.hp+'/'+card.max_hp;
+    else if(card.role==='mid')stat='stm '+card.stamina+'/'+card.max_stamina;
+    else if(card.role==='fwd'){
+      stat='atk '+card.atk;
+      if(card.status==='attacking_next')stat+=' ⏳';
+      else if(card.status==='ready_to_attack')stat+=' ⚡';
+    }
+    var cb=card.cost>0?'<span style="background:'+c.border+';color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:500;">'+card.cost+'</span>':'';
+    var rb='<span style="background:'+c.border+';color:#fff;border-radius:3px;padding:0 4px;font-size:9px;font-weight:500;">'+c.label+'</span>';
+    var db=card.drawBonus>0?'<span style="background:#0F6E56;color:#fff;border-radius:3px;padding:0 4px;font-size:9px;font-weight:500;margin-left:3px;">+'+card.drawBonus+'</span>':'';
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div style="font-weight:500;font-size:12px;">'+card.name+'</div>'+cb+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;flex-wrap:wrap;gap:2px;"><span style="font-size:11px;">'+stat+'</span><div>'+rb+db+'</div></div>'+
+      (card.perk?'<div style="font-size:9px;margin-top:3px;line-height:1.3;opacity:0.85;">'+card.perk+'</div>':'');
+
+    if(isTargetable){
+      el.addEventListener('click',function(){
+        if(targetingMode.kind==='fwd'){
+          if(opts.targetKind==='oppDef')pickFwdTarget('defender',opts.targetIdx);
+          else if(opts.targetKind==='oppKeeper')pickFwdTarget('keeper',-1);
+        }else if(targetingMode.kind==='sniper'){
+          var k=opts.targetKind==='oppDef'?'def':opts.targetKind==='oppMid'?'mid':'fwd';
+          pickSniperTarget(k,opts.targetIdx);
+        }
+      });
+    }else if(isReadyFwd&&!targetingMode){
+      el.addEventListener('click',function(){startFwdTargeting(card);});
+    }else if(canClickAsHand){
+      el.addEventListener('click',opts.onClick);
+    }
+    return el;
+  }
+
+  function renderSetup(){
+    var cards=document.getElementById('setup-cards');cards.innerHTML='';
+    PLAYER_DECK.forEach(function(card){cards.appendChild(makeCardEl(card,{clickable:false}));});
+  }
+
+  function renderKeeperEl(side){
+    var keeperVal=side==='opp'?state.oppKeeper:state.myKeeper;
+    return {name:'Воротар',role:'def',cost:0,hp:keeperVal,max_hp:keeperVal,perk:'save '+keeperVal};
+  }
+
+  function render(){
+    if(!state)return;
+    document.getElementById('turn-counter').textContent=Math.min(state.turn,state.maxTurn)+' / '+state.maxTurn;
+    document.getElementById('actions-counter').textContent=state.actions+' / '+state.maxActions;
+    document.getElementById('score-you').textContent=state.myScore;
+    document.getElementById('score-opp').textContent=state.oppScore;
+    document.getElementById('my-keeper-hp').textContent='save '+state.myKeeper;
+    document.getElementById('opp-keeper-hp').textContent='save '+state.oppKeeper;
+    document.getElementById('deck-count').textContent=state.deck.length;
+    document.getElementById('opp-hand-count').textContent=state.oppHand.length;
+    document.getElementById('opp-deck-count').textContent=state.oppDeck.length;
+
+    var b=document.getElementById('phase-banner');
+    if(state.gameOver){
+      b.textContent=state.myScore>state.oppScore?'Перемога '+state.myScore+':'+state.oppScore:state.myScore<state.oppScore?'Поразка '+state.myScore+':'+state.oppScore:'Нічия '+state.myScore+':'+state.oppScore;
+      b.style.background=state.myScore>state.oppScore?'var(--color-background-success)':'var(--color-background-danger)';
+      b.style.color=state.myScore>state.oppScore?'var(--color-text-success)':'var(--color-text-danger)';
+    }else if(state.phase==='opponent'){
+      b.textContent='Хід опонента...';b.style.background='var(--color-background-secondary)';b.style.color='var(--color-text-secondary)';
+    }else{
+      b.textContent='Твій хід '+state.turn+' | дроу наступного: +'+calcDraw('player');
+      b.style.background='var(--color-background-info)';b.style.color='var(--color-text-info)';
+    }
+
+    var hint=document.getElementById('targeting-hint');
+    if(targetingMode){
+      hint.style.display='block';
+      if(targetingMode.kind==='fwd'){
+        var atkVal=calcAtk(targetingMode.source,'player').atk;
+        hint.textContent=targetingMode.source.name+' (atk '+atkVal+') атакує — обери ціль або натисни Скасувати';
+      }else{
+        hint.textContent='Arvalo Rios — обери карту опонента щоб знести';
+      }
+    }else{
+      hint.style.display='none';
+    }
+
+    function fillRow(rowId,data,emptyMsg,opts){
+      var el=document.getElementById(rowId);el.innerHTML='';
+      data.forEach(function(c,i){
+        var cardOpts={};
+        if(opts&&opts.targetKind){cardOpts.targetKind=opts.targetKind;cardOpts.targetIdx=i;}
+        if(opts&&opts.fwdSelfClick)cardOpts.fwdSelfClick=true;
+        el.appendChild(makeCardEl(c,cardOpts));
+      });
+      if(data.length===0)el.innerHTML='<div style="font-size:10px;color:var(--color-text-tertiary);">'+emptyMsg+'</div>';
+    }
+
+    var oppDefTargetable=targetingMode&&(targetingMode.kind==='fwd'||targetingMode.kind==='sniper');
+    var oppMidTargetable=targetingMode&&targetingMode.kind==='sniper';
+    var oppFwdTargetable=targetingMode&&targetingMode.kind==='sniper';
+
+    fillRow('opp-def-row',state.oppDefenders,'пусто — атаки прямо у воротаря',{targetKind:oppDefTargetable?'oppDef':null});
+    fillRow('opp-mid-row',state.oppMids,'пусто',{targetKind:oppMidTargetable?'oppMid':null});
+    fillRow('opp-fwd-row',state.oppFwds,'пусто',{targetKind:oppFwdTargetable?'oppFwd':null});
+    fillRow('my-fwd-row',state.myFwds,'пусто',{fwdSelfClick:true});
+    fillRow('my-mid-row',state.myMids,'пусто');
+    fillRow('my-def-row',state.myDefenders,'пусто — атаки прямо у воротаря');
+
+    if(targetingMode&&targetingMode.kind==='fwd'&&state.oppDefenders.length===0){
+      var oppDef=document.getElementById('opp-def-row');
+      var keeperFake=renderKeeperEl('opp');
+      var keeperEl=makeCardEl(keeperFake,{targetKind:'oppKeeper',targetIdx:0});
+      oppDef.innerHTML='';
+      oppDef.appendChild(keeperEl);
+      var lbl=document.createElement('div');
+      lbl.style.cssText='font-size:9px;color:var(--color-text-danger);margin-top:2px;text-align:center;';
+      lbl.textContent='пряма атака на воротаря';
+      keeperEl.appendChild(lbl);
+    }
+
+    var hand=document.getElementById('my-hand');hand.innerHTML='';
+    state.hand.forEach(function(card,idx){
+      var el=makeCardEl(card,{
+        clickable:!state.gameOver&&state.phase==='player'&&!targetingMode,
+        requireCost:true,
+        handCard:true,
+        onClick:function(){playMyCard(idx);}
+      });
+      hand.appendChild(el);
+    });
+    if(state.hand.length===0)hand.innerHTML='<div style="font-size:10px;color:var(--color-text-tertiary);">рука порожня</div>';
+
+    var lg=document.getElementById('log');
+    lg.innerHTML=state.log.slice(-14).map(function(m){return '<div>'+m+'</div>';}).join('');
+    lg.scrollTop=lg.scrollHeight;
+
+    var btnDis=state.gameOver||state.phase!=='player'||!!targetingMode;
+    document.getElementById('end-turn').disabled=btnDis;
+    document.getElementById('undo-btn').disabled=btnDis||undoStack.length===0;
+    document.getElementById('reset-turn-btn').disabled=btnDis||undoStack.length===0;
+    document.getElementById('cancel-target-btn').disabled=!targetingMode;
+  }
+
+  function startMatch(){
+    state=makeFreshState();undoStack=[];turnStartSnapshot=snapshot();targetingMode=null;
+    document.getElementById('setup-screen').style.display='none';
+    document.getElementById('match-screen').style.display='block';
+    render();
+  }
+  function reset(){
+    state=null;undoStack=[];turnStartSnapshot=null;targetingMode=null;
+    document.getElementById('setup-screen').style.display='block';
+    document.getElementById('match-screen').style.display='none';
+    renderSetup();
+  }
+
+  document.getElementById('start-match').addEventListener('click',startMatch);
+  document.getElementById('end-turn').addEventListener('click',endTurn);
+  document.getElementById('undo-btn').addEventListener('click',undoLastAction);
+  document.getElementById('reset-turn-btn').addEventListener('click',resetTurn);
+  document.getElementById('cancel-target-btn').addEventListener('click',cancelTargeting);
+  document.getElementById('reset').addEventListener('click',reset);
+  renderSetup();
+})();
+</script>
+</body>
+</html>
