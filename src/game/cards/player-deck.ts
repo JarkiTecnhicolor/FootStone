@@ -274,7 +274,7 @@ export const PLAYER_DECK: Card[] = [
   },
   {
     id: 'p_f10', name: 'Bajan', role: 'fwd', cost: 3,
-    rarity: 'silver',
+    rarity: 'bronze',
     atk: 1,
     perks: [
       {
