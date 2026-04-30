@@ -137,7 +137,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'aura',
       effect: { kind: 'draw_bonus', amount: 1 },
-      label: '+1 draw щоходу',
+      label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
     }],
   },
   {
@@ -184,7 +184,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'aura',
       effect: { kind: 'draw_bonus', amount: 1 },
-      label: '+1 draw щоходу',
+      label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
     }],
   },
   {

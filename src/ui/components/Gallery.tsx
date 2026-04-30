@@ -5,7 +5,17 @@ import { KeeperCard } from './KeeperCard'
 import { PLAYER_DECK } from '../../game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../../game/keepers/player-keepers'
 import { SHAKHTAR } from '../../game/cards/opponents/shakhtar'
-import type { Card as CardData } from '../../game/types'
+import type { Card as CardData, Rarity } from '../../game/types'
+
+const RARITY_ORDER: Record<Rarity, number> = { bronze: 0, silver: 1, gold: 2, legend: 3 }
+
+function compareCards(a: CardData, b: CardData): number {
+  if (a.cost !== b.cost) return a.cost - b.cost
+  const ra = a.rarity ? RARITY_ORDER[a.rarity] : -1
+  const rb = b.rarity ? RARITY_ORDER[b.rarity] : -1
+  if (ra !== rb) return ra - rb
+  return a.name.localeCompare(b.name)
+}
 
 interface Props {
   open: boolean
@@ -16,9 +26,9 @@ type Tab = 'player' | 'opp'
 
 function groupByRole(cards: readonly CardData[]) {
   return {
-    def: cards.filter(c => c.role === 'def'),
-    mid: cards.filter(c => c.role === 'mid'),
-    fwd: cards.filter(c => c.role === 'fwd'),
+    def: cards.filter(c => c.role === 'def').slice().sort(compareCards),
+    mid: cards.filter(c => c.role === 'mid').slice().sort(compareCards),
+    fwd: cards.filter(c => c.role === 'fwd').slice().sort(compareCards),
   }
 }
 
