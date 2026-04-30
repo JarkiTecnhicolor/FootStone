@@ -18,7 +18,7 @@ const mid = (id: string): MidfielderCard => {
 describe('calcDrawCount', () => {
   it('повертає BASE_DRAW коли нема плеймейкерів', () => {
     expect(calcDrawCount([])).toBe(BASE_DRAW)
-    expect(calcDrawCount([mid('p_m1')])).toBe(BASE_DRAW) // Modruk, no draw bonus
+    expect(calcDrawCount([mid('p_m4')])).toBe(BASE_DRAW) // Bellinghame, atk-buff only
   })
 
   it('+1 за Pedrri', () => {

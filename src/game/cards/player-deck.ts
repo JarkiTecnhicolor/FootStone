@@ -84,14 +84,21 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
-    id: 'p_m1', name: 'Modruk', role: 'mid', cost: 4,
+    id: 'p_m1', name: 'Modruk', role: 'mid', cost: 5,
     rarity: 'legend',
     stamina: 3, maxStamina: 3,
-    perks: [{
-      trigger: 'aura',
-      effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
-      label: '+2 атаки усім твоїм форвардам',
-    }],
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
+        label: '+2 атаки усім твоїм форвардам',
+      },
+      {
+        trigger: 'aura',
+        effect: { kind: 'draw_bonus', amount: 1 },
+        label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
+      },
+    ],
   },
   {
     id: 'p_m2', name: 'Kantee', role: 'mid', cost: 2,
