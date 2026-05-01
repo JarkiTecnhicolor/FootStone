@@ -103,7 +103,7 @@ const cards: Card[] = [
 
 export const SHAKHTAR: OpponentDeck = {
   id: 'shakhtar',
-  name: 'Шахтар',
+  name: 'Shakhtar',
   cards,
   keepers: SHAKHTAR_KEEPERS,
 }

@@ -13,9 +13,9 @@ import { dumbPlayerActions } from '../ai/dumb-player'
 import { smartPlayerActionsV2 } from '../ai/smart-player-v2'
 import { computeMvp, DEFAULT_COEF, type MvpCoefficients } from '../season/mvp'
 import {
+  buildSeasonOpponent,
   isSeasonChampion,
   isSeasonOver,
-  makeOpponentByBudget,
   nextMatchPlan,
   recordMatchResult,
   startSeason,
@@ -23,7 +23,6 @@ import {
 import { keeperPriceOf, priceOf, STARTING_BUDGET } from '../draft/pricing'
 import { cloneCard, shuffle } from '../lib'
 import type { DraftedTeam } from '../draft/types'
-import { SHAKHTAR } from '../cards/opponents/shakhtar'
 
 export type PlayerAi = 'dumb' | 'smart'
 
@@ -119,10 +118,8 @@ export function simulateSeason(
   while (!isSeasonOver(season) && safety-- > 0) {
     const plan = nextMatchPlan(season)
     if (!plan) break
-    const opp =
-      plan.oppKind === 'shakhtar'
-        ? SHAKHTAR
-        : makeOpponentByBudget(plan.oppName, plan.oppBudget!, plan.oppDeckSize)
+    const opp = buildSeasonOpponent(season)
+    if (!opp) break
     const final = simulateOne(season.cards, opp, playerAi, [season.keeper])
     season = recordMatchResult(season, final.myScore, final.oppScore, final.goalsByFwd, final)
     if (season.results[season.results.length - 1]?.mvp?.reward.kind === 'upgrade') totalUpgrades++

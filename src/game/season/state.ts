@@ -2,6 +2,9 @@ import type { Card, MatchState, OpponentDeck, Role } from '../types'
 import { PLAYER_DECK } from '../cards/player-deck'
 import { PLAYER_KEEPERS } from '../keepers/player-keepers'
 import { SHAKHTAR } from '../cards/opponents/shakhtar'
+import { REAL } from '../cards/opponents/real'
+import { BARCELONA } from '../cards/opponents/barcelona'
+import { WORLD_ALLSTAR } from '../cards/opponents/world'
 import { cloneCard, shuffle } from '../lib'
 import { MAX_DECK_SIZE, MIN_DECK_SIZE, priceOf, releasePriceOf } from '../draft/pricing'
 import { CHEMISTRY_THRESHOLD, countByNation } from '../chemistry'
@@ -21,10 +24,10 @@ const UPGRADE_CAP_PER_CARD = 2
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
   { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 280, oppDeckSize: 8 },
-  { idx: 1, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 600, oppDeckSize: 10 },
-  { idx: 2, oppKind: 'random', oppName: 'Гроссмейстри', oppBudget: 950, oppDeckSize: 12 },
-  { idx: 3, oppKind: 'shakhtar', oppName: 'Шахтар' },
-  { idx: 4, oppKind: 'random', oppName: 'Чемпіонат світу', oppBudget: 1100, oppDeckSize: 12 },
+  { idx: 1, oppKind: 'shakhtar', oppName: 'Shakhtar' },
+  { idx: 2, oppKind: 'barcelona', oppName: 'Barcelona' },
+  { idx: 3, oppKind: 'real', oppName: 'Real' },
+  { idx: 4, oppKind: 'world', oppName: 'World All-star team' },
 ]
 
 const SHOP_OPTIONS = 3
@@ -270,6 +273,9 @@ export function buildSeasonOpponent(state: SeasonState): OpponentDeck | null {
   const plan = nextMatchPlan(state)
   if (!plan) return null
   if (plan.oppKind === 'shakhtar') return SHAKHTAR
+  if (plan.oppKind === 'real') return REAL
+  if (plan.oppKind === 'barcelona') return BARCELONA
+  if (plan.oppKind === 'world') return WORLD_ALLSTAR
   if (plan.oppKind === 'random' && plan.oppBudget) {
     return makeOpponentByBudget(plan.oppName, plan.oppBudget, plan.oppDeckSize)
   }
