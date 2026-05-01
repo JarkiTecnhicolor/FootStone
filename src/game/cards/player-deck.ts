@@ -452,7 +452,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'self_modifier',
       effect: { kind: 'atk_buff', amount: 3, scope: 'self', condition: { kind: 'mid_present' } },
-      label: '+3 атаки якщо є півзах. на полі (hidden gem)',
+      label: '+3 атаки якщо є півзах. на полі',
     }],
   },
   {

@@ -26,10 +26,34 @@ function parsePerkLabel(label: string): { name?: string; desc: string } {
   return { name: before, desc: after }
 }
 
+function isSimpleAtkToFwds(perk: Perk): boolean {
+  return (
+    perk.effect.kind === 'atk_buff' &&
+    perk.effect.scope === 'all_my_fwds' &&
+    !perk.effect.condition &&
+    !parsePerkLabel(perk.label).name
+  )
+}
+
+function isSimpleHpToDefs(perk: Perk): boolean {
+  return (
+    perk.effect.kind === 'hp_buff' &&
+    perk.effect.scope === 'other_defs' &&
+    !perk.effect.condition &&
+    !parsePerkLabel(perk.label).name
+  )
+}
+
 function tagFor(perk: Perk): { label: string; full: string } {
   const full = perk.label
   if (perk.effect.kind === 'keeper_save_reducer') {
     return { label: `−${perk.effect.amount} SAVE`, full }
+  }
+  if (isSimpleAtkToFwds(perk) && perk.effect.kind === 'atk_buff') {
+    return { label: `+${perk.effect.amount} ATK`, full }
+  }
+  if (isSimpleHpToDefs(perk) && perk.effect.kind === 'hp_buff') {
+    return { label: `+${perk.effect.amount} DEF`, full }
   }
   const parsed = parsePerkLabel(full)
   if (parsed.name) return { label: parsed.name, full }
@@ -366,9 +390,13 @@ export function Card({
       </div>
 
       {card.perks.length > 0 && (() => {
-        const isNamed = (p: Perk) => categoryOf(p) === 'perk' || !!parsePerkLabel(p.label).name
-        const descs = card.perks.filter(p => !isNamed(p))
-        const namedPerks = card.perks.filter(isNamed)
+        const isTagged = (p: Perk) =>
+          categoryOf(p) === 'perk' ||
+          !!parsePerkLabel(p.label).name ||
+          isSimpleAtkToFwds(p) ||
+          isSimpleHpToDefs(p)
+        const descs = card.perks.filter(p => !isTagged(p))
+        const namedPerks = card.perks.filter(isTagged)
         return (
           <div className="mt-1.5 space-y-1 border-t border-current/15 pt-1.5">
             {descs.length > 0 && (

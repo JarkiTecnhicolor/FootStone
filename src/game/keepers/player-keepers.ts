@@ -23,7 +23,6 @@ export const PLAYER_KEEPERS: Keeper[] = [
     save: 3,
     rarity: 'gold',
     abilities: [],
-    label: 'Стіна save 3',
   },
   {
     id: 'k_buffon',
@@ -39,7 +38,6 @@ export const PLAYER_KEEPERS: Keeper[] = [
     save: 2,
     rarity: 'gold',
     abilities: [],
-    label: 'Стіна save 2',
   },
   {
     id: 'k_pyatov',
