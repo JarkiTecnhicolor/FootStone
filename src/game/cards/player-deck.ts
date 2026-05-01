@@ -110,6 +110,16 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d15', name: 'Karavay', role: 'def', cost: 2,
+    rarity: 'silver',
+    hp: 2, maxHp: 2,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'atk_buff', amount: 1, scope: 'all_my_fwds' },
+      label: '+1 атаки форвардам',
+    }],
+  },
+  {
     id: 'p_d11', name: 'Lugastiontiy', role: 'def', cost: 4,
     rarity: 'legend',
     hp: 2, maxHp: 2,
@@ -261,6 +271,16 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_m14', name: 'Gardenson', role: 'mid', cost: 3,
+    rarity: 'silver',
+    stamina: 3, maxStamina: 3,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'damage_reducer', amount: 2 },
+      label: '-2 damage атакам опонента',
+    }],
+  },
+  {
     id: 'p_m13', name: 'Sonbinor', role: 'mid', cost: 1,
     rarity: 'bronze',
     stamina: 1, maxStamina: 1,
@@ -397,6 +417,38 @@ export const PLAYER_DECK: Card[] = [
         label: 'АТАКА ПЕРШИМ ТЕМПОМ — б\'є на поточному ході',
       },
     ],
+  },
+  {
+    id: 'p_f17', name: 'Konchaslka', role: 'fwd', cost: 3,
+    rarity: 'silver',
+    atk: 3,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'instant_attack' },
+      label: 'АТАКА ПЕРШИМ ТЕМПОМ: б\'є на поточному ході',
+    }],
+  },
+  {
+    id: 'p_f18', name: 'Yaremmo', role: 'fwd', cost: 2,
+    rarity: 'bronze',
+    atk: 2,
+    perks: [],
+  },
+  {
+    id: 'p_f19', name: 'Lewandex', role: 'fwd', cost: 5,
+    rarity: 'gold',
+    atk: 5,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'keeper_save_reducer', amount: 1 },
+      label: 'БОМБАРДИР: -1 до захисту воротаря при ударі по воротах',
+    }],
+  },
+  {
+    id: 'p_f20', name: 'Yarmolo', role: 'fwd', cost: 4,
+    rarity: 'silver',
+    atk: 4,
+    perks: [],
   },
   {
     id: 'p_f15', name: 'Zubenko', role: 'fwd', cost: 2,

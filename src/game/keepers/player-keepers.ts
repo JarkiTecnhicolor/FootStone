@@ -33,4 +33,20 @@ export const PLAYER_KEEPERS: Keeper[] = [
     abilities: [{ kind: 'strip_buffs' }],
     label: 'Зриває aura-бафи з нападника',
   },
+  {
+    id: 'k_lunin',
+    name: 'Lunyn',
+    save: 2,
+    rarity: 'gold',
+    abilities: [],
+    label: 'Стіна save 2',
+  },
+  {
+    id: 'k_pyatov',
+    name: 'Pyatyk',
+    save: 2,
+    rarity: 'silver',
+    abilities: [{ kind: 'random_save', chance: 0.20 }],
+    label: '20% шанс відбити голевий удар',
+  },
 ]
