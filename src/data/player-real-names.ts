@@ -16,6 +16,9 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_d9': 'Gerard Piqué',
   'p_d10': 'Taras Mykhavko',
   'p_d11': 'Oleh Luzhny',
+  'p_d12': 'Valeriy Bondar',
+  'p_d13': 'Vitaliy Mykolenko',
+  'p_d14': 'Oleksandr Holovko',
   'p_m1': 'Luka Modrić',
   'p_m2': "N'Golo Kanté",
   'p_m3': 'Pedri',
@@ -41,6 +44,8 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f12': 'Romelu Lukaku',
   'p_f13': 'Матвій Пономаренко',
   'p_f14': 'Thierry Henry',
+  'p_f15': 'Oleksandr Zubkov',
+  'p_f16': 'Viktor Tsygankov',
 
   'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',

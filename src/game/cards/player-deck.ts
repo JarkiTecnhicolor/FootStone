@@ -88,6 +88,28 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d12', name: 'Bondaaru', role: 'def', cost: 1,
+    rarity: 'bronze',
+    hp: 1, maxHp: 1,
+    perks: [],
+  },
+  {
+    id: 'p_d13', name: 'Krepkyi', role: 'def', cost: 2,
+    rarity: 'bronze',
+    hp: 2, maxHp: 2,
+    perks: [],
+  },
+  {
+    id: 'p_d14', name: 'Goalovko', role: 'def', cost: 2,
+    rarity: 'silver',
+    hp: 2, maxHp: 2,
+    perks: [{
+      trigger: 'on_place',
+      effect: { kind: 'hp_buff', amount: 1, scope: 'other_defs' },
+      label: 'КАПІТАН: +1 HP усім іншим захисникам',
+    }],
+  },
+  {
     id: 'p_d11', name: 'Lugastiontiy', role: 'def', cost: 4,
     rarity: 'legend',
     hp: 2, maxHp: 2,
@@ -239,6 +261,16 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_m12', name: 'Tyagaryov', role: 'mid', cost: 1,
+    rarity: 'bronze',
+    stamina: 1, maxStamina: 1,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
+      label: '+2 атаки форвардам',
+    }],
+  },
+  {
     id: 'p_m11', name: "O'Real", role: 'mid', cost: 4,
     rarity: 'gold',
     stamina: 4, maxStamina: 4,
@@ -348,6 +380,22 @@ export const PLAYER_DECK: Card[] = [
         label: 'АТАКА ПЕРШИМ ТЕМПОМ — б\'є на поточному ході',
       },
     ],
+  },
+  {
+    id: 'p_f15', name: 'Zubenko', role: 'fwd', cost: 2,
+    rarity: 'bronze',
+    atk: 2,
+    perks: [],
+  },
+  {
+    id: 'p_f16', name: 'Tsi-Tsi', role: 'fwd', cost: 2,
+    rarity: 'silver',
+    atk: 2,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'isolation' },
+      label: 'ІЗОЛЯЦІЯ: після пробиття захисника одразу б\'є у воротаря',
+    }],
   },
   {
     id: 'p_f12', name: 'Lakaka', role: 'fwd', cost: 3,
