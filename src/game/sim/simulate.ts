@@ -122,7 +122,7 @@ export function simulateSeason(
     const opp =
       plan.oppKind === 'shakhtar'
         ? SHAKHTAR
-        : makeOpponentByBudget(plan.oppName, plan.oppBudget!)
+        : makeOpponentByBudget(plan.oppName, plan.oppBudget!, plan.oppDeckSize)
     const final = simulateOne(season.cards, opp, playerAi, [season.keeper])
     season = recordMatchResult(season, final.myScore, final.oppScore, final.goalsByFwd, final)
     if (season.results[season.results.length - 1]?.mvp?.reward.kind === 'upgrade') totalUpgrades++

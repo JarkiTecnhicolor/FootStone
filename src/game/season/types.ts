@@ -5,6 +5,7 @@ export interface SeasonMatchPlan {
   oppName: string
   oppKind: 'shakhtar' | 'random'
   oppBudget?: number
+  oppDeckSize?: number
 }
 
 export type MatchOutcome = 'win' | 'draw' | 'loss'

@@ -20,11 +20,11 @@ import type {
 const UPGRADE_CAP_PER_CARD = 2
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
-  { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 190 },
-  { idx: 1, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 240 },
-  { idx: 2, oppKind: 'random', oppName: 'Гроссмейстри', oppBudget: 270 },
+  { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 280, oppDeckSize: 8 },
+  { idx: 1, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 600, oppDeckSize: 10 },
+  { idx: 2, oppKind: 'random', oppName: 'Гроссмейстри', oppBudget: 950, oppDeckSize: 12 },
   { idx: 3, oppKind: 'shakhtar', oppName: 'Шахтар' },
-  { idx: 4, oppKind: 'random', oppName: 'Чемпіонат світу', oppBudget: 350 },
+  { idx: 4, oppKind: 'random', oppName: 'Чемпіонат світу', oppBudget: 1100, oppDeckSize: 12 },
 ]
 
 const SHOP_OPTIONS = 3
@@ -271,7 +271,7 @@ export function buildSeasonOpponent(state: SeasonState): OpponentDeck | null {
   if (!plan) return null
   if (plan.oppKind === 'shakhtar') return SHAKHTAR
   if (plan.oppKind === 'random' && plan.oppBudget) {
-    return makeOpponentByBudget(plan.oppName, plan.oppBudget)
+    return makeOpponentByBudget(plan.oppName, plan.oppBudget, plan.oppDeckSize)
   }
   return null
 }
@@ -350,30 +350,52 @@ export function tradePaymentFor(offer: TradeOffer | null, myCard: Card | undefin
   return Math.round(diff * offer.multiplier)
 }
 
-const RANDOM_OPP_DECK_SIZE = 8
+const DEFAULT_OPP_DECK_SIZE = 8
 
-export function makeOpponentByBudget(name: string, budget: number): OpponentDeck {
+export function makeOpponentByBudget(name: string, budget: number, deckSize: number = DEFAULT_OPP_DECK_SIZE): OpponentDeck {
   const shuffled = shuffle(PLAYER_DECK.map(cloneCard))
-  // Greedy fill up to fixed deck size while staying within budget — pricier cards first
-  // so a high-budget opp actually fields strong cards (not just cheap fillers).
-  const sorted = shuffled.slice().sort((a, b) => priceOf(b) - priceOf(a))
+  // Round-robin role pick (def → mid → fwd, repeat) — picks priciest-affordable
+  // in each role's turn, ensuring balanced composition with synergy potential.
+  const roleOrder: Card['role'][] = []
+  for (let i = 0; i < deckSize; i++) {
+    roleOrder.push((['def', 'mid', 'fwd'] as const)[i % 3])
+  }
   const cards: Card[] = []
   let remaining = budget
-  for (const c of sorted) {
-    if (cards.length >= RANDOM_OPP_DECK_SIZE) break
-    const p = priceOf(c)
-    if (p <= remaining) {
-      cards.push(c)
-      remaining -= p
+  for (const role of roleOrder) {
+    const candidates = shuffled
+      .filter(c => c.role === role && !cards.some(cc => cc.id === c.id))
+      .sort((a, b) => priceOf(b) - priceOf(a))
+    for (const c of candidates) {
+      const p = priceOf(c)
+      if (p <= remaining) {
+        cards.push(c)
+        remaining -= p
+        break
+      }
     }
   }
-  // If still short of fixed size (budget too tight), fill with cheapest remaining
-  if (cards.length < RANDOM_OPP_DECK_SIZE) {
+  // Fill remaining slots with priciest-affordable any role
+  if (cards.length < deckSize) {
+    const sorted = shuffled
+      .filter(c => !cards.some(cc => cc.id === c.id))
+      .sort((a, b) => priceOf(b) - priceOf(a))
+    for (const c of sorted) {
+      if (cards.length >= deckSize) break
+      const p = priceOf(c)
+      if (p <= remaining) {
+        cards.push(c)
+        remaining -= p
+      }
+    }
+  }
+  // Fallback: if budget too tight to reach deckSize, fill with cheapest
+  if (cards.length < deckSize) {
     const cheap = shuffled
       .filter(c => !cards.some(cc => cc.id === c.id))
       .sort((a, b) => priceOf(a) - priceOf(b))
     for (const c of cheap) {
-      if (cards.length >= RANDOM_OPP_DECK_SIZE) break
+      if (cards.length >= deckSize) break
       cards.push(c)
     }
   }
