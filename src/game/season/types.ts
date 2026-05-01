@@ -1,4 +1,4 @@
-import type { Card, Keeper } from '../types'
+import type { Card, Keeper, OpponentDeck } from '../types'
 
 export interface SeasonMatchPlan {
   idx: number
@@ -9,6 +9,15 @@ export interface SeasonMatchPlan {
 
 export type MatchOutcome = 'win' | 'draw' | 'loss'
 
+export interface RewardBreakdown {
+  base: number
+  goalBonus: number
+  concedePenalty: number
+  cleanSheet: number
+  hatTrick: number
+  blowout: number
+}
+
 export interface SeasonMatchResult {
   idx: number
   oppName: string
@@ -16,6 +25,17 @@ export interface SeasonMatchResult {
   oppScore: number
   outcome: MatchOutcome
   reward: number
+  breakdown: RewardBreakdown
+}
+
+export interface ScoutInfo {
+  revealedIds: string[]
+  full: boolean
+}
+
+export interface TradeOffer {
+  card: Card
+  multiplier: number
 }
 
 export interface SeasonState {
@@ -25,4 +45,7 @@ export interface SeasonState {
   keeper: Keeper
   money: number
   shop: Card[]
+  nextOpp: OpponentDeck | null
+  scoutInfo: ScoutInfo | null
+  tradeOffer: TradeOffer | null
 }

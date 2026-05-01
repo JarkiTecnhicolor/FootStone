@@ -69,6 +69,11 @@ export function SeasonCompleteScreen({ season, onRestart }: Props) {
                 : r.outcome === 'draw'
                   ? 'bg-stone-50 border-stone-200 text-stone-700'
                   : 'bg-rose-50 border-rose-200 text-rose-900'
+            const badges = [
+              r.breakdown.cleanSheet > 0 && '🚪',
+              r.breakdown.hatTrick > 0 && '⚽⚽⚽',
+              r.breakdown.blowout > 0 && '💥',
+            ].filter(Boolean)
             return (
               <div
                 key={r.idx}
@@ -81,6 +86,9 @@ export function SeasonCompleteScreen({ season, onRestart }: Props) {
                   {r.idx + 1}.
                 </span>
                 <span className="flex-1 text-[12px] font-medium">{r.oppName}</span>
+                {badges.length > 0 && (
+                  <span className="text-[10px]">{badges.join(' ')}</span>
+                )}
                 <span className="text-[12px] font-semibold tabular-nums">
                   {r.myScore}:{r.oppScore}
                   <span className="ml-2 text-emerald-700">+{r.reward}M</span>

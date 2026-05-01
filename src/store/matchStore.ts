@@ -33,12 +33,16 @@ import {
 } from '../game/draft/state'
 import type { SeasonState } from '../game/season/types'
 import {
+  acceptTradeOffer as acceptTradeOfferOp,
   buildSeasonOpponent,
   buyShopCard as buyShopCardOp,
   isSeasonOver as isSeasonOverFn,
   recordMatchResult,
   releaseCard as releaseCardOp,
   rerollShop as rerollShopOp,
+  scoutCheap as scoutCheapOp,
+  scoutDeep as scoutDeepOp,
+  skipTradeOffer as skipTradeOfferOp,
   startSeason as startSeasonOp,
 } from '../game/season/state'
 
@@ -68,6 +72,10 @@ interface Store {
   buyShopCard: (cardId: string) => void
   releaseSeasonCard: (cardId: string) => void
   rerollShop: () => void
+  scoutCheap: () => void
+  scoutDeep: () => void
+  acceptTradeOffer: (ownCardId: string) => void
+  skipTradeOffer: () => void
   abortSeason: () => void
   resetMatch: () => void
   playCard: (handIdx: number) => void
@@ -184,7 +192,7 @@ export const useMatchStore = create<Store>((set, get) => ({
   finalizeMatchResult: () => {
     const { match, season } = get()
     if (!match || !match.gameOver || !season) return
-    const next = recordMatchResult(season, match.myScore, match.oppScore)
+    const next = recordMatchResult(season, match.myScore, match.oppScore, match.goalsByFwd)
     set({ match: null, season: next, targetingFwdId: null, undoStack: [], turnStartSnapshot: null })
   },
 
@@ -204,6 +212,30 @@ export const useMatchStore = create<Store>((set, get) => ({
     const { season } = get()
     if (!season) return
     set({ season: rerollShopOp(season) })
+  },
+
+  scoutCheap: () => {
+    const { season } = get()
+    if (!season) return
+    set({ season: scoutCheapOp(season) })
+  },
+
+  scoutDeep: () => {
+    const { season } = get()
+    if (!season) return
+    set({ season: scoutDeepOp(season) })
+  },
+
+  acceptTradeOffer: (ownCardId) => {
+    const { season } = get()
+    if (!season) return
+    set({ season: acceptTradeOfferOp(season, ownCardId) })
+  },
+
+  skipTradeOffer: () => {
+    const { season } = get()
+    if (!season) return
+    set({ season: skipTradeOfferOp(season) })
   },
 
   abortSeason: () => {

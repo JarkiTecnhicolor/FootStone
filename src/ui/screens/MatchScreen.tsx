@@ -396,6 +396,10 @@ function DraftWrapper({ onOpenGallery }: { onOpenGallery: () => void }) {
   const buyShopCard = useMatchStore(s => s.buyShopCard)
   const releaseSeasonCard = useMatchStore(s => s.releaseSeasonCard)
   const rerollShop = useMatchStore(s => s.rerollShop)
+  const scoutCheap = useMatchStore(s => s.scoutCheap)
+  const scoutDeep = useMatchStore(s => s.scoutDeep)
+  const acceptTradeOffer = useMatchStore(s => s.acceptTradeOffer)
+  const skipTradeOffer = useMatchStore(s => s.skipTradeOffer)
   const abortSeason = useMatchStore(s => s.abortSeason)
   const resetMatch = useMatchStore(s => s.resetMatch)
 
@@ -423,6 +427,10 @@ function DraftWrapper({ onOpenGallery }: { onOpenGallery: () => void }) {
         onBuy={buyShopCard}
         onRelease={releaseSeasonCard}
         onReroll={rerollShop}
+        onScoutCheap={scoutCheap}
+        onScoutDeep={scoutDeep}
+        onAcceptTrade={acceptTradeOffer}
+        onSkipTrade={skipTradeOffer}
         onAbort={abortSeason}
       />
     )

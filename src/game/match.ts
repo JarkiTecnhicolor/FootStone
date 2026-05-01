@@ -83,6 +83,7 @@ export function makeFreshMatch(
     pendingSniper: null,
     pendingTauntGrant: null,
     pendingInstantGrant: null,
+    goalsByFwd: {},
   }
 }
 
@@ -702,6 +703,9 @@ export function attackWithForward(
     discard: [...state.discard, cleanForDiscard(fwd)],
     myScore: state.myScore + (result.goal ? 1 : 0),
     log: [...state.log, ...log],
+    goalsByFwd: result.goal
+      ? { ...state.goalsByFwd, [fwd.id]: (state.goalsByFwd[fwd.id] ?? 0) + 1 }
+      : state.goalsByFwd,
   }
   nextState = queueDyingCaptains(nextState, state.oppDefenders, result.newEnemyDefenders, 'opp')
   return { ok: true, state: nextState }

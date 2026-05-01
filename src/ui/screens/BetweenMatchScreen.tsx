@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { Card as CardData } from '../../game/types'
-import type { SeasonState, SeasonMatchPlan, SeasonMatchResult } from '../../game/season/types'
-import { nextMatchPlan } from '../../game/season/state'
+import type { SeasonMatchPlan, SeasonMatchResult, SeasonState } from '../../game/season/types'
+import { nextMatchPlan, tradePaymentFor } from '../../game/season/state'
 import {
   MAX_DECK_SIZE,
   MIN_DECK_SIZE,
@@ -17,6 +18,10 @@ interface Props {
   onBuy: (cardId: string) => void
   onRelease: (cardId: string) => void
   onReroll: () => void
+  onScoutCheap: () => void
+  onScoutDeep: () => void
+  onAcceptTrade: (ownCardId: string) => void
+  onSkipTrade: () => void
   onAbort: () => void
 }
 
@@ -49,11 +54,36 @@ function MatchPlanRow({
     : isCurrent
       ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200 text-blue-900'
       : 'bg-stone-50 border-stone-200 text-stone-500'
+  const breakdownTitle = result
+    ? [
+        `База ${result.outcome}: +${result.breakdown.base}`,
+        result.breakdown.goalBonus > 0 && `+${result.breakdown.goalBonus} за голи`,
+        result.breakdown.concedePenalty > 0 && `-${result.breakdown.concedePenalty} за пропущені`,
+        result.breakdown.cleanSheet > 0 && `+${result.breakdown.cleanSheet} 🚪 Чистий лист`,
+        result.breakdown.hatTrick > 0 && `+${result.breakdown.hatTrick} ⚽⚽⚽ Хет-трик`,
+        result.breakdown.blowout > 0 && `+${result.breakdown.blowout} 💥 Розгром`,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : undefined
+  const sponsorshipBadges = result
+    ? [
+        result.breakdown.cleanSheet > 0 && '🚪',
+        result.breakdown.hatTrick > 0 && '⚽⚽⚽',
+        result.breakdown.blowout > 0 && '💥',
+      ].filter(Boolean)
+    : []
   return (
-    <div className={`flex items-center gap-2 rounded-md border px-2 py-1.5 ${cls}`}>
+    <div
+      className={`flex items-center gap-2 rounded-md border px-2 py-1.5 ${cls}`}
+      title={breakdownTitle}
+    >
       <span className="w-5 text-center text-base">{status}</span>
       <span className="w-5 text-[10px] text-stone-500 tabular-nums">{plan.idx + 1}.</span>
       <span className="flex-1 text-[12px] font-medium">{plan.oppName}</span>
+      {sponsorshipBadges.length > 0 && (
+        <span className="text-[10px]">{sponsorshipBadges.join(' ')}</span>
+      )}
       {result ? (
         <span className="text-[12px] font-semibold tabular-nums">
           {result.myScore}:{result.oppScore}
@@ -72,9 +102,16 @@ export function BetweenMatchScreen({
   onBuy,
   onRelease,
   onReroll,
+  onScoutCheap,
+  onScoutDeep,
+  onAcceptTrade,
+  onSkipTrade,
   onAbort,
 }: Props) {
   const upcoming = nextMatchPlan(season)
+  const [tradePickId, setTradePickId] = useState<string | null>(null)
+  const tradePicked = tradePickId ? season.cards.find(c => c.id === tradePickId) : undefined
+  const tradePayment = tradePaymentFor(season.tradeOffer, tradePicked)
 
   return (
     <div className="space-y-3">
@@ -131,8 +168,28 @@ export function BetweenMatchScreen({
 
       {upcoming && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 shadow-sm">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-blue-900">
-            ⚽ Наступний матч
+          <div className="mb-1 flex items-baseline justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
+              ⚽ Наступний матч
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={onScoutCheap}
+                disabled={!!season.scoutInfo || season.money < 10}
+                title="Розкрити 3 рандомні карти суперника"
+                className="rounded border border-blue-300 bg-white px-2 py-0.5 text-[10px] text-blue-900 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                🔍 Скаут (10M)
+              </button>
+              <button
+                onClick={onScoutDeep}
+                disabled={season.scoutInfo?.full || season.money < (season.scoutInfo ? 15 : 25)}
+                title="Розкрити 3 найдорожчі карти у кожній ролі"
+                className="rounded border border-blue-300 bg-white px-2 py-0.5 text-[10px] text-blue-900 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                🔬 Глибокий ({season.scoutInfo && !season.scoutInfo.full ? '+15M' : '25M'})
+              </button>
+            </div>
           </div>
           <div className="text-sm font-semibold text-blue-950">
             {upcoming.idx + 1}. {upcoming.oppName}
@@ -141,6 +198,90 @@ export function BetweenMatchScreen({
                 (бюджет суперника {upcoming.oppBudget}M)
               </span>
             )}
+          </div>
+          {season.scoutInfo && season.nextOpp && (
+            <div className="mt-2 border-t border-blue-200 pt-2">
+              <div className="mb-1 text-[10px] font-medium text-blue-900">
+                {season.scoutInfo.full ? '🔬 Топ-карти суперника' : '🔍 Випадкова розвідка'}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {season.scoutInfo.revealedIds
+                  .map(id => season.nextOpp!.cards.find(c => c.id === id))
+                  .filter((c): c is CardData => !!c)
+                  .map(c => (
+                    <Card key={c.id} card={c} showCost />
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {season.tradeOffer && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 shadow-sm">
+          <div className="mb-2 flex items-baseline justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-900">
+              🤝 Вхідна пропозиція
+            </span>
+            <span className="text-[10px] text-purple-700">
+              кеф ×{season.tradeOffer.multiplier.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center">
+              <div className="mb-1 text-[10px] text-purple-700">пропонують</div>
+              <Card card={season.tradeOffer.card} showCost />
+              <div className="mt-1 text-[10px] font-semibold text-purple-900 tabular-nums">
+                {priceOf(season.tradeOffer.card)}M
+              </div>
+            </div>
+            <div className="flex-1 text-[11px] text-purple-900 leading-relaxed">
+              Обери картку зі складу нижче клацанням, щоб обміняти.
+              {tradePicked && tradePayment !== null && (
+                <div className="mt-2 rounded-md border border-purple-300 bg-white px-2 py-1.5">
+                  <div className="text-[10px] text-purple-700">
+                    Обмін: <strong>{tradePicked.name}</strong> → <strong>{season.tradeOffer.card.name}</strong>
+                  </div>
+                  <div className="mt-1 text-[12px] font-semibold tabular-nums">
+                    {tradePayment > 0 ? (
+                      <span className="text-rose-700">платиш {tradePayment}M</span>
+                    ) : tradePayment < 0 ? (
+                      <span className="text-emerald-700">отримуєш {-tradePayment}M</span>
+                    ) : (
+                      <span className="text-stone-700">без доплати</span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 flex gap-1.5">
+                    <button
+                      onClick={() => {
+                        onAcceptTrade(tradePicked.id)
+                        setTradePickId(null)
+                      }}
+                      disabled={tradePayment > 0 && tradePayment > season.money}
+                      className="rounded-md bg-purple-700 px-2 py-1 text-[11px] font-medium text-white transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+                    >
+                      Підтвердити обмін
+                    </button>
+                    <button
+                      onClick={() => setTradePickId(null)}
+                      className="rounded-md border border-stone-300 bg-white px-2 py-1 text-[11px] text-stone-700 hover:bg-stone-50"
+                    >
+                      Скасувати вибір
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                onSkipTrade()
+                setTradePickId(null)
+              }}
+              title="Відхилити пропозицію"
+              className="rounded-md border border-stone-300 bg-white px-2 py-1 text-[10px] text-stone-700 hover:bg-stone-50"
+            >
+              Відхилити
+            </button>
           </div>
         </div>
       )}
@@ -184,7 +325,11 @@ export function BetweenMatchScreen({
           <span className="text-[10px] font-medium uppercase tracking-wider text-stone-600">
             Твій склад · {season.cards.length} + 1 GK
           </span>
-          <span className="text-[10px] text-stone-400">клік на 🗑 щоб розірвати контракт</span>
+          <span className="text-[10px] text-stone-400">
+            {season.tradeOffer
+              ? 'клік на картку = обрати для обміну'
+              : 'клік на 🗑 щоб розірвати контракт'}
+          </span>
         </div>
         <div className="flex flex-wrap gap-2">
           <KeeperCard keeper={season.keeper} />
@@ -199,6 +344,9 @@ export function BetweenMatchScreen({
                   releasePriceOf(c) <= season.money
                 }
                 onRelease={() => onRelease(c.id)}
+                tradeMode={!!season.tradeOffer}
+                isTradePicked={tradePickId === c.id}
+                onTradePick={() => setTradePickId(c.id === tradePickId ? null : c.id)}
               />
             ))}
           </AnimatePresence>
@@ -252,11 +400,17 @@ function RosterCard({
   releasePrice,
   canRelease,
   onRelease,
+  tradeMode,
+  isTradePicked,
+  onTradePick,
 }: {
   card: CardData
   releasePrice: number
   canRelease: boolean
   onRelease: () => void
+  tradeMode: boolean
+  isTradePicked: boolean
+  onTradePick: () => void
 }) {
   return (
     <motion.div
@@ -264,21 +418,28 @@ function RosterCard({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
-      className="relative flex flex-col items-center"
+      className={`relative flex flex-col items-center ${isTradePicked ? 'ring-2 ring-purple-500 rounded-lg' : ''}`}
     >
-      <Card card={card} />
-      <button
-        onClick={onRelease}
-        disabled={!canRelease}
-        title={
-          canRelease
-            ? `Розірвати контракт — ${releasePrice}M`
-            : `Потрібно мін ${8} карт у складі або більше грошей (${releasePrice}M)`
-        }
-        className="mt-1 w-[150px] rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-[10px] text-rose-900 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        🗑 Розірвати ({releasePrice}M)
-      </button>
+      <Card card={card} onClick={tradeMode ? onTradePick : undefined} />
+      {!tradeMode && (
+        <button
+          onClick={onRelease}
+          disabled={!canRelease}
+          title={
+            canRelease
+              ? `Розірвати контракт — ${releasePrice}M`
+              : `Потрібно мін ${8} карт у складі або більше грошей (${releasePrice}M)`
+          }
+          className="mt-1 w-[150px] rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-[10px] text-rose-900 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          🗑 Розірвати ({releasePrice}M)
+        </button>
+      )}
+      {tradeMode && (
+        <div className="mt-1 w-[150px] rounded bg-purple-50 px-2 py-0.5 text-center text-[10px] text-purple-900 tabular-nums">
+          {priceOf(card)}M{isTradePicked && ' · обрано'}
+        </div>
+      )}
     </motion.div>
   )
 }

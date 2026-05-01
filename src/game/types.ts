@@ -108,6 +108,7 @@ export interface MatchState {
   pendingInstantGrant: PendingInstantGrant | null
   pendingDyingCaptainPlayer?: number
   pendingDyingCaptainOpp?: number
+  goalsByFwd: Record<string, number>
 }
 
 export interface PendingSniper {

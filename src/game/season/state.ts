@@ -1,4 +1,4 @@
-import type { Card, OpponentDeck } from '../types'
+import type { Card, OpponentDeck, Role } from '../types'
 import { PLAYER_DECK } from '../cards/player-deck'
 import { PLAYER_KEEPERS } from '../keepers/player-keepers'
 import { SHAKHTAR } from '../cards/opponents/shakhtar'
@@ -7,9 +7,11 @@ import { MAX_DECK_SIZE, MIN_DECK_SIZE, priceOf, releasePriceOf } from '../draft/
 import type { DraftedTeam } from '../draft/types'
 import type {
   MatchOutcome,
+  RewardBreakdown,
   SeasonMatchPlan,
   SeasonMatchResult,
   SeasonState,
+  TradeOffer,
 } from './types'
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
@@ -27,6 +29,14 @@ function rollShop(ownedIds: ReadonlySet<string>): Card[] {
   return shuffle(candidates).slice(0, SHOP_OPTIONS).map(cloneCard)
 }
 
+function rollTradeOffer(ownedIds: ReadonlySet<string>): TradeOffer | null {
+  const candidates = PLAYER_DECK.filter(c => !ownedIds.has(c.id))
+  if (candidates.length === 0) return null
+  const pick = candidates[Math.floor(Math.random() * candidates.length)]
+  const multiplier = 0.5 + Math.random() // 0.5..1.5
+  return { card: cloneCard(pick), multiplier: Math.round(multiplier * 100) / 100 }
+}
+
 export function startSeason(team: DraftedTeam): SeasonState {
   const ownedIds = new Set(team.cards.map(c => c.id))
   return {
@@ -36,6 +46,9 @@ export function startSeason(team: DraftedTeam): SeasonState {
     keeper: team.keeper,
     money: team.remainingBudget,
     shop: rollShop(ownedIds),
+    nextOpp: null,
+    scoutInfo: null,
+    tradeOffer: rollTradeOffer(ownedIds),
   }
 }
 
@@ -48,23 +61,42 @@ export function nextMatchPlan(state: SeasonState): SeasonMatchPlan | null {
   return state.plan[state.results.length]
 }
 
-export function rewardFor(outcome: MatchOutcome, myScore: number, oppScore: number): number {
+export function rewardBreakdownFor(
+  outcome: MatchOutcome,
+  myScore: number,
+  oppScore: number,
+  goalsByFwd: Record<string, number>,
+): RewardBreakdown {
   const base = outcome === 'win' ? 35 : outcome === 'draw' ? 18 : 5
-  const goalBonus = myScore * 4 - oppScore * 2
-  return Math.max(0, base + goalBonus)
+  const goalBonus = myScore * 4
+  const concedePenalty = oppScore * 2
+  const cleanSheet = oppScore === 0 ? 20 : 0
+  const maxFwdGoals = Object.values(goalsByFwd).reduce((m, v) => Math.max(m, v), 0)
+  const hatTrick = maxFwdGoals >= 3 ? 25 : 0
+  const blowout = myScore - oppScore >= 3 && myScore >= 3 ? 15 : 0
+  return { base, goalBonus, concedePenalty, cleanSheet, hatTrick, blowout }
+}
+
+export function totalReward(b: RewardBreakdown): number {
+  return Math.max(
+    0,
+    b.base + b.goalBonus - b.concedePenalty + b.cleanSheet + b.hatTrick + b.blowout,
+  )
 }
 
 export function recordMatchResult(
   state: SeasonState,
   myScore: number,
   oppScore: number,
+  goalsByFwd: Record<string, number>,
 ): SeasonState {
   const idx = state.results.length
   if (idx >= state.plan.length) return state
   const plan = state.plan[idx]
   const outcome: MatchOutcome =
     myScore > oppScore ? 'win' : myScore === oppScore ? 'draw' : 'loss'
-  const reward = rewardFor(outcome, myScore, oppScore)
+  const breakdown = rewardBreakdownFor(outcome, myScore, oppScore, goalsByFwd)
+  const reward = totalReward(breakdown)
   const result: SeasonMatchResult = {
     idx,
     oppName: plan.oppName,
@@ -72,6 +104,7 @@ export function recordMatchResult(
     oppScore,
     outcome,
     reward,
+    breakdown,
   }
   const ownedIds = new Set(state.cards.map(c => c.id))
   return {
@@ -79,6 +112,9 @@ export function recordMatchResult(
     results: [...state.results, result],
     money: state.money + reward,
     shop: rollShop(ownedIds),
+    nextOpp: null,
+    scoutInfo: null,
+    tradeOffer: rollTradeOffer(ownedIds),
   }
 }
 
@@ -120,6 +156,7 @@ export function rerollShop(state: SeasonState, fee: number = 10): SeasonState {
 }
 
 export function buildSeasonOpponent(state: SeasonState): OpponentDeck | null {
+  if (state.nextOpp) return state.nextOpp
   const plan = nextMatchPlan(state)
   if (!plan) return null
   if (plan.oppKind === 'shakhtar') return SHAKHTAR
@@ -127,6 +164,83 @@ export function buildSeasonOpponent(state: SeasonState): OpponentDeck | null {
     return makeOpponentByBudget(plan.oppName, plan.oppBudget)
   }
   return null
+}
+
+export function ensureNextOppCached(state: SeasonState): SeasonState {
+  if (state.nextOpp) return state
+  const opp = buildSeasonOpponent(state)
+  if (!opp) return state
+  return { ...state, nextOpp: opp }
+}
+
+const SCOUT_CHEAP_COST = 10
+const SCOUT_DEEP_COST = 25
+
+export function scoutCheap(state: SeasonState): SeasonState {
+  if (state.scoutInfo) return state
+  if (state.money < SCOUT_CHEAP_COST) return state
+  const next = ensureNextOppCached(state)
+  if (!next.nextOpp) return state
+  const shuffled = shuffle(next.nextOpp.cards)
+  const revealedIds = shuffled.slice(0, 3).map(c => c.id)
+  return {
+    ...next,
+    money: next.money - SCOUT_CHEAP_COST,
+    scoutInfo: { revealedIds, full: false },
+  }
+}
+
+export function scoutDeep(state: SeasonState): SeasonState {
+  if (state.scoutInfo?.full) return state
+  // If cheap already bought, charge only the difference; else full price
+  const alreadyCheap = state.scoutInfo && !state.scoutInfo.full
+  const cost = alreadyCheap ? SCOUT_DEEP_COST - SCOUT_CHEAP_COST : SCOUT_DEEP_COST
+  if (state.money < cost) return state
+  const next = ensureNextOppCached(state)
+  if (!next.nextOpp) return state
+  const cards = next.nextOpp.cards
+  const top = (role: Role) =>
+    cards
+      .filter(c => c.role === role)
+      .sort((a, b) => priceOf(b) - priceOf(a))
+      .slice(0, 3)
+  const revealedIds = [...top('def'), ...top('mid'), ...top('fwd')].map(c => c.id)
+  return {
+    ...next,
+    money: next.money - cost,
+    scoutInfo: { revealedIds, full: true },
+  }
+}
+
+export function acceptTradeOffer(state: SeasonState, ownCardId: string): SeasonState {
+  if (!state.tradeOffer) return state
+  const own = state.cards.find(c => c.id === ownCardId)
+  if (!own) return state
+  const theirPrice = priceOf(state.tradeOffer.card)
+  const ownPrice = priceOf(own)
+  const diff = theirPrice - ownPrice
+  const payment = Math.round(diff * state.tradeOffer.multiplier)
+  if (payment > 0 && payment > state.money) return state
+  const newCards = state.cards
+    .filter(c => c.id !== ownCardId)
+    .concat(cloneCard(state.tradeOffer.card))
+  return {
+    ...state,
+    cards: newCards,
+    money: state.money - payment,
+    tradeOffer: null,
+  }
+}
+
+export function skipTradeOffer(state: SeasonState): SeasonState {
+  if (!state.tradeOffer) return state
+  return { ...state, tradeOffer: null }
+}
+
+export function tradePaymentFor(offer: TradeOffer | null, myCard: Card | undefined): number | null {
+  if (!offer || !myCard) return null
+  const diff = priceOf(offer.card) - priceOf(myCard)
+  return Math.round(diff * offer.multiplier)
 }
 
 export function makeOpponentByBudget(name: string, budget: number): OpponentDeck {
