@@ -12,6 +12,7 @@ import {
   finalizePlayerTurn,
   startOpponentTurn,
   resolveOneOpponentForward,
+  tryOppMorph,
   advanceTurn,
 } from '../game/match'
 import { pickAndPlaceOneOppCard } from '../game/ai/simple'
@@ -174,6 +175,13 @@ export const useMatchStore = create<Store>((set, get) => ({
       oppActions = r.remainingActions
       set({ match })
       await delay(700)
+    }
+
+    const morphed = tryOppMorph(match)
+    if (morphed !== match) {
+      match = morphed
+      set({ match })
+      await delay(500)
     }
 
     if (match.oppFwds.some(f => f.status === 'ready_to_attack')) {

@@ -431,10 +431,16 @@ export function resolvePendingSniper(state: MatchState, target: SniperTargetSele
   return { ok: true, state: nextState }
 }
 
-export function activateMorph(state: MatchState, cardId: string): PlayResult {
-  if (state.phase !== 'player') return { ok: false, reason: 'not_player_turn' }
+export function activateMorph(
+  state: MatchState,
+  cardId: string,
+  side: Side = 'player',
+): PlayResult {
+  const expectedPhase = side === 'player' ? 'player' : 'opponent'
+  if (state.phase !== expectedPhase) return { ok: false, reason: 'wrong_phase' }
   if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
-  const def = state.myDefenders.find(d => d.id === cardId)
+  const ownDefs = side === 'player' ? state.myDefenders : state.oppDefenders
+  const def = ownDefs.find(d => d.id === cardId)
   if (!def) return { ok: false, reason: 'card_not_found' }
   const morphPerk = def.perks.find(
     p => p.trigger === 'active' && p.effect.kind === 'morph_to_fwd',
@@ -460,18 +466,45 @@ export function activateMorph(state: MatchState, cardId: string): PlayResult {
       perks: def.perks,
     },
   }
+  const actor = side === 'player' ? 'Ти' : 'Опонент'
+  const logLine = `${actor}: ${def.name} ВСІ В АТАКУ! Стає форвардом (atk ${newAtk}, з MaxHP ${def.maxHp}).`
+  if (side === 'player') {
+    return {
+      ok: true,
+      state: {
+        ...state,
+        myDefenders: state.myDefenders.filter(d => d.id !== cardId),
+        myFwds: [...state.myFwds, newFwd],
+        log: [...state.log, logLine],
+      },
+    }
+  }
   return {
     ok: true,
     state: {
       ...state,
-      myDefenders: state.myDefenders.filter(d => d.id !== cardId),
-      myFwds: [...state.myFwds, newFwd],
-      log: [
-        ...state.log,
-        `${def.name}: ВСІ В АТАКУ! Стає форвардом (atk ${newAtk}, з MaxHP ${def.maxHp}).`,
-      ],
+      oppDefenders: state.oppDefenders.filter(d => d.id !== cardId),
+      oppFwds: [...state.oppFwds, newFwd],
+      log: [...state.log, logLine],
     },
   }
+}
+
+export function tryOppMorph(state: MatchState): MatchState {
+  if (state.phase !== 'opponent') return state
+  if (state.pendingSniper) return state
+  if (!isExtraTime(state)) return state
+  let s = state
+  for (let safety = 0; safety < 5; safety++) {
+    const morphDef = s.oppDefenders.find(d =>
+      d.perks.some(p => p.trigger === 'active' && p.effect.kind === 'morph_to_fwd'),
+    )
+    if (!morphDef) break
+    const r = activateMorph(s, morphDef.id, 'opp')
+    if (!r.ok) break
+    s = r.state
+  }
+  return s
 }
 
 export function attackWithForward(
