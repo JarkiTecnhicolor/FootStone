@@ -38,6 +38,9 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f9': 'Lorenzo Insigne',
   'p_f10': 'Bojan Krkić',
   'p_f11': 'Artem Besedin',
+  'p_f12': 'Romelu Lukaku',
+  'p_f13': 'Матвій Пономаренко',
+  'p_f14': 'Thierry Henry',
 
   'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',

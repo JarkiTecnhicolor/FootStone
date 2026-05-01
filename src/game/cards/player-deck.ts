@@ -350,6 +350,36 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_f12', name: 'Lakaka', role: 'fwd', cost: 3,
+    rarity: 'silver',
+    atk: 3,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'keeper_save_reducer', amount: 2 },
+      label: 'БОМБАРДИР: -2 до захисту воротаря при ударі по воротах',
+    }],
+  },
+  {
+    id: 'p_f13', name: 'Panamerenko', role: 'fwd', cost: 2,
+    rarity: 'bronze',
+    atk: 1,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'keeper_save_reducer', amount: 2 },
+      label: 'БОМБАРДИР: -2 до захисту воротаря при ударі по воротах',
+    }],
+  },
+  {
+    id: 'p_f14', name: 'Henky', role: 'fwd', cost: 5,
+    rarity: 'gold',
+    atk: 4,
+    perks: [{
+      trigger: 'self_modifier',
+      effect: { kind: 'bypass_keeper' },
+      label: 'ПРОХІД НАСКРІЗЬ: атакує тільки воротаря',
+    }],
+  },
+  {
     id: 'p_f9', name: 'Insight', role: 'fwd', cost: 1,
     rarity: 'silver',
     atk: 2,

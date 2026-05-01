@@ -1,10 +1,48 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import type { Card as CardData, Rarity } from '../../game/types'
-import { categoryOf } from '../../game/perks/types'
+import type { Perk } from '../../game/perks/types'
 import { avatarUrl } from '../lib/avatar'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
 import { REAL_PLAYERS } from '../../data/player-real-names'
+
+function parsePerkLabel(label: string): { name?: string; desc: string } {
+  const colonIdx = label.indexOf(':')
+  const dashIdx = label.indexOf('—')
+  let sepIdx = -1
+  if (colonIdx >= 0 && dashIdx >= 0) sepIdx = Math.min(colonIdx, dashIdx)
+  else if (colonIdx >= 0) sepIdx = colonIdx
+  else if (dashIdx >= 0) sepIdx = dashIdx
+  if (sepIdx < 0) return { desc: label }
+  const before = label.slice(0, sepIdx).trim()
+  const after = label.slice(sepIdx + 1).trim()
+  if (!before) return { desc: after || label }
+  const lettersOnly = before.replace(/[^А-ЯЇІЄҐA-Zа-яїієґa-z]/g, '')
+  if (lettersOnly.length === 0) return { desc: label }
+  const upper = (before.match(/[А-ЯЇІЄҐA-Z]/g) ?? []).length
+  if (upper / lettersOnly.length < 0.6) return { desc: label }
+  return { name: before, desc: after }
+}
+
+function PerkLine({ perk, size }: { perk: Perk; size: 'sm' | 'lg' }) {
+  const parsed = parsePerkLabel(perk.label)
+  const nameSize = size === 'lg' ? 'text-[10px]' : 'text-[9px]'
+  const descSize = size === 'lg' ? 'text-[11px]' : 'text-[10px]'
+  if (!parsed.name) {
+    return <div className={`${descSize} leading-snug opacity-85`}>{parsed.desc}</div>
+  }
+  return (
+    <div className="leading-snug">
+      <span className={`${nameSize} font-bold uppercase tracking-wide`}>{parsed.name}</span>
+      {parsed.desc && (
+        <>
+          <span className={`${descSize} opacity-85`}>: </span>
+          <span className={`${descSize} opacity-85`}>{parsed.desc}</span>
+        </>
+      )}
+    </div>
+  )
+}
 
 interface Props {
   card: CardData
@@ -283,25 +321,13 @@ export function Card({
         </div>
       </div>
 
-      {card.perks.length > 0 && (() => {
-        const bonuses = card.perks.filter(p => categoryOf(p) === 'bonus')
-        const perks = card.perks.filter(p => categoryOf(p) === 'perk')
-        const baseSize = isLg ? 'text-[11px]' : 'text-[10px]'
-        return (
-          <div className={`mt-1.5 border-t border-current/15 pt-1 leading-snug ${baseSize}`}>
-            {bonuses.length > 0 && (
-              <div className="italic opacity-80">
-                {bonuses.map(p => p.label).join(' · ')}
-              </div>
-            )}
-            {perks.length > 0 && (
-              <div className={`font-semibold ${bonuses.length > 0 ? 'mt-0.5' : ''}`}>
-                {perks.map(p => p.label).join(' · ')}
-              </div>
-            )}
-          </div>
-        )
-      })()}
+      {card.perks.length > 0 && (
+        <div className="mt-1.5 space-y-0.5 border-t border-current/15 pt-1">
+          {card.perks.map((p, i) => (
+            <PerkLine key={i} perk={p} size={isLg ? 'lg' : 'sm'} />
+          ))}
+        </div>
+      )}
     </motion.div>
   )
 }

@@ -111,6 +111,16 @@ export function isForwardDefender(d: DefenderCard): boolean {
   )
 }
 
+export function effectiveKeeperSave(keeper: Keeper, attacker: ForwardCard): number {
+  let reduction = 0
+  for (const p of attacker.perks) {
+    if (p.trigger !== 'self_modifier') continue
+    if (p.effect.kind !== 'keeper_save_reducer') continue
+    reduction += p.effect.amount
+  }
+  return Math.max(0, keeper.save - reduction)
+}
+
 export function validAttackTargetIndices(defenders: readonly DefenderCard[]): number[] {
   if (defenders.length === 0) return []
   const taunts: number[] = []
@@ -171,6 +181,7 @@ function applyKeeperAbilities(
   keeper: Keeper,
   buffs: AtkBuff[],
   random: () => number,
+  effSave: number,
 ): { goal: boolean; keeperDamage: number; randomSave: boolean; buffsStripped: number } {
   let damage = keeperDamage
   let buffsStripped = 0
@@ -181,8 +192,7 @@ function applyKeeperAbilities(
     damage = Math.max(0, damage - buffsStripped)
   }
 
-  let goal = damage > keeper.save && initialGoal !== false
-  goal = goal && damage > keeper.save
+  let goal = damage > effSave && initialGoal !== false
 
   let randomSave = false
   const rs = keeper.abilities.find(a => a.kind === 'random_save')
@@ -202,11 +212,12 @@ export function resolveAttack(input: AttackInput): AttackResult {
 
   const atk = calculateAtk(attacker, attackerMids, defenders, attackerFwdCount)
   const damageReduction = calculateDamageReduction(defenderMids)
+  const effSave = effectiveKeeperSave(keeper, attacker)
   const damageDealt = Math.max(0, atk.finalAtk - damageReduction)
 
   if (hasBypass(attacker)) {
-    const initialGoal = damageDealt > keeper.save
-    const finalRes = applyKeeperAbilities(damageDealt, initialGoal, keeper, atk.buffs, random)
+    const initialGoal = damageDealt > effSave
+    const finalRes = applyKeeperAbilities(damageDealt, initialGoal, keeper, atk.buffs, random, effSave)
     return {
       atk,
       damageReduction,
@@ -312,8 +323,8 @@ export function resolveAttack(input: AttackInput): AttackResult {
       }
     }
 
-    const initialGoal = leftover > keeper.save
-    const finalRes = applyKeeperAbilities(leftover, initialGoal, keeper, atk.buffs, random)
+    const initialGoal = leftover > effSave
+    const finalRes = applyKeeperAbilities(leftover, initialGoal, keeper, atk.buffs, random, effSave)
     return {
       atk,
       damageReduction,
@@ -330,8 +341,8 @@ export function resolveAttack(input: AttackInput): AttackResult {
     }
   }
 
-  const initialGoal = damageDealt > keeper.save
-  const finalRes = applyKeeperAbilities(damageDealt, initialGoal, keeper, atk.buffs, random)
+  const initialGoal = damageDealt > effSave
+  const finalRes = applyKeeperAbilities(damageDealt, initialGoal, keeper, atk.buffs, random, effSave)
   return {
     atk,
     damageReduction,

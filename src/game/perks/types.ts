@@ -31,6 +31,7 @@ export type PerkEffect =
   | { kind: 'invulnerable' }
   | { kind: 'intimidate'; amount: number; threshold: number }
   | { kind: 'summon_def_from_hand' }
+  | { kind: 'keeper_save_reducer'; amount: number }
 
 export interface Perk {
   trigger: PerkTrigger
