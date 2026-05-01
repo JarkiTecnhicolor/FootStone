@@ -8,7 +8,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'aura',
       effect: { kind: 'intimidate', amount: 2, threshold: 2 },
-      label: 'ЗАЛЯКУВАННЯ: -2 атаки усім ворожим форвардам якщо їх 2+',
+      label: 'ЗАЛЯКУВАННЯ X2: -2 атаки усім ворожим форвардам якщо їх 2+',
     }],
   },
   {
