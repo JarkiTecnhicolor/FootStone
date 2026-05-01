@@ -1,6 +1,6 @@
 import type { BaseCard, DefenderCard, ForwardCard, Keeper, MidfielderCard, Rarity } from '../types'
 
-export const STARTING_BUDGET = 250
+export const STARTING_BUDGET = 280
 export const MIN_DECK_SIZE = 8
 export const MAX_DECK_SIZE = 12
 

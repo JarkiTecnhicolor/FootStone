@@ -33,7 +33,7 @@ function rollCardOptions(
   if (step === 'star-legend') {
     pool = PLAYER_DECK.filter(c => c.rarity === 'legend')
   } else if (step === 'def' || step === 'mid' || step === 'fwd') {
-    pool = PLAYER_DECK.filter(c => c.role === (step as Role))
+    pool = PLAYER_DECK.filter(c => c.role === (step as Role) && c.rarity !== 'legend')
   } else if (step === 'gold') {
     pool = PLAYER_DECK.filter(c => c.rarity === 'gold')
   } else if (step === 'bench') {
