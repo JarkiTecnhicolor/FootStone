@@ -23,6 +23,7 @@ export interface PlacementResult {
   enemyDiscard: Card[]
   log: string[]
   pendingSniperChoice: boolean
+  pendingTauntGrantChoice: boolean
 }
 
 export function unwindHpBuffsFromRemoved(
@@ -78,6 +79,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
   const enemyDiscard: Card[] = []
   const log: string[] = []
   let pendingSniperChoice = false
+  let pendingTauntGrantChoice = false
 
   if (resultCard.role === 'def') {
     const incomingBuffs: { sourceId: string; amount: number }[] = []
@@ -175,6 +177,22 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
       }
       continue
     }
+
+    if (perk.effect.kind === 'grant_taunt') {
+      const eligible = ownDefenders.filter(
+        d =>
+          d.id !== resultCard.id &&
+          !d.perks.some(
+            p2 => p2.trigger === 'aura' && p2.effect.kind === 'forward_defender',
+          ),
+      )
+      if (eligible.length > 0) {
+        pendingTauntGrantChoice = true
+      } else {
+        log.push(`${card.name}: нема кому передати АВТОРИТЕТ.`)
+      }
+      continue
+    }
   }
 
   return {
@@ -186,6 +204,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
     enemyDiscard,
     log,
     pendingSniperChoice,
+    pendingTauntGrantChoice,
   }
 }
 

@@ -46,8 +46,10 @@ function PhasePill({ match }: { match: MatchState }) {
   const half = currentHalf(match)
   const halfPrefix = `${half === 1 ? '1-й' : '2-й'} тайм`
   const text = match.pendingSniper
-    ? '🎯 Обери ціль'
-    : match.phase === 'opponent'
+    ? '🎯 Обери ціль (Sniper)'
+    : match.pendingTauntGrant
+      ? '🛡 Обери захисника, кому передати АВТОРИТЕТ'
+      : match.phase === 'opponent'
       ? extra
         ? `${halfPrefix} · ⏳ Доданий час · опонент…`
         : `${halfPrefix} · Хід опонента…`
@@ -56,11 +58,13 @@ function PhasePill({ match }: { match: MatchState }) {
         : `${halfPrefix} · Твій хід ${match.turn}`
   const cls = match.pendingSniper
     ? 'bg-red-100 text-red-800 border-red-200'
-    : extra
-      ? 'bg-amber-100 text-amber-900 border-amber-200'
-      : match.phase === 'opponent'
-        ? 'bg-stone-100 text-stone-600 border-stone-200'
-        : 'bg-blue-100 text-blue-800 border-blue-200'
+    : match.pendingTauntGrant
+      ? 'bg-blue-100 text-blue-800 border-blue-300 ring-2 ring-blue-300'
+      : extra
+        ? 'bg-amber-100 text-amber-900 border-amber-200'
+        : match.phase === 'opponent'
+          ? 'bg-stone-100 text-stone-600 border-stone-200'
+          : 'bg-blue-100 text-blue-800 border-blue-200'
   return (
     <motion.div
       key={text}
@@ -468,6 +472,7 @@ export function MatchScreen() {
   const selectAttackTarget = useMatchStore(s => s.selectAttackTarget)
   const cancelTargeting = useMatchStore(s => s.cancelTargeting)
   const selectSniperTarget = useMatchStore(s => s.selectSniperTarget)
+  const selectTauntGrantTarget = useMatchStore(s => s.selectTauntGrantTarget)
   const activateCardPerk = useMatchStore(s => s.activateCardPerk)
   const undo = useMatchStore(s => s.undo)
   const resetTurn = useMatchStore(s => s.resetTurn)
@@ -673,7 +678,10 @@ export function MatchScreen() {
   }
 
   const isPlayerPhase = match.phase === 'player' && !match.gameOver
-  const canInteract = isPlayerPhase && !match.pendingSniper
+  const isTauntGrantMode =
+    !!match.pendingTauntGrant &&
+    match.myDefenders.some(d => d.id === match.pendingTauntGrant!.sourceId)
+  const canInteract = isPlayerPhase && !match.pendingSniper && !isTauntGrantMode
   const isSniperMode = !!match.pendingSniper
   const isAttackTargeting = !!targetingFwdId
 
@@ -868,15 +876,22 @@ export function MatchScreen() {
         <Zone label="Твій захист" emptyHint="порожньо">
           {match.myDefenders.map(c => {
             const hasActive = c.perks.some(p => p.trigger === 'active')
+            const isTauntGrantTarget =
+              isTauntGrantMode &&
+              c.id !== match.pendingTauntGrant?.sourceId &&
+              !c.perks.some(p => p.trigger === 'aura' && p.effect.kind === 'forward_defender')
             return (
               <Card
                 key={c.id}
                 card={c}
                 dimmed={isAttackTargeting || isSniperMode}
+                targetable={isTauntGrantTarget}
                 onClick={
-                  hasActive && canInteract
-                    ? () => activateCardPerk(c.id)
-                    : undefined
+                  isTauntGrantTarget
+                    ? () => selectTauntGrantTarget(c.id)
+                    : hasActive && canInteract
+                      ? () => activateCardPerk(c.id)
+                      : undefined
                 }
               />
             )

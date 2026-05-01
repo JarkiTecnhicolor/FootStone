@@ -1,6 +1,6 @@
 import type { MatchState } from '../types'
 import { payCost } from '../rules/cost'
-import { placeCardOnField, resolveOppPendingSniper } from '../match'
+import { placeCardOnField, resolveOppPendingSniper, resolveOppPendingTauntGrant } from '../match'
 import { pickBestCardIdx } from './smart-ai'
 
 export function pickAndPlaceOneOppCard(
@@ -17,6 +17,9 @@ export function pickAndPlaceOneOppCard(
   let newState = placeCardOnField(state, 'opp', idx)
   if (newState.pendingSniper) {
     newState = resolveOppPendingSniper(newState)
+  }
+  if (newState.pendingTauntGrant) {
+    newState = resolveOppPendingTauntGrant(newState)
   }
   return { state: newState, remainingActions: newActions, done: false }
 }

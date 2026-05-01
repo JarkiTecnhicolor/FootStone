@@ -110,6 +110,16 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d16', name: 'Voron', role: 'def', cost: 4,
+    rarity: 'legend',
+    hp: 5, maxHp: 5,
+    perks: [{
+      trigger: 'on_place',
+      effect: { kind: 'grant_taunt' },
+      label: 'АВТОРИТЕТ: при виставленні передає ВИСУНУТИЙ ЗАХИСНИК іншому захиснику (на вибір)',
+    }],
+  },
+  {
     id: 'p_d15', name: 'Karavay', role: 'def', cost: 2,
     rarity: 'silver',
     hp: 2, maxHp: 2,
@@ -278,6 +288,26 @@ export const PLAYER_DECK: Card[] = [
       trigger: 'aura',
       effect: { kind: 'damage_reducer', amount: 2 },
       label: '-2 damage атакам опонента',
+    }],
+  },
+  {
+    id: 'p_m15', name: 'Xomi', role: 'mid', cost: 5,
+    rarity: 'legend',
+    stamina: 3, maxStamina: 3,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'draw_bonus', amount: 3 },
+      label: 'ПЛЕЙМЕЙКЕР x3: +3 карти щоходу',
+    }],
+  },
+  {
+    id: 'p_m16', name: 'Husein', role: 'mid', cost: 1,
+    rarity: 'bronze',
+    stamina: 2, maxStamina: 2,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'draw_bonus', amount: 1 },
+      label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
     }],
   },
   {

@@ -32,6 +32,7 @@ export type PerkEffect =
   | { kind: 'intimidate'; amount: number; threshold: number }
   | { kind: 'summon_def_from_hand' }
   | { kind: 'keeper_save_reducer'; amount: number }
+  | { kind: 'grant_taunt' }
 
 export interface Perk {
   trigger: PerkTrigger

@@ -104,10 +104,15 @@ export interface MatchState {
   phase: Phase
   firstTurn: boolean
   pendingSniper: PendingSniper | null
+  pendingTauntGrant: PendingTauntGrant | null
   pendingDyingCaptainPlayer?: number
   pendingDyingCaptainOpp?: number
 }
 
 export interface PendingSniper {
+  sourceId: string
+}
+
+export interface PendingTauntGrant {
   sourceId: string
 }
