@@ -58,15 +58,25 @@ describe('applyOnPlacePerks — Rudidiger (hp_buff to other_defs)', () => {
   })
 })
 
-describe('applyOnPlacePerks — Rapunskiy (sniper enemy_fwd_first)', () => {
-  it('знесе ворожого форварда на полі', () => {
+describe('applyOnPlacePerks — Rakytskyi (sniper enemy_fwd_random)', () => {
+  it('знесе єдиного форварда на полі (random з 1 = він)', () => {
     const krivtsov = def(oppDeck, 'o_d4')
     const mbarre: ForwardCard = { ...fwd(PLAYER_DECK, 'p_f1'), status: 'attacking_next' }
-    const result = applyOnPlacePerks(krivtsov, emptyField({ enemyFwds: [mbarre] }))
+    const result = applyOnPlacePerks(krivtsov, emptyField({ enemyFwds: [mbarre] }), () => 0)
     expect(result.enemyFwds).toHaveLength(0)
     expect(result.enemyDiscard).toHaveLength(1)
     expect(result.enemyDiscard[0].id).toBe('p_f1')
     expect(result.log[0]).toMatch(/знесе Kylian/)
+  })
+
+  it('з 3 форвардів — random()=0.99 бере останнього', () => {
+    const krivtsov = def(oppDeck, 'o_d4')
+    const f1: ForwardCard = { ...fwd(PLAYER_DECK, 'p_f1'), status: 'attacking_next' }
+    const f2: ForwardCard = { ...fwd(PLAYER_DECK, 'p_f2'), status: 'attacking_next' }
+    const f3: ForwardCard = { ...fwd(PLAYER_DECK, 'p_f3'), status: 'attacking_next' }
+    const result = applyOnPlacePerks(krivtsov, emptyField({ enemyFwds: [f1, f2, f3] }), () => 0.99)
+    expect(result.enemyFwds).toHaveLength(2)
+    expect(result.enemyDiscard[0].id).toBe('p_f3')
   })
 
   it('коли немає форварда — немає ефекту', () => {

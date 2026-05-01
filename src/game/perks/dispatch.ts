@@ -72,7 +72,11 @@ function matchesCondition(cond: PerkCondition | undefined, field: FieldSnapshot)
   }
 }
 
-export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementResult {
+export function applyOnPlacePerks(
+  card: Card,
+  field: FieldSnapshot,
+  random: () => number = Math.random,
+): PlacementResult {
   let resultCard: Card = card
   let ownDefenders: DefenderCard[] = field.ownDefenders.slice()
   let enemyDefenders: DefenderCard[] = field.enemyDefenders.slice()
@@ -155,15 +159,19 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
     }
 
     if (perk.effect.kind === 'sniper') {
-      if (perk.effect.target === 'enemy_fwd_first') {
-        const targetIdx = enemyFwds.findIndex(f => !isInvulnerable(f))
-        if (targetIdx >= 0) {
+      if (perk.effect.target === 'enemy_fwd_random') {
+        const validIdxs = enemyFwds
+          .map((f, i) => ({ f, i }))
+          .filter(({ f }) => !isInvulnerable(f))
+          .map(({ i }) => i)
+        if (validIdxs.length > 0) {
+          const targetIdx = validIdxs[Math.floor(random() * validIdxs.length)]
           const target = enemyFwds[targetIdx]
           enemyFwds = enemyFwds.filter((_, i) => i !== targetIdx)
           enemyDiscard.push(target)
           log.push(`${displayName(card.id, card.name)} знесе ${displayName(target.id, target.name)}!`)
         } else if (enemyFwds.length > 0) {
-          log.push(`${displayName(card.id, card.name)}: ціль невразлива — перка пропадає.`)
+          log.push(`${displayName(card.id, card.name)}: усі цілі невразливі — перка пропадає.`)
         } else {
           log.push(`${displayName(card.id, card.name)}: немає цілі.`)
         }

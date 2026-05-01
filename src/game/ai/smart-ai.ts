@@ -73,10 +73,11 @@ function scoreDef(d: DefenderCard, view: SideView): number {
 }
 
 function sniperValue(view: SideView, target: SniperTarget): number {
-  if (target === 'enemy_fwd_first') {
-    const f = view.enemyFwds.find(c => !isInvulnerable(c))
-    if (!f) return view.enemyFwds.length > 0 ? -2 : -4
-    return 4 + f.atk * 0.6
+  if (target === 'enemy_fwd_random') {
+    const valid = view.enemyFwds.filter(c => !isInvulnerable(c))
+    if (valid.length === 0) return view.enemyFwds.length > 0 ? -2 : -4
+    const avgAtk = valid.reduce((s, c) => s + c.atk, 0) / valid.length
+    return 4 + avgAtk * 0.6
   }
   let best = 0
   const all: Card[] = [...view.enemyDefs, ...view.enemyMids, ...view.enemyFwds]

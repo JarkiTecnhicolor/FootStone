@@ -26,8 +26,8 @@ const cards: Card[] = [
     hp: 2, maxHp: 2,
     perks: [{
       trigger: 'on_place',
-      effect: { kind: 'sniper', target: 'enemy_fwd_first' },
-      label: 'ПІДКАТ ЗЗАДУ: знеси виставленого форварда опонента',
+      effect: { kind: 'sniper', target: 'enemy_fwd_random' },
+      label: 'ЖОРСТКИЙ ПІДКАТ (випадковий форвард): знеси випадкового виставленого форварда опонента',
     }],
   },
   {

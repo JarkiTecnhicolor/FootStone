@@ -228,7 +228,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'on_place',
       effect: { kind: 'sniper', target: 'any_enemy' },
-      label: 'ПІДКАТ ЗЗАДУ: знеси будь-яку карту опонента',
+      label: 'ЖОРСТКИЙ ПІДКАТ (будь-яка ціль): знеси будь-яку карту опонента',
     }],
   },
   {

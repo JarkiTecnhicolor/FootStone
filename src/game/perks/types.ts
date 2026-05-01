@@ -13,7 +13,7 @@ export type PerkCondition =
 
 export type AtkBuffScope = 'all_my_fwds' | 'self' | 'other_fwds'
 
-export type SniperTarget = 'any_enemy' | 'enemy_fwd_first'
+export type SniperTarget = 'any_enemy' | 'enemy_fwd_random'
 
 export type HpBuffScope = 'self' | 'other_defs'
 
