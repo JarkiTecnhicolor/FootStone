@@ -138,6 +138,7 @@ function PickedRoster({ state }: { state: DraftState }) {
           <Card
             key={`${c.id}-picked-${i}`}
             card={c}
+            showCost
             stretch
             footer={
               <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
