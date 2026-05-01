@@ -388,7 +388,7 @@ export function Card({
         </div>
       </div>
 
-      {card.perks.length > 0 && (() => {
+      {(() => {
         const isTagged = (p: Perk) =>
           !!parsePerkLabel(p.label).name ||
           isSimpleAtkToFwds(p) ||
@@ -410,11 +410,7 @@ export function Card({
           </div>
         )
       })()}
-      <div
-        className={`mt-auto flex flex-col gap-1.5 pt-1.5 ${
-          card.perks.length === 0 ? 'border-t border-current/15' : ''
-        }`}
-      >
+      <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
         <div className="flex items-center justify-end">
           <FlagImg cardId={card.id} />
         </div>

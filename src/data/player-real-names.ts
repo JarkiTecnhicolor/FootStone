@@ -93,7 +93,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'o_d4': 'Yaroslav Rakytskyi',
   'o_m1': 'Taras Stepanenko',
   'o_m2': 'Maycon Roque',
-  'o_m3': 'Bernard (footballer)',
+  'o_m3': 'Alan Patrick',
   'o_f1': 'Mykhailo Mudryk',
   'o_f2': 'Júnior Moraes',
   'o_f3': 'Facundo Ferreyra',

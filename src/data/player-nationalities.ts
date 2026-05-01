@@ -79,6 +79,20 @@ export const NATIONALITY_BY_ID: Record<string, string> = {
   k_lunin: 'UA', // Lunyn → Andriy Lunin
   k_shovkov: 'UA', // Shovkovsky → Oleksandr Shovkovskyi
   k_pyatov: 'UA', // Pyatyk → Andriy Pyatov
+
+  // Shakhtar opponents
+  o_d2: 'UA', // Bondarro → Valeriy Bondar
+  o_d3: 'BR', // Marlossi → Marlos
+  o_d4: 'UA', // Rapunskiy → Yaroslav Rakytskyi
+  o_m1: 'UA', // Steppanenko → Taras Stepanenko
+  o_m2: 'BR', // Maycoon → Maycon Roque
+  o_m3: 'BR', // Patrico → Alan Patrick
+  o_f1: 'UA', // Mudruk → Mykhailo Mudryk
+  o_f2: 'BR', // Juniyor Moraz → Júnior Moraes
+  o_f3: 'AR', // Ferrayra → Facundo Ferreyra
+  o_f4: 'IL', // Saloman → Manor Solomon
+  o_f5: 'BR', // Dentinjo → Dentinho
+  k_riznyk: 'UA', // Rylnyk → Dmytro Riznyk
 }
 
 export const FLAGS: Record<string, string> = {
@@ -93,6 +107,7 @@ export const FLAGS: Record<string, string> = {
   ES: '🇪🇸',
   FR: '🇫🇷',
   HR: '🇭🇷',
+  IL: '🇮🇱',
   IT: '🇮🇹',
   NL: '🇳🇱',
   NO: '🇳🇴',
@@ -113,6 +128,7 @@ export const NATIONALITY_LABELS: Record<string, string> = {
   ES: 'Іспанія',
   FR: 'Франція',
   HR: 'Хорватія',
+  IL: 'Ізраїль',
   IT: 'Італія',
   NL: 'Нідерланди',
   NO: 'Норвегія',

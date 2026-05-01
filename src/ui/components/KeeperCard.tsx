@@ -147,16 +147,10 @@ export function KeeperCard({ keeper, highlighted, onClick, footer }: Props) {
         </div>
       </div>
 
-      {keeper.label && (
-        <div className="mt-1.5 border-t border-current/15 pt-1 leading-tight text-[10px] opacity-85">
-          {keeper.label}
-        </div>
-      )}
-      <div
-        className={`mt-auto flex flex-col gap-1.5 pt-1.5 ${
-          keeper.label ? '' : 'border-t border-current/15'
-        }`}
-      >
+      <div className="mt-1.5 border-t border-current/15 pt-1 leading-tight text-[10px] opacity-85">
+        {keeper.label ?? ' '}
+      </div>
+      <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
         <div className="flex items-center justify-end">
           <FlagImg cardId={keeper.id} />
         </div>

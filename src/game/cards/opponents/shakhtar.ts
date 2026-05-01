@@ -26,13 +26,12 @@ const cards: Card[] = [
   },
   {
     id: 'o_m1', name: 'Steppanenko', role: 'mid', cost: 3,
-    rarity: 'legend',
+    rarity: 'gold',
     stamina: 2, maxStamina: 2,
-    unique: true,
     perks: [{
       trigger: 'aura',
       effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
-      label: 'УНІКАЛЬНА: +2 атаки форвардам Шахтаря',
+      label: '+2 атаки форвардам',
     }],
   },
   {
@@ -52,7 +51,7 @@ const cards: Card[] = [
     perks: [{
       trigger: 'aura',
       effect: { kind: 'draw_bonus', amount: 1 },
-      label: '+1 draw щоходу',
+      label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
     }],
   },
   {
@@ -66,15 +65,15 @@ const cards: Card[] = [
     }],
   },
   {
-    id: 'o_f2', name: 'Juniyor Moraz', role: 'fwd', cost: 3,
+    id: 'o_f2', name: 'Juniyor Moraz', role: 'fwd', cost: 4,
     rarity: 'silver',
     atk: 4,
     perks: [],
   },
   {
-    id: 'o_f3', name: 'Ferrayra', role: 'fwd', cost: 4,
+    id: 'o_f3', name: 'Ferrayra', role: 'fwd', cost: 3,
     rarity: 'silver',
-    atk: 5,
+    atk: 3,
     perks: [],
   },
   {
