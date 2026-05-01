@@ -144,23 +144,22 @@ function ChemistryPills({ match }: { match: MatchState }) {
   const codes = activeChemistries(match.myDefenders, match.myMids, match.myFwds, match.myKeeper)
   if (codes.length === 0) return null
   return (
-    <div className="flex flex-wrap items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 shadow-sm">
-      <span className="text-[9px] font-medium uppercase tracking-wider text-amber-900">
-        🔗 Хімія активна:
-      </span>
-      {codes.map(code => {
-        const def = CHEMISTRY_DEFS[code]
-        return (
-          <span
-            key={code}
-            title={def?.desc}
-            className="flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] text-amber-900 shadow-sm"
-          >
-            <FlagImg code={code} size={12} />
-            <span>{def?.label}</span>
-          </span>
-        )
-      })}
+    <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 shadow-sm">
+      <div className="text-[9px] font-bold uppercase tracking-wider text-amber-900">
+        🔗 Активні бонуси за національність
+      </div>
+      <div className="mt-1 space-y-0.5">
+        {codes.map(code => {
+          const def = CHEMISTRY_DEFS[code]
+          return (
+            <div key={code} className="flex items-baseline gap-1.5 text-[11px]">
+              <FlagImg code={code} size={12} />
+              <span className="font-semibold text-amber-950">{def?.label}:</span>
+              <span className="text-amber-900/85">{def?.desc}</span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
