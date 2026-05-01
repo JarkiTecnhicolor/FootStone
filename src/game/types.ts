@@ -76,6 +76,7 @@ export interface MatchState {
   actions: number
   maxActions: number
 
+  oppName: string
   myKeeper: Keeper
   oppKeeper: Keeper
 

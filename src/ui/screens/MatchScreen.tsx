@@ -61,40 +61,67 @@ function PhasePill({ match }: { match: MatchState }) {
   )
 }
 
-function StatPill({ label, value, pulse = false }: { label: string; value: string | number; pulse?: boolean }) {
+function StatPill({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex items-baseline gap-1.5">
       <span className="text-[9px] uppercase tracking-wider text-stone-500">{label}</span>
-      <div className="relative h-4 min-w-[20px]">
-        {pulse ? (
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
-              key={String(value)}
-              initial={{ y: 6, scale: 1.4, color: '#16a34a' }}
-              animate={{ y: 0, scale: 1, color: '#1c1917' }}
-              exit={{ y: -8, opacity: 0 }}
-              transition={{ duration: 0.32, ease: 'easeOut' }}
-              className="absolute inset-0 text-sm font-semibold tabular-nums"
-            >
-              {value}
-            </motion.span>
-          </AnimatePresence>
-        ) : (
-          <span className="text-sm font-semibold tabular-nums text-stone-900">{value}</span>
-        )}
-      </div>
+      <span className="text-sm font-semibold tabular-nums text-stone-900">{value}</span>
     </div>
   )
 }
 
+function ScorePill({ match }: { match: MatchState }) {
+  const oppLabel = match.oppName || 'Опонент'
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-stone-700">Гравець</span>
+      <div className="relative inline-flex items-baseline rounded-md bg-stone-100 px-2 py-0.5 font-semibold tabular-nums">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={`my-${match.myScore}`}
+            initial={{ y: 6, scale: 1.4, color: '#16a34a' }}
+            animate={{ y: 0, scale: 1, color: '#1c1917' }}
+            exit={{ y: -8, opacity: 0 }}
+            transition={{ duration: 0.32, ease: 'easeOut' }}
+            className="text-sm"
+          >
+            {match.myScore}
+          </motion.span>
+        </AnimatePresence>
+        <span className="px-0.5 text-stone-400">:</span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={`opp-${match.oppScore}`}
+            initial={{ y: 6, scale: 1.4, color: '#dc2626' }}
+            animate={{ y: 0, scale: 1, color: '#1c1917' }}
+            exit={{ y: -8, opacity: 0 }}
+            transition={{ duration: 0.32, ease: 'easeOut' }}
+            className="text-sm"
+          >
+            {match.oppScore}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+      <span className="text-[10px] font-medium uppercase tracking-wider text-stone-700">{oppLabel}</span>
+    </div>
+  )
+}
+
+function formatTurnLabel(turn: number): string {
+  if (turn === 6) return '1-й тайм · ЕКСТРА'
+  if (turn >= 12) return '2-й тайм · ЕКСТРА'
+  if (turn <= 5) return `1-й тайм ${turn}/5`
+  return `2-й тайм ${turn - 6}/5`
+}
+
 function ControlStrip({ match }: { match: MatchState }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
-      <StatPill label="Хід" value={`${Math.min(match.turn, match.maxTurn)}/${match.maxTurn}`} />
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+      <StatPill label="Період" value={formatTurnLabel(Math.min(match.turn, match.maxTurn))} />
       <div className="h-4 w-px bg-stone-200" />
       <StatPill label="Дії" value={`${match.actions}/${match.maxActions}`} />
       <div className="h-4 w-px bg-stone-200" />
-      <StatPill label="Рахунок" value={`${match.myScore}:${match.oppScore}`} pulse />
+      <ScorePill match={match} />
       <div className="ml-auto">
         <PhasePill match={match} />
       </div>
@@ -812,17 +839,25 @@ export function MatchScreen() {
               onClick={undo}
               disabled={!canInteract || undoStackLength === 0}
               title="Відмінити останню дію"
-              className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs text-stone-700 transition hover:bg-stone-50 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Відмінити"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ◀
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 14 4 9l5-5" />
+                <path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H8" />
+              </svg>
             </button>
             <button
               onClick={resetTurn}
               disabled={!canInteract || undoStackLength === 0}
               title="Скинути хід"
-              className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs text-stone-700 transition hover:bg-stone-50 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Скинути хід"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ◀◀
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <path d="M3 4v5h5" />
+              </svg>
             </button>
             {(isAttackTargeting || isSniperMode) && (
               <button

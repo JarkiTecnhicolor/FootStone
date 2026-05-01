@@ -58,6 +58,7 @@ export function makeFreshMatch(
     maxTurn: MAX_TURN,
     actions: ACTION_PROGRESSION[0],
     maxActions: ACTION_PROGRESSION[0],
+    oppName: opp.name,
     myKeeper,
     oppKeeper,
     myScore: 0,
