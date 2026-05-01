@@ -97,7 +97,7 @@ export function autoDraft(
     }
   }
   // If still under min, force-add cheapest
-  while (cards.length < 6) {
+  while (cards.length < 7) {
     const fallback = shuffled.find(c => !cards.some(cc => cc.id === c.id))
     if (!fallback) break
     cards.push(fallback)
