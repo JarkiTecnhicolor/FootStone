@@ -281,7 +281,7 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
-    id: 'p_m14', name: 'Gardenson', role: 'mid', cost: 3,
+    id: 'p_m14', name: 'Gardensen', role: 'mid', cost: 3,
     rarity: 'silver',
     stamina: 3, maxStamina: 3,
     perks: [{
