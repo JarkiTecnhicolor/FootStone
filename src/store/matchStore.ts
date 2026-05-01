@@ -240,16 +240,16 @@ export const useMatchStore = create<Store>((set, get) => ({
       if (r.done) break
       match = r.state
       set({ match })
-      await delay(650)
+      await delay(950)
     }
 
     match = finalizePlayerTurn(match)
     set({ match })
-    await delay(400)
+    await delay(600)
 
     match = startOpponentTurn(match)
     set({ match })
-    await delay(350)
+    await delay(550)
 
     let oppActions = match.maxActions
     for (let i = 0; i < 20; i++) {
@@ -258,18 +258,18 @@ export const useMatchStore = create<Store>((set, get) => ({
       match = r.state
       oppActions = r.remainingActions
       set({ match })
-      await delay(700)
+      await delay(1000)
     }
 
     const morphed = tryOppMorph(match)
     if (morphed !== match) {
       match = morphed
       set({ match })
-      await delay(500)
+      await delay(700)
     }
 
     if (match.oppFwds.some(f => f.status === 'ready_to_attack')) {
-      await delay(300)
+      await delay(500)
     }
 
     for (let i = 0; i < 10; i++) {
@@ -277,10 +277,10 @@ export const useMatchStore = create<Store>((set, get) => ({
       if (r.done) break
       match = r.state
       set({ match })
-      await delay(750)
+      await delay(1100)
     }
 
-    await delay(300)
+    await delay(500)
     match = advanceTurn(match)
     set({ match, turnStartSnapshot: match.gameOver ? null : match })
   },

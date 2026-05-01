@@ -208,10 +208,10 @@ export function Card({
     <motion.div
       layout
       layoutId={layoutId}
-      initial={{ opacity: 0, scale: 0.85, y: -4 }}
+      initial={{ opacity: 0, scale: 0.85, y: -8 }}
       animate={{ opacity: targetOpacity, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14 } }}
-      transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.6 }}
+      exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.22 } }}
+      transition={{ type: 'spring', stiffness: 260, damping: 30, mass: 0.9 }}
       whileTap={onClick ? { scale: 0.96 } : undefined}
       onClick={onClick}
       title={skin.label || undefined}
