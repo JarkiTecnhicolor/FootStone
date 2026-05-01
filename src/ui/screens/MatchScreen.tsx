@@ -917,7 +917,10 @@ export function MatchScreen() {
               </button>
             )}
             <button
-              onClick={endTurn}
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                endTurn()
+              }}
               disabled={!canInteract}
               className="flex-1 rounded-md bg-stone-900 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400 disabled:shadow-none"
             >
