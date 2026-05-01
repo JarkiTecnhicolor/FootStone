@@ -1,7 +1,7 @@
 import type { BaseCard, DefenderCard, ForwardCard, Keeper, MidfielderCard, Rarity } from '../types'
 
 export const STARTING_BUDGET = 280
-export const MIN_DECK_SIZE = 8
+export const MIN_DECK_SIZE = 6
 export const MAX_DECK_SIZE = 12
 
 const RARITY_BASE: Record<Rarity, number> = {
