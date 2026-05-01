@@ -25,21 +25,39 @@ function parsePerkLabel(label: string): { name?: string; desc: string } {
   return { name: before, desc: after }
 }
 
-function PerkLine({ perk }: { perk: Perk }) {
-  const parsed = parsePerkLabel(perk.label)
-  if (!parsed.name) {
-    return <div className="text-[10px] leading-tight opacity-85">{parsed.desc}</div>
+function tagFor(perk: Perk): { label: string; full: string } {
+  const full = perk.label
+  switch (perk.effect.kind) {
+    case 'atk_buff':
+      return { label: `+${perk.effect.amount} ATK`, full }
+    case 'hp_buff':
+      return { label: `+${perk.effect.amount} HP`, full }
+    case 'damage_reducer':
+      return { label: `−${perk.effect.amount} DMG`, full }
+    case 'draw_bonus':
+      return { label: `+${perk.effect.amount} DRAW`, full }
+    case 'keeper_save_reducer':
+      return { label: `−${perk.effect.amount} SAVE`, full }
+    case 'intimidate':
+      return { label: 'ЗАЛЯКУВАННЯ', full }
+    default:
+      break
   }
+  const parsed = parsePerkLabel(full)
+  if (parsed.name) return { label: parsed.name, full }
+  const firstWords = full.split(/\s+/).slice(0, 2).join(' ')
+  return { label: firstWords, full }
+}
+
+function PerkTag({ perk }: { perk: Perk }) {
+  const { label, full } = tagFor(perk)
   return (
-    <div className="leading-tight">
-      <span className="text-[9px] font-bold uppercase tracking-wide">{parsed.name}</span>
-      {parsed.desc && (
-        <>
-          <span className="text-[10px] opacity-85">: </span>
-          <span className="text-[10px] opacity-85">{parsed.desc}</span>
-        </>
-      )}
-    </div>
+    <span
+      title={full}
+      className="rounded bg-black/15 px-1.5 py-[2px] text-[9px] font-bold uppercase tracking-wide leading-none"
+    >
+      {label}
+    </span>
   )
 }
 
@@ -54,7 +72,6 @@ interface Props {
   layoutId?: string
   effectiveAtk?: number
   footer?: React.ReactNode
-  stretch?: boolean
 }
 
 interface RaritySkin {
@@ -167,16 +184,6 @@ const TONE_COLOR: Record<'normal' | 'buffed' | 'debuffed', string> = {
   debuffed: 'text-red-700 font-bold',
 }
 
-function drawBonus(card: CardData): number {
-  let total = 0
-  for (const perk of card.perks) {
-    if (perk.trigger === 'aura' && perk.effect.kind === 'draw_bonus') {
-      total += perk.effect.amount
-    }
-  }
-  return total
-}
-
 export function Card({
   card,
   showCost = false,
@@ -188,7 +195,6 @@ export function Card({
   layoutId,
   effectiveAtk,
   footer,
-  stretch = false,
 }: Props) {
   const skin: RaritySkin = card.rarity ? RARITY_SKINS[card.rarity] : FALLBACK_SKIN
 
@@ -200,7 +206,6 @@ export function Card({
   const avatarSize = 44
   const stat = statText(card, effectiveAtk)
   const statColor = TONE_COLOR[stat.tone]
-  const draw = drawBonus(card)
   const isForwardDef = card.role === 'def' && card.perks.some(
     p => p.trigger === 'aura' && p.effect.kind === 'forward_defender',
   )
@@ -241,7 +246,7 @@ export function Card({
       onClick={onClick}
       title={skin.label || undefined}
       data-card-id={card.id}
-      className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} select-none p-2 shadow-sm ${skin.glow} ${stretch ? 'flex h-full flex-col' : ''}`}
+      className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} flex h-full flex-col select-none p-2 shadow-sm ${skin.glow}`}
     >
       {ready && (
         <motion.div
@@ -350,30 +355,23 @@ export function Card({
             <span className={`rounded px-1 text-[9px] font-medium ${ROLE_BADGE[card.role]}`}>
               {ROLE_LABEL[card.role]}
             </span>
-            {draw > 0 && (
-              <span className="rounded bg-emerald-700 px-1 text-[9px] font-medium text-white">
-                +{draw} draw
-              </span>
-            )}
           </div>
         </div>
       </div>
 
       {card.perks.length > 0 && (
-        <div className="mt-1.5 border-t border-current/15 pt-1">
+        <div className="mt-1.5 flex flex-wrap gap-1 border-t border-current/15 pt-1.5">
           {card.perks.map((p, i) => (
-            <PerkLine key={i} perk={p} />
+            <PerkTag key={i} perk={p} />
           ))}
         </div>
       )}
-      <div className="mt-1 flex justify-end">
-        <FlagImg cardId={card.id} />
-      </div>
-      {footer && (
-        <div className="mt-auto pt-1.5">
-          {footer}
+      <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
+        <div className="flex items-center justify-end">
+          <FlagImg cardId={card.id} />
         </div>
-      )}
+        {footer && <div>{footer}</div>}
+      </div>
     </motion.div>
   )
 }

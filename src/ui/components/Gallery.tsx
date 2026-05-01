@@ -49,7 +49,6 @@ function CardWithPrice({ card }: { card: CardData }) {
     <Card
       card={card}
       showCost
-      stretch
       footer={
         <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
           💰 {priceOf(card)} M
@@ -63,7 +62,6 @@ function KeeperWithPrice({ keeper }: { keeper: Keeper }) {
   return (
     <KeeperCard
       keeper={keeper}
-      stretch
       footer={
         <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
           💰 {keeperPriceOf(keeper)} M

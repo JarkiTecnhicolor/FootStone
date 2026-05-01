@@ -126,7 +126,6 @@ function PickedRoster({ state }: { state: DraftState }) {
         {state.keeper && (
           <KeeperCard
             keeper={state.keeper}
-            stretch
             footer={
               <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
                 💰 {keeperPriceOf(state.keeper)} M
@@ -139,7 +138,6 @@ function PickedRoster({ state }: { state: DraftState }) {
             key={`${c.id}-picked-${i}`}
             card={c}
             showCost
-            stretch
             footer={
               <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
                 💰 {priceOf(c)} M

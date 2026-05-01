@@ -51,14 +51,13 @@ interface Props {
   highlighted?: boolean
   onClick?: () => void
   footer?: React.ReactNode
-  stretch?: boolean
 }
 
 function fallbackAvatar(name: string): string {
   return `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(name)}&backgroundType=gradientLinear&backgroundColor=d9e9ff,a3c8e9`
 }
 
-export function KeeperCard({ keeper, highlighted, onClick, footer, stretch = false }: Props) {
+export function KeeperCard({ keeper, highlighted, onClick, footer }: Props) {
   const skin = keeper.rarity ? RARITY_SKINS[keeper.rarity] : FALLBACK_SKIN
   const avatarSize = 44
   const widthClass = 'w-[150px]'
@@ -92,7 +91,7 @@ export function KeeperCard({ keeper, highlighted, onClick, footer, stretch = fal
       title={keeper.label || keeper.rarity}
       whileTap={onClick ? { scale: 0.97 } : undefined}
       data-card-id={keeper.id}
-      className={`relative ${widthClass} rounded-lg border ${skin.box} ${skin.glow} ${cursor} select-none p-2 shadow-sm ${stretch ? 'flex h-full flex-col' : ''}`}
+      className={`relative ${widthClass} rounded-lg border ${skin.box} ${skin.glow} ${cursor} flex h-full flex-col select-none p-2 shadow-sm`}
     >
       {highlighted && (
         <motion.div
@@ -153,14 +152,12 @@ export function KeeperCard({ keeper, highlighted, onClick, footer, stretch = fal
           {keeper.label}
         </div>
       )}
-      <div className="mt-1 flex justify-end">
-        <FlagImg cardId={keeper.id} />
-      </div>
-      {footer && (
-        <div className="mt-auto pt-1.5">
-          {footer}
+      <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
+        <div className="flex items-center justify-end">
+          <FlagImg cardId={keeper.id} />
         </div>
-      )}
+        {footer && <div>{footer}</div>}
+      </div>
     </motion.div>
   )
 }
