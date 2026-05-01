@@ -110,6 +110,29 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_d17', name: 'Konoto', role: 'def', cost: 5,
+    rarity: 'silver',
+    hp: 5, maxHp: 5,
+    perks: [],
+  },
+  {
+    id: 'p_d18', name: 'Nosti', role: 'def', cost: 4,
+    rarity: 'legend',
+    hp: 3, maxHp: 3,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'forward_defender' },
+        label: 'ВИСУНУТИЙ ЗАХИСНИК: форварди змушені атакувати його першим',
+      },
+      {
+        trigger: 'aura',
+        effect: { kind: 'intimidate', amount: 2, threshold: 1 },
+        label: 'ЗАЛЯКУВАННЯ: -2 атаки усім ворожим форвардам',
+      },
+    ],
+  },
+  {
     id: 'p_d16', name: 'Voron', role: 'def', cost: 4,
     rarity: 'legend',
     hp: 5, maxHp: 5,
@@ -291,6 +314,33 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_m17', name: 'Erzo', role: 'mid', cost: 4,
+    rarity: 'silver',
+    stamina: 4, maxStamina: 4,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'atk_buff', amount: 1, scope: 'all_my_fwds' },
+      label: '+1 атаки форвардам',
+    }],
+  },
+  {
+    id: 'p_m18', name: 'Riquale', role: 'mid', cost: 2,
+    rarity: 'legend',
+    stamina: 2, maxStamina: 2,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
+        label: '+2 атаки форвардам',
+      },
+      {
+        trigger: 'aura',
+        effect: { kind: 'draw_bonus', amount: 1 },
+        label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
+      },
+    ],
+  },
+  {
     id: 'p_m15', name: 'Xomi', role: 'mid', cost: 5,
     rarity: 'legend',
     stamina: 3, maxStamina: 3,
@@ -447,6 +497,12 @@ export const PLAYER_DECK: Card[] = [
         label: 'АТАКА ПЕРШИМ ТЕМПОМ — б\'є на поточному ході',
       },
     ],
+  },
+  {
+    id: 'p_f21', name: 'Sacamaca', role: 'fwd', cost: 5,
+    rarity: 'silver',
+    atk: 5,
+    perks: [],
   },
   {
     id: 'p_f17', name: 'Konchaslka', role: 'fwd', cost: 3,
