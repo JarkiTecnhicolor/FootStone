@@ -11,7 +11,7 @@ export type PerkCondition =
   | { kind: 'playmaker_present' }
   | { kind: 'last_in_hand' }
 
-export type AtkBuffScope = 'all_my_fwds' | 'self'
+export type AtkBuffScope = 'all_my_fwds' | 'self' | 'other_fwds'
 
 export type SniperTarget = 'any_enemy' | 'enemy_fwd_first'
 

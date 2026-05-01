@@ -897,7 +897,7 @@ export function MatchScreen() {
             <Card
               key={c.id}
               card={c}
-              effectiveAtk={calculateAtk(c, match.oppMids, match.myDefenders, match.oppFwds.length).finalAtk}
+              effectiveAtk={calculateAtk(c, match.oppMids, match.myDefenders, match.oppFwds.length, match.oppFwds).finalAtk}
               targetable={isCardTargetable('oppFwd')}
               onClick={oppFwdClick(i)}
             />
@@ -920,7 +920,7 @@ export function MatchScreen() {
             <Card
               key={c.id}
               card={c}
-              effectiveAtk={calculateAtk(c, match.myMids, match.oppDefenders, match.myFwds.length).finalAtk}
+              effectiveAtk={calculateAtk(c, match.myMids, match.oppDefenders, match.myFwds.length, match.myFwds).finalAtk}
               ready={c.status === 'ready_to_attack' && targetingFwdId !== c.id}
               targetable={targetingFwdId === c.id || isInstantGrantTarget}
               dimmed={isAttackTargeting && targetingFwdId !== c.id}

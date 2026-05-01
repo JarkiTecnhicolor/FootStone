@@ -142,6 +142,7 @@ function scoreFwd(f: ForwardCard, view: SideView, state: MatchState): number {
     view.ownMids as MidfielderCard[],
     view.enemyDefs as DefenderCard[],
     view.ownFwds.length + 1,
+    view.ownFwds,
   ).finalAtk
   const keeperSave = view.enemyKeeper.save
   let s = eff * 1.1

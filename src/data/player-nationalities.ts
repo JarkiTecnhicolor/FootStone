@@ -21,6 +21,7 @@ export const NATIONALITY_BY_ID: Record<string, string> = {
   p_d16: 'FR', // Voron → Raphaël Varane
   p_d17: 'FR', // Konoto → Ibrahima Konaté
   p_d18: 'IT', // Nosti → Alessandro Nesta
+  p_d19: 'BE', // Verstontet → Jan Vertonghen
 
   // Mids
   p_m1: 'HR', // Modruk → Luka Modrić
@@ -66,6 +67,7 @@ export const NATIONALITY_BY_ID: Record<string, string> = {
   p_f20: 'UA', // Yarmolo → Andriy Yarmolenko
   p_f21: 'IT', // Sacamaca → Gianluca Scamacca
   p_f22: 'BR', // Rumourio → Romário
+  p_f23: 'EN', // Ronney → Wayne Rooney
 
   // Keepers
   k_onana: 'CM', // Onunana → André Onana

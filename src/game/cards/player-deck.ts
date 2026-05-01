@@ -116,6 +116,12 @@ export const PLAYER_DECK: Card[] = [
     perks: [],
   },
   {
+    id: 'p_d19', name: 'Verstontet', role: 'def', cost: 3,
+    rarity: 'silver',
+    hp: 4, maxHp: 4,
+    perks: [],
+  },
+  {
     id: 'p_d18', name: 'Nosti', role: 'def', cost: 4,
     rarity: 'legend',
     hp: 3, maxHp: 3,
@@ -514,6 +520,16 @@ export const PLAYER_DECK: Card[] = [
         label: 'АТАКА ПЕРШИМ ТЕМПОМ — б\'є на поточному ході',
       },
     ],
+  },
+  {
+    id: 'p_f23', name: 'Ronney', role: 'fwd', cost: 5,
+    rarity: 'legend',
+    atk: 6,
+    perks: [{
+      trigger: 'aura',
+      effect: { kind: 'atk_buff', amount: 2, scope: 'other_fwds' },
+      label: 'КАПІТАН АТАКИ: +2 атаки усім іншим форвардам',
+    }],
   },
   {
     id: 'p_f22', name: 'Rumourio', role: 'fwd', cost: 4,

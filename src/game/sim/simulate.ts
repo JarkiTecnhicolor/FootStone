@@ -24,7 +24,6 @@ import { keeperPriceOf, MAX_DECK_SIZE, priceOf, STARTING_BUDGET } from '../draft
 import { cloneCard, shuffle } from '../lib'
 import type { DraftedTeam } from '../draft/types'
 import { SHAKHTAR } from '../cards/opponents/shakhtar'
-import { PLAYER_KEEPERS } from '../keepers/player-keepers'
 
 export type PlayerAi = 'dumb' | 'smart'
 

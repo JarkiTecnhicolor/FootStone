@@ -702,6 +702,7 @@ export function attackWithForward(
     attackerMids: state.myMids,
     defenderMids: state.oppMids,
     attackerFwdCount: state.myFwds.length,
+    attackerFwds: state.myFwds,
     target,
   })
 
@@ -789,6 +790,7 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
     attackerMids: state.oppMids,
     defenderMids: state.myMids,
     attackerFwdCount: state.oppFwds.length,
+    attackerFwds: state.oppFwds,
     target,
   })
   const log: string[] = []
