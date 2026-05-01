@@ -108,16 +108,16 @@ function ScorePill({ match }: { match: MatchState }) {
 }
 
 function formatTurnLabel(turn: number): string {
-  if (turn === 6) return '1-й тайм · ЕКСТРА'
-  if (turn >= 12) return '2-й тайм · ЕКСТРА'
-  if (turn <= 5) return `1-й тайм ${turn}/5`
-  return `2-й тайм ${turn - 6}/5`
+  if (turn === 6) return '1-ий ЕКСТРА'
+  if (turn >= 12) return '2-ий ЕКСТРА'
+  if (turn <= 5) return `1-ий ${turn}/5`
+  return `2-ий ${turn - 6}/5`
 }
 
 function ControlStrip({ match }: { match: MatchState }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
-      <StatPill label="Період" value={formatTurnLabel(Math.min(match.turn, match.maxTurn))} />
+      <StatPill label="Тайм" value={formatTurnLabel(Math.min(match.turn, match.maxTurn))} />
       <div className="h-4 w-px bg-stone-200" />
       <StatPill label="Дії" value={`${match.actions}/${match.maxActions}`} />
       <div className="h-4 w-px bg-stone-200" />
