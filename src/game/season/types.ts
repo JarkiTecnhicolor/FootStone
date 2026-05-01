@@ -60,4 +60,5 @@ export interface SeasonState {
   nextOpp: OpponentDeck | null
   scoutInfo: ScoutInfo | null
   tradeOffer: TradeOffer | null
+  eliminated: boolean
 }

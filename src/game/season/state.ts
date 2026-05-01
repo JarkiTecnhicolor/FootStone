@@ -53,11 +53,20 @@ export function startSeason(team: DraftedTeam): SeasonState {
     nextOpp: null,
     scoutInfo: null,
     tradeOffer: rollTradeOffer(ownedIds),
+    eliminated: false,
   }
 }
 
 export function isSeasonOver(state: SeasonState): boolean {
-  return state.results.length >= state.plan.length
+  return state.eliminated || state.results.length >= state.plan.length
+}
+
+export function isSeasonChampion(state: SeasonState): boolean {
+  return (
+    !state.eliminated &&
+    state.results.length === state.plan.length &&
+    state.results.every(r => r.outcome === 'win')
+  )
 }
 
 export function nextMatchPlan(state: SeasonState): SeasonMatchPlan | null {
@@ -180,15 +189,17 @@ export function recordMatchResult(
     mvp: mvpAward,
   }
   const ownedIds = new Set(updatedCards.map(c => c.id))
+  const eliminated = state.eliminated || outcome === 'loss'
   return {
     ...state,
     cards: updatedCards,
     results: [...state.results, result],
     money: state.money + reward,
-    shop: rollShop(ownedIds),
+    shop: eliminated ? state.shop : rollShop(ownedIds),
     nextOpp: null,
     scoutInfo: null,
-    tradeOffer: rollTradeOffer(ownedIds),
+    tradeOffer: eliminated ? null : rollTradeOffer(ownedIds),
+    eliminated,
   }
 }
 
