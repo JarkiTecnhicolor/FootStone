@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import type { Card as CardData, Rarity } from '../../game/types'
 import type { Perk } from '../../game/perks/types'
+import { categoryOf } from '../../game/perks/types'
 import { avatarUrl } from '../lib/avatar'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
 import { REAL_PLAYERS, displayName, surname } from '../../data/player-real-names'
@@ -27,21 +28,8 @@ function parsePerkLabel(label: string): { name?: string; desc: string } {
 
 function tagFor(perk: Perk): { label: string; full: string } {
   const full = perk.label
-  switch (perk.effect.kind) {
-    case 'atk_buff':
-      return { label: `+${perk.effect.amount} ATK`, full }
-    case 'hp_buff':
-      return { label: `+${perk.effect.amount} HP`, full }
-    case 'damage_reducer':
-      return { label: `−${perk.effect.amount} DMG`, full }
-    case 'draw_bonus':
-      return { label: `+${perk.effect.amount} DRAW`, full }
-    case 'keeper_save_reducer':
-      return { label: `−${perk.effect.amount} SAVE`, full }
-    case 'intimidate':
-      return { label: 'ЗАЛЯКУВАННЯ', full }
-    default:
-      break
+  if (perk.effect.kind === 'keeper_save_reducer') {
+    return { label: `−${perk.effect.amount} SAVE`, full }
   }
   const parsed = parsePerkLabel(full)
   if (parsed.name) return { label: parsed.name, full }
@@ -58,6 +46,24 @@ function PerkTag({ perk }: { perk: Perk }) {
     >
       {label}
     </span>
+  )
+}
+
+function PerkLine({ perk }: { perk: Perk }) {
+  const parsed = parsePerkLabel(perk.label)
+  if (!parsed.name) {
+    return <div className="text-[10px] leading-tight opacity-85">{parsed.desc}</div>
+  }
+  return (
+    <div className="leading-tight">
+      <span className="text-[9px] font-bold uppercase tracking-wide">{parsed.name}</span>
+      {parsed.desc && (
+        <>
+          <span className="text-[10px] opacity-85">: </span>
+          <span className="text-[10px] opacity-85">{parsed.desc}</span>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -246,7 +252,7 @@ export function Card({
       onClick={onClick}
       title={skin.label || undefined}
       data-card-id={card.id}
-      className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} flex h-full flex-col select-none p-2 shadow-sm ${skin.glow}`}
+      className={`relative ${widthClass} ${footer ? 'min-h-[170px]' : 'min-h-[120px]'} rounded-lg border ${skin.box} ${outline} ${cursor} flex h-full flex-col select-none p-2 shadow-sm ${skin.glow}`}
     >
       {ready && (
         <motion.div
@@ -359,13 +365,24 @@ export function Card({
         </div>
       </div>
 
-      {card.perks.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1 border-t border-current/15 pt-1.5">
-          {card.perks.map((p, i) => (
-            <PerkTag key={i} perk={p} />
-          ))}
-        </div>
-      )}
+      {card.perks.length > 0 && (() => {
+        const bonuses = card.perks.filter(p => categoryOf(p) === 'bonus')
+        const namedPerks = card.perks.filter(p => categoryOf(p) === 'perk')
+        return (
+          <div className="mt-1.5 space-y-1 border-t border-current/15 pt-1.5">
+            {bonuses.length > 0 && (
+              <div className="space-y-0.5">
+                {bonuses.map((p, i) => <PerkLine key={`b${i}`} perk={p} />)}
+              </div>
+            )}
+            {namedPerks.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {namedPerks.map((p, i) => <PerkTag key={`p${i}`} perk={p} />)}
+              </div>
+            )}
+          </div>
+        )
+      })()}
       <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
         <div className="flex items-center justify-end">
           <FlagImg cardId={card.id} />
