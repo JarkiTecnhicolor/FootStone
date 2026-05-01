@@ -73,12 +73,12 @@ function CardOption({
 }) {
   return (
     <div className="flex flex-col items-center">
-      <Card card={card} size="lg" showCost />
+      <Card card={card} showCost />
       <PriceTag value={priceOf(card)} affordable={affordable} />
       <button
         onClick={onClick}
         disabled={!affordable}
-        className="mt-1 w-[180px] rounded-md bg-stone-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+        className="mt-1 w-[150px] rounded-md bg-stone-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
       >
         Підписати
       </button>
@@ -97,12 +97,12 @@ function KeeperOption({
 }) {
   return (
     <div className="flex flex-col items-center">
-      <KeeperCard keeper={keeper} size="lg" />
+      <KeeperCard keeper={keeper} />
       <PriceTag value={keeperPriceOf(keeper)} affordable={affordable} />
       <button
         onClick={onClick}
         disabled={!affordable}
-        className="mt-1 w-[180px] rounded-md bg-stone-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+        className="mt-1 w-[150px] rounded-md bg-stone-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
       >
         Підписати
       </button>

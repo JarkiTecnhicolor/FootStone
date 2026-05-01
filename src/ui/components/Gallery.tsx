@@ -48,7 +48,6 @@ function CardWithPrice({ card }: { card: CardData }) {
   return (
     <Card
       card={card}
-      size="lg"
       showCost
       stretch
       footer={
@@ -64,7 +63,6 @@ function KeeperWithPrice({ keeper }: { keeper: Keeper }) {
   return (
     <KeeperCard
       keeper={keeper}
-      size="lg"
       stretch
       footer={
         <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
@@ -155,7 +153,7 @@ export function Gallery({ open, onClose }: Props) {
                   <div className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                     🧤 Воротарі · {keepers.length}
                   </div>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, 200px)' }}>
+                  <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, 160px)' }}>
                     {keepers.map(k => (
                       <KeeperWithPrice key={k.id} keeper={k} />
                     ))}
@@ -170,7 +168,7 @@ export function Gallery({ open, onClose }: Props) {
                     <div className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                       {ROLE_TITLE[role]} · {roleCards.length}
                     </div>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, 200px)' }}>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, 160px)' }}>
                       {roleCards.map(c => (
                         <CardWithPrice key={c.id} card={c} />
                       ))}

@@ -4,7 +4,7 @@ import type { Card as CardData, Rarity } from '../../game/types'
 import type { Perk } from '../../game/perks/types'
 import { avatarUrl } from '../lib/avatar'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
-import { REAL_PLAYERS, displayName } from '../../data/player-real-names'
+import { REAL_PLAYERS, displayName, surname } from '../../data/player-real-names'
 import { FlagImg } from './FlagImg'
 
 function parsePerkLabel(label: string): { name?: string; desc: string } {
@@ -25,20 +25,18 @@ function parsePerkLabel(label: string): { name?: string; desc: string } {
   return { name: before, desc: after }
 }
 
-function PerkLine({ perk, size }: { perk: Perk; size: 'sm' | 'lg' }) {
+function PerkLine({ perk }: { perk: Perk }) {
   const parsed = parsePerkLabel(perk.label)
-  const nameSize = size === 'lg' ? 'text-[10px]' : 'text-[9px]'
-  const descSize = size === 'lg' ? 'text-[11px]' : 'text-[10px]'
   if (!parsed.name) {
-    return <div className={`${descSize} leading-snug opacity-85`}>{parsed.desc}</div>
+    return <div className="text-[10px] leading-tight opacity-85">{parsed.desc}</div>
   }
   return (
-    <div className="leading-snug">
-      <span className={`${nameSize} font-bold uppercase tracking-wide`}>{parsed.name}</span>
+    <div className="leading-tight">
+      <span className="text-[9px] font-bold uppercase tracking-wide">{parsed.name}</span>
       {parsed.desc && (
         <>
-          <span className={`${descSize} opacity-85`}>: </span>
-          <span className={`${descSize} opacity-85`}>{parsed.desc}</span>
+          <span className="text-[10px] opacity-85">: </span>
+          <span className="text-[10px] opacity-85">{parsed.desc}</span>
         </>
       )}
     </div>
@@ -47,7 +45,6 @@ function PerkLine({ perk, size }: { perk: Perk; size: 'sm' | 'lg' }) {
 
 interface Props {
   card: CardData
-  size?: 'sm' | 'lg'
   showCost?: boolean
   affordable?: boolean
   ready?: boolean
@@ -182,7 +179,6 @@ function drawBonus(card: CardData): number {
 
 export function Card({
   card,
-  size = 'sm',
   showCost = false,
   affordable = true,
   ready = false,
@@ -195,14 +191,13 @@ export function Card({
   stretch = false,
 }: Props) {
   const skin: RaritySkin = card.rarity ? RARITY_SKINS[card.rarity] : FALLBACK_SKIN
-  const isLg = size === 'lg'
 
   const outline = ''
   const targetOpacity = !affordable ? 0.45 : dimmed ? 0.5 : 1
   const cursor = onClick ? 'cursor-pointer' : 'cursor-default'
 
-  const widthClass = isLg ? 'w-[180px]' : 'w-[150px]'
-  const avatarSize = isLg ? 56 : 40
+  const widthClass = 'w-[150px]'
+  const avatarSize = 44
   const stat = statText(card, effectiveAtk)
   const statColor = TONE_COLOR[stat.tone]
   const draw = drawBonus(card)
@@ -329,13 +324,15 @@ export function Card({
           }}
         />
         <div className="min-w-0 flex-1">
-          <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
-            {displayName(card.id, card.name)}
-            <FlagImg cardId={card.id} className="ml-1" />
+          <div
+            className="truncate font-medium leading-tight text-[12px]"
+            title={displayName(card.id, card.name)}
+          >
+            {surname(card.id, card.name)}
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">
             <span
-              className={`font-medium ${statColor} ${isLg ? 'text-base' : 'text-[13px]'} ${
+              className={`font-medium text-[13px] ${statColor} ${
                 stat.upgradedCount > 0 && stat.tone === 'normal' ? 'text-amber-600' : ''
               }`}
             >
@@ -362,14 +359,17 @@ export function Card({
       </div>
 
       {card.perks.length > 0 && (
-        <div className="mt-1.5 space-y-0.5 border-t border-current/15 pt-1">
+        <div className="mt-1.5 border-t border-current/15 pt-1">
           {card.perks.map((p, i) => (
-            <PerkLine key={i} perk={p} size={isLg ? 'lg' : 'sm'} />
+            <PerkLine key={i} perk={p} />
           ))}
         </div>
       )}
+      <div className="mt-1 flex justify-end">
+        <FlagImg cardId={card.id} />
+      </div>
       {footer && (
-        <div className="mt-auto pt-2">
+        <div className="mt-auto pt-1.5">
           {footer}
         </div>
       )}

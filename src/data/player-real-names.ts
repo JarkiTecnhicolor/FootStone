@@ -2,6 +2,18 @@ export function displayName(id: string, fallback: string): string {
   return REAL_PLAYERS[id] ?? fallback
 }
 
+const PARTICLES = new Set(['van', 'von', 'de', 'del', 'da', 'do', 'dos', 'der', 'di', 'la', 'le', 'al', 'bin'])
+
+export function surname(id: string, fallback: string): string {
+  const full = displayName(id, fallback)
+  const tokens = full.split(/\s+/).filter(Boolean)
+  if (tokens.length <= 1) return full
+  const last = tokens[tokens.length - 1]
+  const prev = tokens[tokens.length - 2]
+  if (PARTICLES.has(prev.toLowerCase())) return `${prev} ${last}`
+  return last
+}
+
 export const REAL_PLAYERS: Record<string, string> = {
   'k_onana': 'André Onana',
   'k_nojer': 'Manuel Neuer',

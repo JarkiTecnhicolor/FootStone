@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import type { Keeper, Rarity } from '../../game/types'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
-import { REAL_PLAYERS, displayName } from '../../data/player-real-names'
+import { REAL_PLAYERS, displayName, surname } from '../../data/player-real-names'
 import { FlagImg } from './FlagImg'
 
 interface RaritySkin {
@@ -48,7 +48,6 @@ const FALLBACK_SKIN: RaritySkin = {
 
 interface Props {
   keeper: Keeper
-  size?: 'sm' | 'lg'
   highlighted?: boolean
   onClick?: () => void
   footer?: React.ReactNode
@@ -59,11 +58,10 @@ function fallbackAvatar(name: string): string {
   return `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(name)}&backgroundType=gradientLinear&backgroundColor=d9e9ff,a3c8e9`
 }
 
-export function KeeperCard({ keeper, size = 'sm', highlighted, onClick, footer, stretch = false }: Props) {
-  const isLg = size === 'lg'
+export function KeeperCard({ keeper, highlighted, onClick, footer, stretch = false }: Props) {
   const skin = keeper.rarity ? RARITY_SKINS[keeper.rarity] : FALLBACK_SKIN
-  const avatarSize = isLg ? 56 : 40
-  const widthClass = isLg ? 'w-[180px]' : 'w-[150px]'
+  const avatarSize = 44
+  const widthClass = 'w-[150px]'
 
   const realName = REAL_PLAYERS[keeper.id]
   const [photoUrl, setPhotoUrl] = useState<string | null>(() => {
@@ -132,12 +130,14 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick, footer, 
           }}
         />
         <div className="min-w-0 flex-1">
-          <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
-            {displayName(keeper.id, keeper.name)}
-            <FlagImg cardId={keeper.id} className="ml-1" />
+          <div
+            className="truncate font-medium leading-tight text-[12px]"
+            title={displayName(keeper.id, keeper.name)}
+          >
+            {surname(keeper.id, keeper.name)}
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">
-            <span className={`font-medium ${isLg ? 'text-base' : 'text-[13px]'}`}>
+            <span className="font-medium text-[13px]">
               {keeper.save} DEF
             </span>
           </div>
@@ -148,14 +148,15 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick, footer, 
       </div>
 
       {keeper.label && (
-        <div
-          className={`mt-1.5 border-t border-current/15 pt-1 italic leading-snug ${isLg ? 'text-[11px]' : 'text-[10px]'} opacity-85`}
-        >
+        <div className="mt-1.5 border-t border-current/15 pt-1 italic leading-tight text-[10px] opacity-85">
           {keeper.label}
         </div>
       )}
+      <div className="mt-1 flex justify-end">
+        <FlagImg cardId={keeper.id} />
+      </div>
       {footer && (
-        <div className="mt-auto pt-2">
+        <div className="mt-auto pt-1.5">
           {footer}
         </div>
       )}
