@@ -10,6 +10,7 @@ import {
 } from '../match'
 import { runSimpleOpponentTurn } from '../ai/simple'
 import { dumbPlayerActions } from '../ai/dumb-player'
+import { smartPlayerActionsV2 } from '../ai/smart-player-v2'
 
 export interface SimulationResult {
   matches: number
@@ -29,8 +30,10 @@ export function simulateOne(
 ): MatchState {
   let state = makeFreshMatch(playerCards, playerKeepers, opponent)
   let safety = 50
+  const useSmart = process.env.SMART === '1'
+  const playerFn = useSmart ? smartPlayerActionsV2 : dumbPlayerActions
   while (!state.gameOver && safety-- > 0) {
-    state = dumbPlayerActions(state)
+    state = playerFn(state)
     state = endPlayerTurn(state)
     state = startOpponentTurn(state)
     state = runSimpleOpponentTurn(state)
