@@ -191,11 +191,8 @@ export function scoutCheap(state: SeasonState): SeasonState {
 }
 
 export function scoutDeep(state: SeasonState): SeasonState {
-  if (state.scoutInfo?.full) return state
-  // If cheap already bought, charge only the difference; else full price
-  const alreadyCheap = state.scoutInfo && !state.scoutInfo.full
-  const cost = alreadyCheap ? SCOUT_DEEP_COST - SCOUT_CHEAP_COST : SCOUT_DEEP_COST
-  if (state.money < cost) return state
+  if (state.scoutInfo) return state
+  if (state.money < SCOUT_DEEP_COST) return state
   const next = ensureNextOppCached(state)
   if (!next.nextOpp) return state
   const cards = next.nextOpp.cards
@@ -207,7 +204,7 @@ export function scoutDeep(state: SeasonState): SeasonState {
   const revealedIds = [...top('def'), ...top('mid'), ...top('fwd')].map(c => c.id)
   return {
     ...next,
-    money: next.money - cost,
+    money: next.money - SCOUT_DEEP_COST,
     scoutInfo: { revealedIds, full: true },
   }
 }

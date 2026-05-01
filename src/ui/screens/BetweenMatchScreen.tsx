@@ -183,11 +183,11 @@ export function BetweenMatchScreen({
               </button>
               <button
                 onClick={onScoutDeep}
-                disabled={season.scoutInfo?.full || season.money < (season.scoutInfo ? 15 : 25)}
+                disabled={!!season.scoutInfo || season.money < 25}
                 title="Розкрити 3 найдорожчі карти у кожній ролі"
                 className="rounded border border-blue-300 bg-white px-2 py-0.5 text-[10px] text-blue-900 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                🔬 Глибокий ({season.scoutInfo && !season.scoutInfo.full ? '+15M' : '25M'})
+                🔬 Глибокий (25M)
               </button>
             </div>
           </div>
