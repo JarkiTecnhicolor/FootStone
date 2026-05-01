@@ -12,6 +12,8 @@ import { runSimpleOpponentTurn } from '../ai/simple'
 import { dumbPlayerActions } from '../ai/dumb-player'
 import { smartPlayerActionsV2 } from '../ai/smart-player-v2'
 
+export type PlayerAi = 'dumb' | 'smart'
+
 export interface SimulationResult {
   matches: number
   wins: number
@@ -26,12 +28,12 @@ export interface SimulationResult {
 export function simulateOne(
   playerCards: readonly Card[],
   opponent: OpponentDeck,
+  playerAi: PlayerAi = 'dumb',
   playerKeepers: readonly Keeper[] = PLAYER_KEEPERS,
 ): MatchState {
   let state = makeFreshMatch(playerCards, playerKeepers, opponent)
   let safety = 50
-  const useSmart = process.env.SMART === '1'
-  const playerFn = useSmart ? smartPlayerActionsV2 : dumbPlayerActions
+  const playerFn = playerAi === 'smart' ? smartPlayerActionsV2 : dumbPlayerActions
   while (!state.gameOver && safety-- > 0) {
     state = playerFn(state)
     state = endPlayerTurn(state)
@@ -47,6 +49,7 @@ export function runSimulation(
   playerCards: readonly Card[],
   opponent: OpponentDeck,
   matches: number,
+  playerAi: PlayerAi = 'dumb',
 ): SimulationResult {
   let wins = 0
   let losses = 0
@@ -57,7 +60,7 @@ export function runSimulation(
   const oppDist: Record<number, number> = {}
 
   for (let i = 0; i < matches; i++) {
-    const final = simulateOne(playerCards, opponent)
+    const final = simulateOne(playerCards, opponent, playerAi)
     const result = decideMatchResult(final)
     if (result === 'win') wins++
     else if (result === 'loss') losses++

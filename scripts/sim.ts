@@ -1,11 +1,13 @@
 import { runSimulation } from '../src/game/sim/simulate'
+import type { PlayerAi } from '../src/game/sim/simulate'
 import { PLAYER_DECK } from '../src/game/cards/player-deck'
 import { SHAKHTAR } from '../src/game/cards/opponents/shakhtar'
 
 const N = parseInt(process.argv[2] ?? '1000', 10)
-console.log(`Running ${N} matches: PLAYER_DECK vs ${SHAKHTAR.name}...`)
+const ai: PlayerAi = process.env.SMART === '1' ? 'smart' : 'dumb'
+console.log(`Running ${N} matches: PLAYER_DECK (${ai}) vs ${SHAKHTAR.name}...`)
 const start = Date.now()
-const result = runSimulation(PLAYER_DECK, SHAKHTAR, N)
+const result = runSimulation(PLAYER_DECK, SHAKHTAR, N, ai)
 const elapsed = Date.now() - start
 
 const pct = (n: number) => `${((n / N) * 100).toFixed(1)}%`

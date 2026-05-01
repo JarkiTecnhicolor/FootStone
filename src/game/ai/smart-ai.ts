@@ -7,8 +7,8 @@ import type {
   MidfielderCard,
   Side,
 } from '../types'
-import type { SniperTarget, SniperTargetSelection } from '../perks/dispatch'
-import { canAfford } from '../rules/cost'
+import type { SniperTarget } from '../perks/types'
+import type { SniperTargetSelection } from '../perks/dispatch'
 import { calculateAtk } from '../rules/combat'
 import { isBlockedInExtraTime, isExtraTime } from '../match'
 import { isInvulnerable } from '../perks/dispatch'
