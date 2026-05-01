@@ -189,7 +189,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
       if (eligible.length > 0) {
         pendingTauntGrantChoice = true
       } else {
-        log.push(`${card.name}: нема кому передати АВТОРИТЕТ.`)
+        log.push(`${card.name}: нема кому передати ПІДСТРАХОВКА.`)
       }
       continue
     }

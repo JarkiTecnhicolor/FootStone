@@ -356,7 +356,7 @@ export function resolvePendingTauntGrant(
     label: 'ВИСУНУТИЙ ЗАХИСНИК (від лідера): форварди змушені атакувати першим',
   }
   const updated: DefenderCard = { ...target, perks: [...target.perks, grantedPerk] }
-  const log = `АВТОРИТЕТ: ${target.name} стає ВИСУНУТИМ ЗАХИСНИКОМ.`
+  const log = `ПІДСТРАХОВКА: ${target.name} стає ВИСУНУТИМ ЗАХИСНИКОМ.`
   if (isPlayerSide) {
     return {
       ok: true,

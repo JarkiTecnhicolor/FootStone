@@ -48,7 +48,7 @@ function PhasePill({ match }: { match: MatchState }) {
   const text = match.pendingSniper
     ? '🎯 Обери ціль (Sniper)'
     : match.pendingTauntGrant
-      ? '🛡 Обери захисника, кому передати АВТОРИТЕТ'
+      ? '🛡 Обери захисника, кому передати ПІДСТРАХОВКА'
       : match.phase === 'opponent'
       ? extra
         ? `${halfPrefix} · ⏳ Доданий час · опонент…`
