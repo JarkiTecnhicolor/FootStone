@@ -5,6 +5,7 @@ import { SHAKHTAR } from '../cards/opponents/shakhtar'
 import { REAL } from '../cards/opponents/real'
 import { BARCELONA } from '../cards/opponents/barcelona'
 import { WORLD_ALLSTAR } from '../cards/opponents/world'
+import { DYNAMO } from '../cards/opponents/dynamo'
 import { cloneCard, shuffle } from '../lib'
 import { MAX_DECK_SIZE, MIN_DECK_SIZE, priceOf, releasePriceOf } from '../draft/pricing'
 import { CHEMISTRY_THRESHOLD, countByNation } from '../chemistry'
@@ -23,7 +24,7 @@ import type {
 const UPGRADE_CAP_PER_CARD = 2
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
-  { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 280, oppDeckSize: 8 },
+  { idx: 0, oppKind: 'dynamo', oppName: 'Dynamo Kyiv' },
   { idx: 1, oppKind: 'shakhtar', oppName: 'Shakhtar' },
   { idx: 2, oppKind: 'barcelona', oppName: 'Barcelona' },
   { idx: 3, oppKind: 'real', oppName: 'Real' },
@@ -272,6 +273,7 @@ export function buildSeasonOpponent(state: SeasonState): OpponentDeck | null {
   if (state.nextOpp) return state.nextOpp
   const plan = nextMatchPlan(state)
   if (!plan) return null
+  if (plan.oppKind === 'dynamo') return DYNAMO
   if (plan.oppKind === 'shakhtar') return SHAKHTAR
   if (plan.oppKind === 'real') return REAL
   if (plan.oppKind === 'barcelona') return BARCELONA

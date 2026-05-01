@@ -3,7 +3,7 @@ import type { Card, Keeper, OpponentDeck } from '../types'
 export interface SeasonMatchPlan {
   idx: number
   oppName: string
-  oppKind: 'shakhtar' | 'real' | 'barcelona' | 'world' | 'random'
+  oppKind: 'dynamo' | 'shakhtar' | 'real' | 'barcelona' | 'world' | 'random'
   oppBudget?: number
   oppDeckSize?: number
 }

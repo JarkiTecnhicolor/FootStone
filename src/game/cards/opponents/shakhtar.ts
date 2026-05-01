@@ -28,11 +28,18 @@ const cards: Card[] = [
     id: 'o_m1', name: 'Steppanenko', role: 'mid', cost: 3,
     rarity: 'gold',
     stamina: 2, maxStamina: 2,
-    perks: [{
-      trigger: 'aura',
-      effect: { kind: 'atk_buff', amount: 2, scope: 'all_my_fwds' },
-      label: '+2 атаки форвардам',
-    }],
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'atk_buff', amount: 1, scope: 'all_my_fwds' },
+        label: '+1 атаки форвардам',
+      },
+      {
+        trigger: 'aura',
+        effect: { kind: 'damage_reducer', amount: 1 },
+        label: '-1 damage атакам опонента',
+      },
+    ],
   },
   {
     id: 'o_m2', name: 'Maycoon', role: 'mid', cost: 2,
