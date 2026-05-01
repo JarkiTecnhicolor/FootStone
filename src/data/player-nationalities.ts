@@ -77,6 +77,7 @@ export const NATIONALITY_BY_ID: Record<string, string> = {
   k_weiden: 'DE', // Waisburfeller → Roman Weidenfeller
   k_buffon: 'IT', // Baronior → Gianluigi Buffon
   k_lunin: 'UA', // Lunyn → Andriy Lunin
+  k_shovkov: 'UA', // Shovkovsky → Oleksandr Shovkovskyi
   k_pyatov: 'UA', // Pyatyk → Andriy Pyatov
 }
 

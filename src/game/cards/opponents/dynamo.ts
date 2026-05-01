@@ -24,8 +24,8 @@ const cards: Card[] = [
   pickById('p_f20'), // Yarmolo (Yarmolenko UA) — legend
 ]
 
-const keeper = PLAYER_KEEPERS.find(k => k.id === 'k_lunin')
-if (!keeper) throw new Error('Lunyn keeper missing')
+const keeper = PLAYER_KEEPERS.find(k => k.id === 'k_shovkov')
+if (!keeper) throw new Error('Shovkovsky keeper missing')
 
 export const DYNAMO: OpponentDeck = {
   id: 'dynamo',

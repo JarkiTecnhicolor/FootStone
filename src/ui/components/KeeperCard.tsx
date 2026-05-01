@@ -152,7 +152,11 @@ export function KeeperCard({ keeper, highlighted, onClick, footer }: Props) {
           {keeper.label}
         </div>
       )}
-      <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
+      <div
+        className={`mt-auto flex flex-col gap-1.5 pt-1.5 ${
+          keeper.label ? '' : 'border-t border-current/15'
+        }`}
+      >
         <div className="flex items-center justify-end">
           <FlagImg cardId={keeper.id} />
         </div>

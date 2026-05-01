@@ -36,6 +36,13 @@ export const PLAYER_KEEPERS: Keeper[] = [
     id: 'k_lunin',
     name: 'Lunyn',
     save: 2,
+    rarity: 'silver',
+    abilities: [],
+  },
+  {
+    id: 'k_shovkov',
+    name: 'Shovkovsky',
+    save: 3,
     rarity: 'gold',
     abilities: [],
   },

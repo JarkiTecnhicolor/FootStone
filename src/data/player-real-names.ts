@@ -21,6 +21,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'k_buffon': 'Gianluigi Buffon',
   'k_riznyk': 'Dmytro Riznyk',
   'k_lunin': 'Andriy Lunin',
+  'k_shovkov': 'Oleksandr Shovkovskyi',
   'k_pyatov': 'Andriy Pyatov',
 
   'p_d1': 'Virgil van Dijk',
