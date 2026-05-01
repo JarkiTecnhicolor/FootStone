@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import { Card } from '../components/Card'
 import { KeeperCard } from '../components/KeeperCard'
 import { Gallery } from '../components/Gallery'
+import { ConfettiBurst } from '../components/ConfettiBurst'
 import { useMatchStore } from '../../store/matchStore'
 import { canAfford } from '../../game/rules/cost'
 import { currentHalf, decideMatchResult, isBlockedInExtraTime, isExtraTime } from '../../game/match'
 import { calculateAtk, validAttackTargetIndices } from '../../game/rules/combat'
 import { isInvulnerable } from '../../game/perks/dispatch'
+import {
+  isMuted,
+  playGoalMine,
+  playGoalOpp,
+  playSave,
+  playHalftime,
+  playExtraTime,
+  playKick,
+  playCardPlace,
+  setMuted,
+} from '../lib/sfx'
 import type { Card as CardData, MatchState } from '../../game/types'
 
 function PhasePill({ match }: { match: MatchState }) {
@@ -424,6 +436,9 @@ export function MatchScreen() {
   const resetMatch = useMatchStore(s => s.resetMatch)
 
   const [galleryOpen, setGalleryOpen] = useState(false)
+  const [muted, setMutedState] = useState(() => isMuted())
+  const [confettiKey, setConfettiKey] = useState(0)
+  const pitchShakeControls = useAnimationControls()
   const [overlay, setOverlay] = useState<
     | { kind: 'goal-mine' | 'goal-opp' | 'save'; message: string }
     | { kind: 'halftime' }
@@ -498,11 +513,18 @@ export function MatchScreen() {
     }
     if (match.myScore > prevScores.current.my) {
       flashOverlay({ kind: 'goal-mine', message: '⚽ ГОЛ!' }, 1400)
+      playGoalMine()
+      setConfettiKey(k => k + 1)
       prevScores.current = { my: match.myScore, opp: match.oppScore }
       return
     }
     if (match.oppScore > prevScores.current.opp) {
       flashOverlay({ kind: 'goal-opp', message: 'ОПОНЕНТ ЗАБИВ' }, 1400)
+      playGoalOpp()
+      pitchShakeControls.start({
+        x: [0, -10, 10, -8, 8, -4, 4, 0],
+        transition: { duration: 0.55, ease: 'easeInOut' },
+      })
       prevScores.current = { my: match.myScore, opp: match.oppScore }
       return
     }
@@ -549,6 +571,8 @@ export function MatchScreen() {
           ? 'hit'
           : 'save'
       fireBall('player', outcome)
+      playKick()
+      if (outcome === 'save') setTimeout(playSave, 350)
     } else if (oppFwds < prevFwdCount.current.opp) {
       const outcome: 'goal' | 'save' | 'hit' = oppScoreUp
         ? 'goal'
@@ -556,6 +580,8 @@ export function MatchScreen() {
           ? 'hit'
           : 'save'
       fireBall('opp', outcome)
+      playKick()
+      if (outcome === 'save') setTimeout(playSave, 350)
     }
 
     prevFwdCount.current = { my: myFwds, opp: oppFwds }
@@ -578,16 +604,19 @@ export function MatchScreen() {
     if (!match) return
     if (prevTurn.current === 6 && match.turn === 7) {
       flashOverlay({ kind: 'halftime' }, 2200)
+      playHalftime()
       prevTurn.current = match.turn
       return
     }
     if (prevTurn.current === 5 && match.turn === 6) {
       flashOverlay({ kind: 'extra-time', half: 1 }, 2000)
+      playExtraTime()
       prevTurn.current = match.turn
       return
     }
     if (prevTurn.current === 11 && match.turn === 12) {
       flashOverlay({ kind: 'extra-time', half: 2 }, 2000)
+      playExtraTime()
       prevTurn.current = match.turn
       return
     }
@@ -614,7 +643,10 @@ export function MatchScreen() {
     if (isAttackTargeting) return undefined
     if (!canAfford(match.actions, card)) return undefined
     if (isBlockedInExtraTime(card, match)) return undefined
-    return () => playCard(idx)
+    return () => {
+      playCardPlace()
+      playCard(idx)
+    }
   }
 
   const isCardPlayable = (card: CardData): boolean =>
@@ -679,16 +711,31 @@ export function MatchScreen() {
 
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-medium text-stone-900">
-          FootStone <span className="text-stone-400">/ vs Шахтар</span>
+          FootStone <span className="text-stone-400">/ vs {match.oppName}</span>
         </div>
-        <button
-          onClick={() => setGalleryOpen(true)}
-          className="rounded-md border border-stone-300 bg-stone-50 px-2.5 py-1 text-xs hover:bg-stone-100"
-        >
-          🎴 Галерея
-        </button>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => {
+              const next = !muted
+              setMuted(next)
+              setMutedState(next)
+            }}
+            title={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
+            aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
+            className="rounded-md border border-stone-300 bg-stone-50 px-2.5 py-1 text-xs hover:bg-stone-100"
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
+          <button
+            onClick={() => setGalleryOpen(true)}
+            className="rounded-md border border-stone-300 bg-stone-50 px-2.5 py-1 text-xs hover:bg-stone-100"
+          >
+            🎴 Галерея
+          </button>
+        </div>
       </div>
 
+      <motion.div animate={pitchShakeControls}>
       <Pitch>
         <AnimatePresence>
           {ballEvent && ballEvent.kind === 'ball' && ballEvent.outcome && (
@@ -701,6 +748,7 @@ export function MatchScreen() {
           {ballEvent && ballEvent.kind === 'sniper' && (
             <SniperStrike key={ballEvent.nonce} side={ballEvent.side} />
           )}
+          {confettiKey > 0 && <ConfettiBurst key={`confetti-${confettiKey}`} />}
         </AnimatePresence>
         <div className="relative flex justify-center items-end">
           <KeeperCard
@@ -800,6 +848,7 @@ export function MatchScreen() {
           <KeeperCard keeper={match.myKeeper} />
         </div>
       </Pitch>
+      </motion.div>
 
       <ControlStrip match={match} />
 
