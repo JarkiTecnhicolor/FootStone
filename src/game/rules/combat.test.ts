@@ -248,7 +248,10 @@ describe('resolveAttack — cascade hits ALL defs (target first, then rest)', ()
   it('atk 5 vs [hp1, hp2] target idx 1 → пробиває цільового, потім каскадить на idx 0', () => {
     const mbarre = fwd(PLAYER_DECK, 'p_f1')
     const bondar = def(oppDeck, 'o_d2') // hp 1
-    const krochovyak = def(oppDeck, 'o_d1') // hp 2
+    const krochovyak: DefenderCard = {
+      id: 'test_def_hp2', name: 'TestDef', role: 'def', cost: 1,
+      hp: 2, maxHp: 2, perks: [],
+    }
     const result = resolveAttack({
       attacker: mbarre,
       defenders: [bondar, krochovyak],

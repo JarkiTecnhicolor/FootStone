@@ -22,6 +22,8 @@ export const NATIONALITY_BY_ID: Record<string, string> = {
   p_d17: 'FR', // Konoto → Ibrahima Konaté
   p_d18: 'IT', // Nosti → Alessandro Nesta
   p_d19: 'BE', // Verstontet → Jan Vertonghen
+  p_d20: 'BE', // Vermalen → Thomas Vermaelen
+  p_d21: 'PL', // Krochovyak → Grzegorz Krychowiak
 
   // Mids
   p_m1: 'HR', // Modruk → Luka Modrić

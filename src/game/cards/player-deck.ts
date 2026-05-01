@@ -8,7 +8,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'aura',
       effect: { kind: 'intimidate', amount: 2, threshold: 2 },
-      label: 'ЗАЛЯКУВАННЯ X2: -2 атаки усім ворожим форвардам якщо їх 2+',
+      label: '-2 атаки усім ворожим форвардам якщо їх 2+',
     }],
   },
   {
@@ -134,7 +134,7 @@ export const PLAYER_DECK: Card[] = [
       {
         trigger: 'aura',
         effect: { kind: 'intimidate', amount: 2, threshold: 1 },
-        label: 'ЗАЛЯКУВАННЯ: -2 атаки усім ворожим форвардам',
+        label: '-2 атаки усім ворожим форвардам',
       },
     ],
   },
@@ -171,6 +171,22 @@ export const PLAYER_DECK: Card[] = [
   {
     id: 'p_d10', name: 'Mechanic', role: 'def', cost: 1,
     rarity: 'bronze',
+    hp: 2, maxHp: 2,
+    perks: [],
+  },
+  {
+    id: 'p_d20', name: 'Vermalen', role: 'def', cost: 4,
+    rarity: 'gold',
+    hp: 4, maxHp: 4,
+    perks: [{
+      trigger: 'active',
+      effect: { kind: 'morph_to_fwd', atkDivisor: 2 },
+      label: 'ВСІ В АТАКУ — стає форвардом з atk = MaxHP/2 (округлено вгору)',
+    }],
+  },
+  {
+    id: 'p_d21', name: 'Krochovyak', role: 'def', cost: 2,
+    rarity: 'silver',
     hp: 2, maxHp: 2,
     perks: [],
   },
@@ -446,7 +462,7 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
-    id: 'p_f3', name: 'Vinicus', role: 'fwd', cost: 1,
+    id: 'p_f3', name: 'Vinicus', role: 'fwd', cost: 2,
     rarity: 'gold',
     atk: 2,
     perks: [{

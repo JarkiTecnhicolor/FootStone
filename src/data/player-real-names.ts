@@ -42,6 +42,8 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_d17': 'Ibrahima Konaté',
   'p_d18': 'Alessandro Nesta',
   'p_d19': 'Jan Vertonghen',
+  'p_d20': 'Thomas Vermaelen',
+  'p_d21': 'Grzegorz Krychowiak',
   'p_m1': 'Luka Modrić',
   'p_m2': "N'Golo Kanté",
   'p_m3': 'Pedri',
@@ -85,7 +87,6 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f22': 'Romário',
   'p_f23': 'Wayne Rooney',
 
-  'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',
   'o_d3': 'Marlos',
   'o_d4': 'Yaroslav Rakytskyi',

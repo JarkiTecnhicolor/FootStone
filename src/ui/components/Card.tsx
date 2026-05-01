@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import type { Card as CardData, Rarity } from '../../game/types'
 import type { Perk } from '../../game/perks/types'
-import { categoryOf } from '../../game/perks/types'
 import { avatarUrl } from '../lib/avatar'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
 import { REAL_PLAYERS, displayName, surname } from '../../data/player-real-names'
@@ -276,7 +275,7 @@ export function Card({
       onClick={onClick}
       title={skin.label || undefined}
       data-card-id={card.id}
-      className={`relative ${widthClass} ${footer ? 'min-h-[170px]' : 'min-h-[120px]'} rounded-lg border ${skin.box} ${outline} ${cursor} flex h-full flex-col select-none p-2 shadow-sm ${skin.glow}`}
+      className={`relative ${widthClass} min-h-[170px] rounded-lg border ${skin.box} ${outline} ${cursor} flex h-full flex-col select-none p-2 shadow-sm ${skin.glow}`}
     >
       {ready && (
         <motion.div
@@ -391,7 +390,6 @@ export function Card({
 
       {card.perks.length > 0 && (() => {
         const isTagged = (p: Perk) =>
-          categoryOf(p) === 'perk' ||
           !!parsePerkLabel(p.label).name ||
           isSimpleAtkToFwds(p) ||
           isSimpleHpToDefs(p)

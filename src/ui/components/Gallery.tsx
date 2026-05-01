@@ -8,6 +8,7 @@ import { SHAKHTAR } from '../../game/cards/opponents/shakhtar'
 import { BARCELONA } from '../../game/cards/opponents/barcelona'
 import { REAL } from '../../game/cards/opponents/real'
 import { WORLD_ALLSTAR } from '../../game/cards/opponents/world'
+import { DYNAMO } from '../../game/cards/opponents/dynamo'
 import { keeperPriceOf, priceOf } from '../../game/draft/pricing'
 import { displayName } from '../../data/player-real-names'
 import type { Card as CardData, Keeper, OpponentDeck, Rarity } from '../../game/types'
@@ -27,9 +28,10 @@ interface Props {
   onClose: () => void
 }
 
-type Tab = 'player' | 'shakhtar' | 'barcelona' | 'real' | 'world'
+type Tab = 'player' | 'dynamo' | 'shakhtar' | 'barcelona' | 'real' | 'world'
 
 const OPP_DECKS: Record<Exclude<Tab, 'player'>, OpponentDeck> = {
+  dynamo: DYNAMO,
   shakhtar: SHAKHTAR,
   barcelona: BARCELONA,
   real: REAL,
@@ -38,6 +40,7 @@ const OPP_DECKS: Record<Exclude<Tab, 'player'>, OpponentDeck> = {
 
 const TAB_LABELS: Record<Tab, string> = {
   player: 'Твоя дека',
+  dynamo: 'Dynamo Kyiv',
   shakhtar: 'Shakhtar',
   barcelona: 'Barcelona',
   real: 'Real',
@@ -122,7 +125,7 @@ export function Gallery({ open, onClose }: Props) {
                 >
                   {TAB_LABELS.player} · {PLAYER_DECK.length}
                 </button>
-                {(['shakhtar', 'barcelona', 'real', 'world'] as const).map(key => (
+                {(['dynamo', 'shakhtar', 'barcelona', 'real', 'world'] as const).map(key => (
                   <button
                     key={key}
                     onClick={() => setTab(key)}

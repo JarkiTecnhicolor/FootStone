@@ -14,6 +14,7 @@ const cards: Card[] = [
   pickById('p_d9'),  // Paquet (Piqué ES)
   pickById('p_d4'),  // Acerbe (Acerbi IT) — ageing veteran filler
   pickById('p_d2'),  // Saliboo (Saliba FR)
+  pickById('p_d20'), // Vermalen (Vermaelen BE) — utility morph defender
   pickById('p_m15'), // Xomi (Xavi ES) — playmaker x3
   pickById('p_m19'), // Miniesta (Iniesta ES) — assist + +1 draw
   pickById('p_m3'),  // Pedrri (Pedri ES)
@@ -21,8 +22,6 @@ const cards: Card[] = [
   pickById('p_f4'),  // Mossi (Messi AR — was Barca)
   pickById('p_f10'), // Bajan (Bojan ES)
   pickById('p_f14'), // Henky (Henry FR — was Barca briefly)
-  pickById('p_f3'),  // Vinicus (Vinícius BR) — pace
-  pickById('p_d11'), // Lugastiontiy (Luzhny UA) — sacrifice card filler
 ]
 
 const keeper = PLAYER_KEEPERS.find(k => k.id === 'k_buffon')

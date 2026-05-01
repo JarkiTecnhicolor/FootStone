@@ -3,12 +3,6 @@ import { SHAKHTAR_KEEPERS } from '../../keepers/shakhtar-keepers'
 
 const cards: Card[] = [
   {
-    id: 'o_d1', name: 'Krochovyak', role: 'def', cost: 2,
-    rarity: 'silver',
-    hp: 2, maxHp: 2,
-    perks: [],
-  },
-  {
     id: 'o_d2', name: 'Bondarro', role: 'def', cost: 1,
     rarity: 'bronze',
     hp: 1, maxHp: 1,

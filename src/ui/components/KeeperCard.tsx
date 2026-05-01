@@ -91,7 +91,7 @@ export function KeeperCard({ keeper, highlighted, onClick, footer }: Props) {
       title={keeper.label || keeper.rarity}
       whileTap={onClick ? { scale: 0.97 } : undefined}
       data-card-id={keeper.id}
-      className={`relative ${widthClass} ${footer ? 'min-h-[170px]' : 'min-h-[120px]'} rounded-lg border ${skin.box} ${skin.glow} ${cursor} flex h-full flex-col select-none p-2 shadow-sm`}
+      className={`relative ${widthClass} min-h-[170px] rounded-lg border ${skin.box} ${skin.glow} ${cursor} flex h-full flex-col select-none p-2 shadow-sm`}
     >
       {highlighted && (
         <motion.div
