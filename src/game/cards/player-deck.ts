@@ -261,6 +261,23 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_m13', name: 'Sonbinor', role: 'mid', cost: 1,
+    rarity: 'bronze',
+    stamina: 1, maxStamina: 1,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'atk_buff', amount: 1, scope: 'all_my_fwds' },
+        label: '+1 атаки форвардам',
+      },
+      {
+        trigger: 'on_place',
+        effect: { kind: 'hp_buff', amount: 1, scope: 'other_defs' },
+        label: '+1 HP захисникам',
+      },
+    ],
+  },
+  {
     id: 'p_m12', name: 'Tyagaryov', role: 'mid', cost: 1,
     rarity: 'bronze',
     stamina: 1, maxStamina: 1,
