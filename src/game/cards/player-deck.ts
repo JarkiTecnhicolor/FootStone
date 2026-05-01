@@ -64,7 +64,7 @@ export const PLAYER_DECK: Card[] = [
     perks: [{
       trigger: 'on_place',
       effect: { kind: 'hp_buff', amount: 3, scope: 'other_defs' },
-      label: 'ВЕТЕРАН: +3 HP усім іншим захисникам',
+      label: 'КАПІТАН x3: +3 HP усім іншим захисникам',
     }],
   },
   {

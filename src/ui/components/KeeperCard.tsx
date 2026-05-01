@@ -148,7 +148,7 @@ export function KeeperCard({ keeper, highlighted, onClick, footer }: Props) {
       </div>
 
       {keeper.label && (
-        <div className="mt-1.5 border-t border-current/15 pt-1 italic leading-tight text-[10px] opacity-85">
+        <div className="mt-1.5 border-t border-current/15 pt-1 leading-tight text-[10px] opacity-85">
           {keeper.label}
         </div>
       )}

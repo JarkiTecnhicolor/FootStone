@@ -366,13 +366,14 @@ export function Card({
       </div>
 
       {card.perks.length > 0 && (() => {
-        const bonuses = card.perks.filter(p => categoryOf(p) === 'bonus')
-        const namedPerks = card.perks.filter(p => categoryOf(p) === 'perk')
+        const isNamed = (p: Perk) => categoryOf(p) === 'perk' || !!parsePerkLabel(p.label).name
+        const descs = card.perks.filter(p => !isNamed(p))
+        const namedPerks = card.perks.filter(isNamed)
         return (
           <div className="mt-1.5 space-y-1 border-t border-current/15 pt-1.5">
-            {bonuses.length > 0 && (
+            {descs.length > 0 && (
               <div className="space-y-0.5">
-                {bonuses.map((p, i) => <PerkLine key={`b${i}`} perk={p} />)}
+                {descs.map((p, i) => <PerkLine key={`b${i}`} perk={p} />)}
               </div>
             )}
             {namedPerks.length > 0 && (
