@@ -4,6 +4,8 @@ import { Card } from '../components/Card'
 import { KeeperCard } from '../components/KeeperCard'
 import { Gallery } from '../components/Gallery'
 import { ConfettiBurst } from '../components/ConfettiBurst'
+import { FlagImg } from '../components/FlagImg'
+import { activeChemistries, CHEMISTRY_DEFS } from '../../game/chemistry'
 import { DraftScreen } from './DraftScreen'
 import { BetweenMatchScreen } from './BetweenMatchScreen'
 import { SeasonCompleteScreen } from './SeasonCompleteScreen'
@@ -138,17 +140,45 @@ function formatTurnLabel(turn: number): string {
   return `2-ий ${turn - 6}/5`
 }
 
+function ChemistryPills({ match }: { match: MatchState }) {
+  const codes = activeChemistries(match.myDefenders, match.myMids, match.myFwds, match.myKeeper)
+  if (codes.length === 0) return null
+  return (
+    <div className="flex flex-wrap items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 shadow-sm">
+      <span className="text-[9px] font-medium uppercase tracking-wider text-amber-900">
+        🔗 Хімія активна:
+      </span>
+      {codes.map(code => {
+        const def = CHEMISTRY_DEFS[code]
+        return (
+          <span
+            key={code}
+            title={def?.desc}
+            className="flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] text-amber-900 shadow-sm"
+          >
+            <FlagImg code={code} size={12} />
+            <span>{def?.label}</span>
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function ControlStrip({ match }: { match: MatchState }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
-      <StatPill label="Тайм" value={formatTurnLabel(Math.min(match.turn, match.maxTurn))} />
-      <div className="h-4 w-px bg-stone-200" />
-      <StatPill label="Дії" value={`${match.actions}/${match.maxActions}`} />
-      <div className="h-4 w-px bg-stone-200" />
-      <ScorePill match={match} />
-      <div className="ml-auto">
-        <PhasePill match={match} />
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+        <StatPill label="Тайм" value={formatTurnLabel(Math.min(match.turn, match.maxTurn))} />
+        <div className="h-4 w-px bg-stone-200" />
+        <StatPill label="Дії" value={`${match.actions}/${match.maxActions}`} />
+        <div className="h-4 w-px bg-stone-200" />
+        <ScorePill match={match} />
+        <div className="ml-auto">
+          <PhasePill match={match} />
+        </div>
       </div>
+      <ChemistryPills match={match} />
     </div>
   )
 }

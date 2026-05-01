@@ -17,7 +17,9 @@ import {
   resolveAttack,
   validAttackTargetIndices,
   type AttackTarget,
+  type ChemistryBonuses,
 } from './rules/combat'
+import { CHEMISTRY_THRESHOLD, countByNation } from './chemistry'
 import {
   applyOnPlacePerks,
   applySniperChoice,
@@ -89,6 +91,7 @@ export function makeFreshMatch(
     teamGoalsWhileAlive: {},
     oppGoalsWhileAlive: {},
     sniperKillsByCard: {},
+    englandTurnBonus: 0,
   }
 }
 
@@ -703,6 +706,10 @@ export function attackWithForward(
     defenderMids: state.oppMids,
     attackerFwdCount: state.myFwds.length,
     attackerFwds: state.myFwds,
+    chemistry: {
+      ...chemistryForSide(state, 'player'),
+      ...defenderChemistryForSide(state, 'opp'),
+    },
     target,
   })
 
@@ -733,6 +740,35 @@ export function attackWithForward(
   }
   nextState = queueDyingCaptains(nextState, state.oppDefenders, result.newEnemyDefenders, 'opp')
   return { ok: true, state: nextState }
+}
+
+function chemistryForSide(state: MatchState, side: Side): ChemistryBonuses {
+  const cards =
+    side === 'player'
+      ? [...state.myDefenders, ...state.myMids, ...state.myFwds]
+      : [...state.oppDefenders, ...state.oppMids, ...state.oppFwds]
+  const keeper = side === 'player' ? state.myKeeper : state.oppKeeper
+  const counts = countByNation(cards, keeper)
+  const has = (code: string) => (counts[code] ?? 0) >= CHEMISTRY_THRESHOLD
+  return {
+    attackerAtk: (has('BR') ? 1 : 0),
+    attackerAtkIfMid: has('AR') ? 1 : 0,
+    skipKeeperAbilities: has('BE'),
+  }
+}
+
+function defenderChemistryForSide(state: MatchState, side: Side): ChemistryBonuses {
+  const cards =
+    side === 'player'
+      ? [...state.myDefenders, ...state.myMids, ...state.myFwds]
+      : [...state.oppDefenders, ...state.oppMids, ...state.oppFwds]
+  const keeper = side === 'player' ? state.myKeeper : state.oppKeeper
+  const counts = countByNation(cards, keeper)
+  const has = (code: string) => (counts[code] ?? 0) >= CHEMISTRY_THRESHOLD
+  return {
+    defenderDamageReduction: has('IT') ? 1 : 0,
+    keeperSaveBonus: has('DE') ? 1 : 0,
+  }
 }
 
 function bumpAlive(state: MatchState, current: Record<string, number>): Record<string, number> {
@@ -791,6 +827,10 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
     defenderMids: state.myMids,
     attackerFwdCount: state.oppFwds.length,
     attackerFwds: state.oppFwds,
+    chemistry: {
+      ...chemistryForSide(state, 'opp'),
+      ...defenderChemistryForSide(state, 'player'),
+    },
     target,
   })
   const log: string[] = []
@@ -883,6 +923,14 @@ function applyHalftime(state: MatchState): MatchState {
 }
 
 export function advanceTurn(state: MatchState): MatchState {
+  // England chemistry: +20M for each turn ending with 3+ EN on field
+  const playerCounts = countByNation(
+    [...state.myDefenders, ...state.myMids, ...state.myFwds],
+    state.myKeeper,
+  )
+  const englandBonusThisTurn = (playerCounts['EN'] ?? 0) >= CHEMISTRY_THRESHOLD ? 20 : 0
+  state = { ...state, englandTurnBonus: state.englandTurnBonus + englandBonusThisTurn }
+
   const newTurn = state.turn + 1
   if (newTurn > state.maxTurn) {
     return { ...state, gameOver: true, phase: 'player', firstTurn: false }
@@ -913,7 +961,12 @@ export function advanceTurn(state: MatchState): MatchState {
   next = drainDyingCaptains(next, 'player')
   next = decayPlayerMids(next)
 
-  const drawCount = calcDrawCount(next.myMids)
+  const playerCountsForDraw = countByNation(
+    [...next.myDefenders, ...next.myMids, ...next.myFwds],
+    next.myKeeper,
+  )
+  const spainBonus = (playerCountsForDraw['ES'] ?? 0) >= CHEMISTRY_THRESHOLD ? 1 : 0
+  const drawCount = calcDrawCount(next.myMids) + spainBonus
   const drew = drawN(next.hand, next.deck, next.discard, drawCount)
   next = {
     ...next,
@@ -930,7 +983,12 @@ export function advanceTurn(state: MatchState): MatchState {
 
 export function drawForOpponentTurn(state: MatchState): MatchState {
   if (state.firstTurn) return state
-  const count = calcDrawCount(state.oppMids)
+  const oppCounts = countByNation(
+    [...state.oppDefenders, ...state.oppMids, ...state.oppFwds],
+    state.oppKeeper,
+  )
+  const spainBonus = (oppCounts['ES'] ?? 0) >= CHEMISTRY_THRESHOLD ? 1 : 0
+  const count = calcDrawCount(state.oppMids) + spainBonus
   const drew = drawN(state.oppHand, state.oppDeck, state.oppDiscard, count)
   return {
     ...state,

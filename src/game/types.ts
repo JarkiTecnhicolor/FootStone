@@ -115,6 +115,7 @@ export interface MatchState {
   teamGoalsWhileAlive: Record<string, number>
   oppGoalsWhileAlive: Record<string, number>
   sniperKillsByCard: Record<string, number>
+  englandTurnBonus: number
 }
 
 export interface PendingSniper {

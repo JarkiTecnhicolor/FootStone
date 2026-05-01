@@ -20,7 +20,7 @@ import {
   recordMatchResult,
   startSeason,
 } from '../season/state'
-import { keeperPriceOf, MAX_DECK_SIZE, priceOf, STARTING_BUDGET } from '../draft/pricing'
+import { keeperPriceOf, priceOf, STARTING_BUDGET } from '../draft/pricing'
 import { cloneCard, shuffle } from '../lib'
 import type { DraftedTeam } from '../draft/types'
 import { SHAKHTAR } from '../cards/opponents/shakhtar'

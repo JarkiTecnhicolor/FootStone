@@ -1,7 +1,7 @@
 import { PLAYER_DECK } from '../src/game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../src/game/keepers/player-keepers'
 import { keeperPriceOf, priceOf } from '../src/game/draft/pricing'
-import type { Card, Rarity } from '../src/game/types'
+import type { Rarity } from '../src/game/types'
 
 interface Row {
   id: string

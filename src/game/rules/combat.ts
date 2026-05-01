@@ -161,6 +161,14 @@ export type AttackTarget =
   | { kind: 'defender'; idx: number }
   | { kind: 'keeper' }
 
+export interface ChemistryBonuses {
+  attackerAtk?: number
+  attackerAtkIfMid?: number
+  defenderDamageReduction?: number
+  keeperSaveBonus?: number
+  skipKeeperAbilities?: boolean
+}
+
 export interface AttackInput {
   attacker: ForwardCard
   defenders: DefenderCard[]
@@ -169,6 +177,7 @@ export interface AttackInput {
   defenderMids: MidfielderCard[]
   attackerFwdCount?: number
   attackerFwds?: readonly ForwardCard[]
+  chemistry?: ChemistryBonuses
   target: AttackTarget
   random?: () => number
 }
@@ -223,17 +232,30 @@ function applyKeeperAbilities(
 }
 
 export function resolveAttack(input: AttackInput): AttackResult {
-  const { attacker, defenders, keeper, attackerMids, defenderMids, target, attackerFwdCount, attackerFwds } = input
+  const { attacker, defenders, keeper, attackerMids, defenderMids, target, attackerFwdCount, attackerFwds, chemistry } = input
   const random = input.random ?? Math.random
 
-  const atk = calculateAtk(attacker, attackerMids, defenders, attackerFwdCount, attackerFwds)
-  const damageReduction = calculateDamageReduction(defenderMids)
-  const effSave = effectiveKeeperSave(keeper, attacker)
+  const atkRaw = calculateAtk(attacker, attackerMids, defenders, attackerFwdCount, attackerFwds)
+  const chemAtkBonus =
+    (chemistry?.attackerAtk ?? 0) +
+    (attackerMids.length > 0 ? chemistry?.attackerAtkIfMid ?? 0 : 0)
+  const atk: AtkCalculation = chemAtkBonus !== 0
+    ? {
+        baseAtk: atkRaw.baseAtk,
+        buffs: chemAtkBonus > 0
+          ? [...atkRaw.buffs, { source: 'Хімія', amount: chemAtkBonus, origin: 'aura' }]
+          : atkRaw.buffs,
+        finalAtk: Math.max(0, atkRaw.finalAtk + chemAtkBonus),
+      }
+    : atkRaw
+  const damageReduction = calculateDamageReduction(defenderMids) + (chemistry?.defenderDamageReduction ?? 0)
+  const effSave = effectiveKeeperSave(keeper, attacker) + (chemistry?.keeperSaveBonus ?? 0)
   const damageDealt = Math.max(0, atk.finalAtk - damageReduction)
+  const effectiveKeeper: Keeper = chemistry?.skipKeeperAbilities ? { ...keeper, abilities: [] } : keeper
 
   if (hasBypass(attacker)) {
     const initialGoal = damageDealt > effSave
-    const finalRes = applyKeeperAbilities(damageDealt, initialGoal, keeper, atk.buffs, random, effSave)
+    const finalRes = applyKeeperAbilities(damageDealt, initialGoal, effectiveKeeper, atk.buffs, random, effSave)
     return {
       atk,
       damageReduction,
@@ -340,7 +362,7 @@ export function resolveAttack(input: AttackInput): AttackResult {
     }
 
     const initialGoal = leftover > effSave
-    const finalRes = applyKeeperAbilities(leftover, initialGoal, keeper, atk.buffs, random, effSave)
+    const finalRes = applyKeeperAbilities(leftover, initialGoal, effectiveKeeper, atk.buffs, random, effSave)
     return {
       atk,
       damageReduction,
@@ -358,7 +380,7 @@ export function resolveAttack(input: AttackInput): AttackResult {
   }
 
   const initialGoal = damageDealt > effSave
-  const finalRes = applyKeeperAbilities(damageDealt, initialGoal, keeper, atk.buffs, random, effSave)
+  const finalRes = applyKeeperAbilities(damageDealt, initialGoal, effectiveKeeper, atk.buffs, random, effSave)
   return {
     atk,
     damageReduction,

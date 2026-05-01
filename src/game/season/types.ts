@@ -16,6 +16,8 @@ export interface RewardBreakdown {
   cleanSheet: number
   hatTrick: number
   blowout: number
+  ukraineChemistry: number
+  englandChemistry: number
 }
 
 export interface MvpAward {

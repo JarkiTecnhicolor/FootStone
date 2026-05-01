@@ -4,6 +4,7 @@ import { PLAYER_KEEPERS } from '../keepers/player-keepers'
 import { SHAKHTAR } from '../cards/opponents/shakhtar'
 import { cloneCard, shuffle } from '../lib'
 import { MAX_DECK_SIZE, MIN_DECK_SIZE, priceOf, releasePriceOf } from '../draft/pricing'
+import { CHEMISTRY_THRESHOLD, countByNation } from '../chemistry'
 import type { DraftedTeam } from '../draft/types'
 import { computeMvp, MONEY_BONUS, rollMvpReward } from './mvp'
 import type {
@@ -79,6 +80,7 @@ export function rewardBreakdownFor(
   myScore: number,
   oppScore: number,
   goalsByFwd: Record<string, number>,
+  match: MatchState,
 ): RewardBreakdown {
   const base = outcome === 'win' ? 35 : outcome === 'draw' ? 18 : 5
   const goalBonus = myScore * 4
@@ -87,13 +89,36 @@ export function rewardBreakdownFor(
   const maxFwdGoals = Object.values(goalsByFwd).reduce((m, v) => Math.max(m, v), 0)
   const hatTrick = maxFwdGoals >= 3 ? 25 : 0
   const blowout = myScore - oppScore >= 3 && myScore >= 3 ? 15 : 0
-  return { base, goalBonus, concedePenalty, cleanSheet, hatTrick, blowout }
+  // Ukraine chemistry: +10M if 3+ UA on player's field at match end
+  const counts = countByNation(
+    [...match.myDefenders, ...match.myMids, ...match.myFwds],
+    match.myKeeper,
+  )
+  const ukraineChemistry = (counts['UA'] ?? 0) >= CHEMISTRY_THRESHOLD ? 10 : 0
+  const englandChemistry = match.englandTurnBonus
+  return {
+    base,
+    goalBonus,
+    concedePenalty,
+    cleanSheet,
+    hatTrick,
+    blowout,
+    ukraineChemistry,
+    englandChemistry,
+  }
 }
 
 export function totalReward(b: RewardBreakdown): number {
   return Math.max(
     0,
-    b.base + b.goalBonus - b.concedePenalty + b.cleanSheet + b.hatTrick + b.blowout,
+    b.base +
+      b.goalBonus -
+      b.concedePenalty +
+      b.cleanSheet +
+      b.hatTrick +
+      b.blowout +
+      b.ukraineChemistry +
+      b.englandChemistry,
   )
 }
 
@@ -138,7 +163,7 @@ export function recordMatchResult(
   const plan = state.plan[idx]
   const outcome: MatchOutcome =
     myScore > oppScore ? 'win' : myScore === oppScore ? 'draw' : 'loss'
-  const breakdown = rewardBreakdownFor(outcome, myScore, oppScore, goalsByFwd)
+  const breakdown = rewardBreakdownFor(outcome, myScore, oppScore, goalsByFwd, match)
   let reward = totalReward(breakdown)
 
   // MVP detection
