@@ -131,8 +131,8 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick }: Props)
         />
         <div className="min-w-0 flex-1">
           <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
-            {flagOf(keeper.id) && <span className="mr-0.5">{flagOf(keeper.id)}</span>}
             {keeper.name}
+            {flagOf(keeper.id) && <span className="ml-0.5">{flagOf(keeper.id)}</span>}
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">
             <span className={`font-medium ${isLg ? 'text-base' : 'text-[13px]'}`}>

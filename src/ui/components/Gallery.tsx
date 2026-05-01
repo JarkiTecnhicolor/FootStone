@@ -35,9 +35,11 @@ function CardWithPrice({ card }: { card: CardData }) {
   const flag = flagOf(card.id)
   const label = labelOf(card.id)
   return (
-    <div className="flex flex-col items-center">
-      <Card card={card} size="lg" showCost />
-      <div className="mt-1 flex flex-col items-center gap-0.5">
+    <div className="flex flex-col items-center justify-between rounded-lg border border-stone-100 bg-white p-1.5">
+      <div className="flex w-full justify-center">
+        <Card card={card} size="lg" showCost />
+      </div>
+      <div className="mt-2 flex flex-col items-center gap-0.5">
         <div className="rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
           💰 {priceOf(card)} M
         </div>
@@ -55,9 +57,11 @@ function KeeperWithPrice({ keeper }: { keeper: Keeper }) {
   const flag = flagOf(keeper.id)
   const label = labelOf(keeper.id)
   return (
-    <div className="flex flex-col items-center">
-      <KeeperCard keeper={keeper} size="lg" />
-      <div className="mt-1 flex flex-col items-center gap-0.5">
+    <div className="flex flex-col items-center justify-between rounded-lg border border-stone-100 bg-white p-1.5">
+      <div className="flex w-full justify-center">
+        <KeeperCard keeper={keeper} size="lg" />
+      </div>
+      <div className="mt-2 flex flex-col items-center gap-0.5">
         <div className="rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
           💰 {keeperPriceOf(keeper)} M
         </div>
@@ -148,7 +152,7 @@ export function Gallery({ open, onClose }: Props) {
                   <div className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                     🧤 Воротарі · {keepers.length}
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, 200px)' }}>
                     {keepers.map(k => (
                       <KeeperWithPrice key={k.id} keeper={k} />
                     ))}
@@ -163,7 +167,7 @@ export function Gallery({ open, onClose }: Props) {
                     <div className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                       {ROLE_TITLE[role]} · {roleCards.length}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, 200px)' }}>
                       {roleCards.map(c => (
                         <CardWithPrice key={c.id} card={c} />
                       ))}

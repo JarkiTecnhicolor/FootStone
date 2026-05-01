@@ -326,8 +326,8 @@ export function Card({
         />
         <div className="min-w-0 flex-1">
           <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
-            {flagOf(card.id) && <span className="mr-0.5">{flagOf(card.id)}</span>}
             {card.name}
+            {flagOf(card.id) && <span className="ml-0.5">{flagOf(card.id)}</span>}
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">
             <span

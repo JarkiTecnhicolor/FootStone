@@ -19,10 +19,10 @@ import type {
 const UPGRADE_CAP_PER_CARD = 2
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
-  { idx: 0, oppKind: 'shakhtar', oppName: 'Шахтар' },
-  { idx: 1, oppKind: 'shakhtar', oppName: 'Шахтар (відплата)' },
-  { idx: 2, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 160 },
-  { idx: 3, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 200 },
+  { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 160 },
+  { idx: 1, oppKind: 'shakhtar', oppName: 'Шахтар' },
+  { idx: 2, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 200 },
+  { idx: 3, oppKind: 'shakhtar', oppName: 'Шахтар (відплата)' },
   { idx: 4, oppKind: 'random', oppName: 'Гроссмейстри', oppBudget: 270 },
 ]
 
@@ -325,23 +325,30 @@ export function tradePaymentFor(offer: TradeOffer | null, myCard: Card | undefin
   return Math.round(diff * offer.multiplier)
 }
 
+const RANDOM_OPP_DECK_SIZE = 8
+
 export function makeOpponentByBudget(name: string, budget: number): OpponentDeck {
   const shuffled = shuffle(PLAYER_DECK.map(cloneCard))
+  // Greedy fill up to fixed deck size while staying within budget — pricier cards first
+  // so a high-budget opp actually fields strong cards (not just cheap fillers).
+  const sorted = shuffled.slice().sort((a, b) => priceOf(b) - priceOf(a))
   const cards: Card[] = []
   let remaining = budget
-  for (const c of shuffled) {
-    if (cards.length >= MAX_DECK_SIZE) break
+  for (const c of sorted) {
+    if (cards.length >= RANDOM_OPP_DECK_SIZE) break
     const p = priceOf(c)
     if (p <= remaining) {
       cards.push(c)
       remaining -= p
     }
   }
-  // Fallback: ensure min size by allowing budget overflow if pool too small
-  if (cards.length < MIN_DECK_SIZE) {
-    for (const c of shuffled) {
-      if (cards.length >= MIN_DECK_SIZE) break
-      if (cards.some(cc => cc.id === c.id)) continue
+  // If still short of fixed size (budget too tight), fill with cheapest remaining
+  if (cards.length < RANDOM_OPP_DECK_SIZE) {
+    const cheap = shuffled
+      .filter(c => !cards.some(cc => cc.id === c.id))
+      .sort((a, b) => priceOf(a) - priceOf(b))
+    for (const c of cheap) {
+      if (cards.length >= RANDOM_OPP_DECK_SIZE) break
       cards.push(c)
     }
   }
