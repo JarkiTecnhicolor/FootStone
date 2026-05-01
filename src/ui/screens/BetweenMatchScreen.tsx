@@ -62,6 +62,8 @@ function MatchPlanRow({
         result.breakdown.cleanSheet > 0 && `+${result.breakdown.cleanSheet} 🚪 Чистий лист`,
         result.breakdown.hatTrick > 0 && `+${result.breakdown.hatTrick} ⚽⚽⚽ Хет-трик`,
         result.breakdown.blowout > 0 && `+${result.breakdown.blowout} 💥 Розгром`,
+        result.breakdown.ukraineChemistry > 0 && `+${result.breakdown.ukraineChemistry} 🇺🇦 хімія`,
+        result.breakdown.englandChemistry > 0 && `+${result.breakdown.englandChemistry} 🏴 хімія`,
       ]
         .filter(Boolean)
         .join(' · ')
@@ -71,6 +73,8 @@ function MatchPlanRow({
         result.breakdown.cleanSheet > 0 && '🚪',
         result.breakdown.hatTrick > 0 && '⚽⚽⚽',
         result.breakdown.blowout > 0 && '💥',
+        result.breakdown.ukraineChemistry > 0 && '🇺🇦',
+        result.breakdown.englandChemistry > 0 && '🏴',
       ].filter(Boolean)
     : []
   return (

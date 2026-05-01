@@ -5,7 +5,7 @@ import { KeeperCard } from '../components/KeeperCard'
 import { Gallery } from '../components/Gallery'
 import { ConfettiBurst } from '../components/ConfettiBurst'
 import { FlagImg } from '../components/FlagImg'
-import { activeChemistries, CHEMISTRY_DEFS } from '../../game/chemistry'
+import { activeChemistries, CHEMISTRY_DEFS, CHEMISTRY_THRESHOLD, countByNation } from '../../game/chemistry'
 import { DraftScreen } from './DraftScreen'
 import { BetweenMatchScreen } from './BetweenMatchScreen'
 import { SeasonCompleteScreen } from './SeasonCompleteScreen'
@@ -778,6 +778,16 @@ export function MatchScreen() {
     canAfford(match.actions, card) && !isBlockedInExtraTime(card, match)
 
   const validDefTargets = validAttackTargetIndices(match.oppDefenders)
+
+  // Chemistry bonus to fwd atk (BR + AR-with-mid) for visual highlight
+  const myCounts = countByNation([...match.myDefenders, ...match.myMids, ...match.myFwds], match.myKeeper)
+  const myBrBonus = (myCounts['BR'] ?? 0) >= CHEMISTRY_THRESHOLD ? 1 : 0
+  const myArBonus = (myCounts['AR'] ?? 0) >= CHEMISTRY_THRESHOLD && match.myMids.length > 0 ? 1 : 0
+  const myFwdChemBonus = myBrBonus + myArBonus
+  const oppCounts = countByNation([...match.oppDefenders, ...match.oppMids, ...match.oppFwds], match.oppKeeper)
+  const oppBrBonus = (oppCounts['BR'] ?? 0) >= CHEMISTRY_THRESHOLD ? 1 : 0
+  const oppArBonus = (oppCounts['AR'] ?? 0) >= CHEMISTRY_THRESHOLD && match.oppMids.length > 0 ? 1 : 0
+  const oppFwdChemBonus = oppBrBonus + oppArBonus
   const oppDefClick = (idx: number): (() => void) | undefined => {
     if (isSniperMode) {
       if (isInvulnerable(match.oppDefenders[idx])) return undefined
@@ -927,7 +937,7 @@ export function MatchScreen() {
             <Card
               key={c.id}
               card={c}
-              effectiveAtk={calculateAtk(c, match.oppMids, match.myDefenders, match.oppFwds.length, match.oppFwds).finalAtk}
+              effectiveAtk={calculateAtk(c, match.oppMids, match.myDefenders, match.oppFwds.length, match.oppFwds).finalAtk + oppFwdChemBonus}
               targetable={isCardTargetable('oppFwd')}
               onClick={oppFwdClick(i)}
             />
@@ -950,7 +960,7 @@ export function MatchScreen() {
             <Card
               key={c.id}
               card={c}
-              effectiveAtk={calculateAtk(c, match.myMids, match.oppDefenders, match.myFwds.length, match.myFwds).finalAtk}
+              effectiveAtk={calculateAtk(c, match.myMids, match.oppDefenders, match.myFwds.length, match.myFwds).finalAtk + myFwdChemBonus}
               ready={c.status === 'ready_to_attack' && targetingFwdId !== c.id}
               targetable={targetingFwdId === c.id || isInstantGrantTarget}
               dimmed={isAttackTargeting && targetingFwdId !== c.id}
