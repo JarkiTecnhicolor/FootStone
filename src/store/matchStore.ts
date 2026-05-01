@@ -20,17 +20,35 @@ import { PLAYER_DECK } from '../game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../game/keepers/player-keepers'
 import { SHAKHTAR } from '../game/cards/opponents/shakhtar'
 import { makeRandomOpponent } from '../game/cards/opponents/random'
+import type { DraftState, DraftedTeam } from '../game/draft/types'
+import {
+  finalizeDraft,
+  finishBench as finishBenchOp,
+  pickCard as pickCardOp,
+  pickKeeper as pickKeeperOp,
+  skipStep as skipStepOp,
+  startDraft as startDraftOp,
+} from '../game/draft/state'
 
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
 
 interface Store {
   match: MatchState | null
+  draft: DraftState | null
+  draftedTeam: DraftedTeam | null
   targetingFwdId: string | null
   undoStack: MatchState[]
   turnStartSnapshot: MatchState | null
 
   startMatch: (opp?: OpponentDeck) => void
   startQuickMatch: (kind: 'shakhtar' | 'random') => void
+  startDraft: () => void
+  draftPickCard: (cardId: string) => void
+  draftPickKeeper: (keeperId: string) => void
+  draftSkip: () => void
+  draftFinishBench: () => void
+  draftAbort: () => void
+  startMatchFromDraft: (kind: 'shakhtar' | 'random') => void
   resetMatch: () => void
   playCard: (handIdx: number) => void
   beginFwdTargeting: (fwdId: string) => void
@@ -51,6 +69,8 @@ function pushUndo(stack: MatchState[], state: MatchState): MatchState[] {
 
 export const useMatchStore = create<Store>((set, get) => ({
   match: null,
+  draft: null,
+  draftedTeam: null,
   targetingFwdId: null,
   undoStack: [],
   turnStartSnapshot: null,
@@ -65,8 +85,61 @@ export const useMatchStore = create<Store>((set, get) => ({
     const fresh = makeFreshMatch(PLAYER_DECK, PLAYER_KEEPERS, opp)
     set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh })
   },
+  startDraft: () => {
+    set({ draft: startDraftOp(), draftedTeam: null, match: null })
+  },
+  draftPickCard: (cardId) => {
+    const { draft } = get()
+    if (!draft) return
+    set({ draft: pickCardOp(draft, cardId) })
+  },
+  draftPickKeeper: (keeperId) => {
+    const { draft } = get()
+    if (!draft) return
+    set({ draft: pickKeeperOp(draft, keeperId) })
+  },
+  draftSkip: () => {
+    const { draft } = get()
+    if (!draft) return
+    set({ draft: skipStepOp(draft) })
+  },
+  draftFinishBench: () => {
+    const { draft } = get()
+    if (!draft) return
+    const next = finishBenchOp(draft)
+    if (next) set({ draft: next })
+  },
+  draftAbort: () => {
+    set({ draft: null })
+  },
+  startMatchFromDraft: (kind) => {
+    const { draft } = get()
+    if (!draft) return
+    const team = finalizeDraft(draft)
+    if (!team) return
+    const opp =
+      kind === 'random'
+        ? makeRandomOpponent(team.cards, [team.keeper])
+        : SHAKHTAR
+    const fresh = makeFreshMatch(team.cards, [team.keeper], opp)
+    set({
+      match: fresh,
+      draft: null,
+      draftedTeam: team,
+      targetingFwdId: null,
+      undoStack: [],
+      turnStartSnapshot: fresh,
+    })
+  },
   resetMatch: () =>
-    set({ match: null, targetingFwdId: null, undoStack: [], turnStartSnapshot: null }),
+    set({
+      match: null,
+      draft: null,
+      draftedTeam: null,
+      targetingFwdId: null,
+      undoStack: [],
+      turnStartSnapshot: null,
+    }),
 
   playCard: (handIdx) => {
     const { match, undoStack } = get()

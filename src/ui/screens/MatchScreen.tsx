@@ -4,6 +4,7 @@ import { Card } from '../components/Card'
 import { KeeperCard } from '../components/KeeperCard'
 import { Gallery } from '../components/Gallery'
 import { ConfettiBurst } from '../components/ConfettiBurst'
+import { DraftScreen } from './DraftScreen'
 import { useMatchStore } from '../../store/matchStore'
 import { canAfford } from '../../game/rules/cost'
 import { currentHalf, decideMatchResult, isBlockedInExtraTime, isExtraTime } from '../../game/match'
@@ -371,8 +372,33 @@ function CenterLine() {
   )
 }
 
+function DraftWrapper({ onOpenGallery }: { onOpenGallery: () => void }) {
+  const draft = useMatchStore(s => s.draft)
+  const draftPickCard = useMatchStore(s => s.draftPickCard)
+  const draftPickKeeper = useMatchStore(s => s.draftPickKeeper)
+  const draftSkip = useMatchStore(s => s.draftSkip)
+  const draftFinishBench = useMatchStore(s => s.draftFinishBench)
+  const draftAbort = useMatchStore(s => s.draftAbort)
+  const startMatchFromDraft = useMatchStore(s => s.startMatchFromDraft)
+  if (draft) {
+    return (
+      <DraftScreen
+        state={draft}
+        onPickCard={draftPickCard}
+        onPickKeeper={draftPickKeeper}
+        onSkip={draftSkip}
+        onFinishBench={draftFinishBench}
+        onStartMatch={() => startMatchFromDraft('shakhtar')}
+        onAbort={draftAbort}
+      />
+    )
+  }
+  return <MatchSetup onOpenGallery={onOpenGallery} />
+}
+
 function MatchSetup({ onOpenGallery }: { onOpenGallery: () => void }) {
   const startQuickMatch = useMatchStore(s => s.startQuickMatch)
+  const startDraft = useMatchStore(s => s.startDraft)
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -387,13 +413,26 @@ function MatchSetup({ onOpenGallery }: { onOpenGallery: () => void }) {
           🎴 Галерея
         </button>
       </div>
-      <div className="text-xs text-stone-600">
-        Стартова рука: 5 рандомних карт. Форварди атакують через хід після виставлення.
+
+      <div className="rounded-lg border border-emerald-300 bg-gradient-to-br from-emerald-50 to-emerald-100 p-3 shadow-sm">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-950">
+          🏆 Новий забіг
+        </div>
+        <div className="mb-2 text-[11px] leading-snug text-emerald-900/85">
+          Збираєш команду з нуля з обмеженим бюджетом. Через драфт-флоу обираєш зірку, воротаря,
+          по позиціям і лаву. Потім граєш сезон.
+        </div>
+        <button
+          onClick={startDraft}
+          className="w-full rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-800"
+        >
+          Розпочати драфт →
+        </button>
       </div>
 
       <div className="rounded-lg border border-stone-300 bg-stone-50 p-3">
         <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-stone-900">
-          ⚡ Швидкий матч
+          ⚡ Швидкий матч (повна колекція)
         </div>
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -627,7 +666,7 @@ export function MatchScreen() {
   if (!match) {
     return (
       <>
-        <MatchSetup onOpenGallery={() => setGalleryOpen(true)} />
+        <DraftWrapper onOpenGallery={() => setGalleryOpen(true)} />
         <Gallery open={galleryOpen} onClose={() => setGalleryOpen(false)} />
       </>
     )

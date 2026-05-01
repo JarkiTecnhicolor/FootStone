@@ -14,6 +14,7 @@ export interface BaseCard {
   perks: Perk[]
   unique?: boolean
   rarity?: Rarity
+  price?: number
 }
 
 export interface AppliedHpBuff {
@@ -61,6 +62,7 @@ export interface Keeper {
   rarity?: Rarity
   abilities: KeeperAbility[]
   label?: string
+  price?: number
 }
 
 export interface OpponentDeck {
