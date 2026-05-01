@@ -36,7 +36,7 @@ export interface SeasonSimResult {
   results: Array<{ idx: number; outcome: string; myScore: number; oppScore: number }>
 }
 
-function autoDraft(
+export function autoDraft(
   pool: readonly Card[],
   keepers: readonly Keeper[],
   budget: number,
