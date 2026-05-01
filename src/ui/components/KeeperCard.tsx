@@ -91,6 +91,7 @@ export function KeeperCard({ keeper, highlighted, onClick, footer, stretch = fal
       onClick={onClick}
       title={keeper.label || keeper.rarity}
       whileTap={onClick ? { scale: 0.97 } : undefined}
+      data-card-id={keeper.id}
       className={`relative ${widthClass} rounded-lg border ${skin.box} ${skin.glow} ${cursor} select-none p-2 shadow-sm ${stretch ? 'flex h-full flex-col' : ''}`}
     >
       {highlighted && (

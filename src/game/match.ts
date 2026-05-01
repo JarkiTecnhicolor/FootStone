@@ -40,9 +40,10 @@ import type {
 } from './types'
 import type { Perk } from './perks/types'
 import { displayName } from '../data/player-real-names'
+import type { AnimEvent } from './anim/events'
 
 export type PlayResult =
-  | { ok: true; state: MatchState }
+  | { ok: true; state: MatchState; events?: AnimEvent[] }
   | { ok: false; reason: string }
 
 export function makeFreshMatch(
@@ -597,7 +598,15 @@ export function resolvePendingSniper(state: MatchState, target: SniperTargetSele
     },
   }
   nextState = queueDyingCaptains(nextState, state.oppDefenders, result.enemyDefenders, 'opp')
-  return { ok: true, state: nextState }
+  const events: AnimEvent[] = [
+    {
+      kind: 'sniper_kill',
+      side: 'player',
+      sourceId,
+      targetId: result.removed.id,
+    },
+  ]
+  return { ok: true, state: nextState, events }
 }
 
 export function activateMorph(
@@ -723,6 +732,29 @@ export function attackWithForward(
   else if (result.goal) log.push(`  ⚽ ГОЛ! (${result.keeperDamage} > save ${state.oppKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере (${result.keeperDamage} ≤ save ${state.oppKeeper.save}).`)
 
+  const targetCardId =
+    target.kind === 'defender' && result.defenderHitIdx !== null
+      ? state.oppDefenders[result.defenderHitIdx]?.id
+      : undefined
+  const targetKeeperId = result.reachedKeeper ? state.oppKeeper.id : undefined
+  const events: AnimEvent[] = [
+    {
+      kind: 'attack',
+      side: 'player',
+      sourceId: fwd.id,
+      targetCardId,
+      targetKeeperId,
+      finalAtk: result.atk.finalAtk,
+      damage: result.damageDealt,
+      defenderRemoved: result.defenderRemoved,
+      reachedKeeper: result.reachedKeeper,
+      save: result.reachedKeeper && !result.goal,
+      goal: result.goal,
+      buffsStripped: result.buffsStripped,
+      bypass: result.bypass,
+    },
+  ]
+
   const teamGoalsAfter = result.goal ? bumpAlive(state, state.teamGoalsWhileAlive) : state.teamGoalsWhileAlive
   let nextState: MatchState = {
     ...state,
@@ -740,7 +772,7 @@ export function attackWithForward(
     teamGoalsWhileAlive: teamGoalsAfter,
   }
   nextState = queueDyingCaptains(nextState, state.oppDefenders, result.newEnemyDefenders, 'opp')
-  return { ok: true, state: nextState }
+  return { ok: true, state: nextState, events }
 }
 
 function chemistryForSide(state: MatchState, side: Side): ChemistryBonuses {
@@ -787,7 +819,7 @@ export function autoTarget(state: MatchState, attackerSide: Side): AttackTarget 
   return { kind: 'defender', idx: valid[0] }
 }
 
-export function nextPlayerAutoAttack(state: MatchState): { state: MatchState; done: boolean } {
+export function nextPlayerAutoAttack(state: MatchState): { state: MatchState; done: boolean; events?: AnimEvent[] } {
   if (state.phase !== 'player') return { state, done: true }
   const ready = state.myFwds.find(f => f.status === 'ready_to_attack')
   if (!ready) return { state, done: true }
@@ -796,7 +828,7 @@ export function nextPlayerAutoAttack(state: MatchState): { state: MatchState; do
     : autoTarget(state, 'player')
   const r = attackWithForward(state, ready.id, target)
   if (!r.ok) return { state, done: true }
-  return { state: r.state, done: false }
+  return { state: r.state, done: false, events: r.events }
 }
 
 export function finalizePlayerTurn(state: MatchState): MatchState {
@@ -814,7 +846,7 @@ export function endPlayerTurn(state: MatchState): MatchState {
   return finalizePlayerTurn(s)
 }
 
-export function resolveOneOpponentForward(state: MatchState): { state: MatchState; done: boolean } {
+export function resolveOneOpponentForward(state: MatchState): { state: MatchState; done: boolean; events?: AnimEvent[] } {
   const ready = state.oppFwds.find(f => f.status === 'ready_to_attack')
   if (!ready) return { state, done: true }
   const target: AttackTarget = hasBypass(ready)
@@ -862,7 +894,28 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
     oppGoalsWhileAlive: oppGoalsAfter,
   }
   nextState = queueDyingCaptains(nextState, state.myDefenders, result.newEnemyDefenders, 'player')
-  return { state: nextState, done: false }
+  const oppTargetCardId =
+    target.kind === 'defender' && result.defenderHitIdx !== null
+      ? state.myDefenders[result.defenderHitIdx]?.id
+      : undefined
+  const events: AnimEvent[] = [
+    {
+      kind: 'attack',
+      side: 'opp',
+      sourceId: ready.id,
+      targetCardId: oppTargetCardId,
+      targetKeeperId: result.reachedKeeper ? state.myKeeper.id : undefined,
+      finalAtk: result.atk.finalAtk,
+      damage: result.damageDealt,
+      defenderRemoved: result.defenderRemoved,
+      reachedKeeper: result.reachedKeeper,
+      save: result.reachedKeeper && !result.goal,
+      goal: result.goal,
+      buffsStripped: result.buffsStripped,
+      bypass: result.bypass,
+    },
+  ]
+  return { state: nextState, done: false, events }
 }
 
 export function resolveOpponentForwards(state: MatchState): MatchState {

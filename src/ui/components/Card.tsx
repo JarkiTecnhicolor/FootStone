@@ -240,6 +240,7 @@ export function Card({
       whileTap={onClick ? { scale: 0.96 } : undefined}
       onClick={onClick}
       title={skin.label || undefined}
+      data-card-id={card.id}
       className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} select-none p-2 shadow-sm ${skin.glow} ${stretch ? 'flex h-full flex-col' : ''}`}
     >
       {ready && (

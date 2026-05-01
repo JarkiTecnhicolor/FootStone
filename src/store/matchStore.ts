@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import type { MatchState, OpponentDeck } from '../game/types'
 import { hasBypass, type AttackTarget } from '../game/rules/combat'
 import type { SniperTargetSelection } from '../game/perks/dispatch'
+import type { AnimEvent } from '../game/anim/events'
+
+export interface QueuedAnimEvent {
+  id: number
+  event: AnimEvent
+}
 import {
   makeFreshMatch,
   playPlayerCard,
@@ -56,6 +62,8 @@ interface Store {
   targetingFwdId: string | null
   undoStack: MatchState[]
   turnStartSnapshot: MatchState | null
+  animEvents: QueuedAnimEvent[]
+  consumeAnimEvent: (id: number) => void
 
   startMatch: (opp?: OpponentDeck) => void
   startQuickMatch: (kind: 'shakhtar' | 'random') => void
@@ -97,6 +105,12 @@ function pushUndo(stack: MatchState[], state: MatchState): MatchState[] {
   return next
 }
 
+let animEventCounter = 0
+function makeQueuedEvents(events: AnimEvent[] | undefined): QueuedAnimEvent[] {
+  if (!events || events.length === 0) return []
+  return events.map(event => ({ id: ++animEventCounter, event }))
+}
+
 export const useMatchStore = create<Store>((set, get) => ({
   match: null,
   draft: null,
@@ -105,16 +119,21 @@ export const useMatchStore = create<Store>((set, get) => ({
   targetingFwdId: null,
   undoStack: [],
   turnStartSnapshot: null,
+  animEvents: [],
+
+  consumeAnimEvent: (id: number) => {
+    set({ animEvents: get().animEvents.filter(e => e.id !== id) })
+  },
 
   startMatch: (opp = SHAKHTAR) => {
     const fresh = makeFreshMatch(PLAYER_DECK, PLAYER_KEEPERS, opp)
-    set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh })
+    set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh, animEvents: [] })
   },
   startQuickMatch: (kind) => {
     const opp =
       kind === 'random' ? makeRandomOpponent(PLAYER_DECK, PLAYER_KEEPERS) : SHAKHTAR
     const fresh = makeFreshMatch(PLAYER_DECK, PLAYER_KEEPERS, opp)
-    set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh })
+    set({ match: fresh, targetingFwdId: null, undoStack: [], turnStartSnapshot: fresh, animEvents: [] })
   },
   startDraft: () => {
     set({ draft: startDraftOp(), draftedTeam: null, match: null })
@@ -160,6 +179,7 @@ export const useMatchStore = create<Store>((set, get) => ({
       targetingFwdId: null,
       undoStack: [],
       turnStartSnapshot: fresh,
+      animEvents: [],
     })
   },
 
@@ -186,6 +206,7 @@ export const useMatchStore = create<Store>((set, get) => ({
       targetingFwdId: null,
       undoStack: [],
       turnStartSnapshot: fresh,
+      animEvents: [],
     })
   },
 
@@ -193,7 +214,7 @@ export const useMatchStore = create<Store>((set, get) => ({
     const { match, season } = get()
     if (!match || !match.gameOver || !season) return
     const next = recordMatchResult(season, match.myScore, match.oppScore, match.goalsByFwd, match)
-    set({ match: null, season: next, targetingFwdId: null, undoStack: [], turnStartSnapshot: null })
+    set({ match: null, season: next, targetingFwdId: null, undoStack: [], turnStartSnapshot: null, animEvents: [] })
   },
 
   buyShopCard: (cardId) => {
@@ -246,6 +267,7 @@ export const useMatchStore = create<Store>((set, get) => ({
       targetingFwdId: null,
       undoStack: [],
       turnStartSnapshot: null,
+      animEvents: [],
     })
   },
   resetMatch: () =>
@@ -257,6 +279,7 @@ export const useMatchStore = create<Store>((set, get) => ({
       targetingFwdId: null,
       undoStack: [],
       turnStartSnapshot: null,
+      animEvents: [],
     }),
 
   playCard: (handIdx) => {
@@ -269,14 +292,19 @@ export const useMatchStore = create<Store>((set, get) => ({
   },
 
   beginFwdTargeting: (fwdId) => {
-    const { match, undoStack } = get()
+    const { match, undoStack, animEvents } = get()
     if (!match || match.phase !== 'player' || match.pendingSniper) return
     const fwd = match.myFwds.find(f => f.id === fwdId)
     if (!fwd || fwd.status !== 'ready_to_attack') return
     if (hasBypass(fwd) || match.oppDefenders.length === 0) {
       const r = attackWithForward(match, fwdId, { kind: 'keeper' })
       if (r.ok) {
-        set({ match: r.state, targetingFwdId: null, undoStack: pushUndo(undoStack, match) })
+        set({
+          match: r.state,
+          targetingFwdId: null,
+          undoStack: pushUndo(undoStack, match),
+          animEvents: [...animEvents, ...makeQueuedEvents(r.events)],
+        })
       }
       return
     }
@@ -284,11 +312,16 @@ export const useMatchStore = create<Store>((set, get) => ({
   },
 
   selectAttackTarget: (target) => {
-    const { match, targetingFwdId, undoStack } = get()
+    const { match, targetingFwdId, undoStack, animEvents } = get()
     if (!match || !targetingFwdId) return
     const r = attackWithForward(match, targetingFwdId, target)
     if (r.ok) {
-      set({ match: r.state, targetingFwdId: null, undoStack: pushUndo(undoStack, match) })
+      set({
+        match: r.state,
+        targetingFwdId: null,
+        undoStack: pushUndo(undoStack, match),
+        animEvents: [...animEvents, ...makeQueuedEvents(r.events)],
+      })
     }
   },
 
@@ -302,11 +335,15 @@ export const useMatchStore = create<Store>((set, get) => ({
   },
 
   selectSniperTarget: (target) => {
-    const { match, undoStack } = get()
+    const { match, undoStack, animEvents } = get()
     if (!match) return
     const r = resolvePendingSniper(match, target)
     if (r.ok) {
-      set({ match: r.state, undoStack: pushUndo(undoStack, match) })
+      set({
+        match: r.state,
+        undoStack: pushUndo(undoStack, match),
+        animEvents: [...animEvents, ...makeQueuedEvents(r.events)],
+      })
     }
   },
 
@@ -345,13 +382,14 @@ export const useMatchStore = create<Store>((set, get) => ({
       match: previous,
       undoStack: undoStack.slice(0, -1),
       targetingFwdId: null,
+      animEvents: [],
     })
   },
 
   resetTurn: () => {
     const { turnStartSnapshot } = get()
     if (!turnStartSnapshot) return
-    set({ match: turnStartSnapshot, undoStack: [], targetingFwdId: null })
+    set({ match: turnStartSnapshot, undoStack: [], targetingFwdId: null, animEvents: [] })
   },
 
   endTurn: async () => {
@@ -364,7 +402,10 @@ export const useMatchStore = create<Store>((set, get) => ({
       const r = nextPlayerAutoAttack(match)
       if (r.done) break
       match = r.state
-      set({ match })
+      set({
+        match,
+        animEvents: [...get().animEvents, ...makeQueuedEvents(r.events)],
+      })
       await delay(950)
     }
 
@@ -401,7 +442,10 @@ export const useMatchStore = create<Store>((set, get) => ({
       const r = resolveOneOpponentForward(match)
       if (r.done) break
       match = r.state
-      set({ match })
+      set({
+        match,
+        animEvents: [...get().animEvents, ...makeQueuedEvents(r.events)],
+      })
       await delay(1100)
     }
 

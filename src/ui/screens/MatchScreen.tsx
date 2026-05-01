@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import { Card } from '../components/Card'
 import { KeeperCard } from '../components/KeeperCard'
 import { Gallery } from '../components/Gallery'
 import { ConfettiBurst } from '../components/ConfettiBurst'
 import { FlagImg } from '../components/FlagImg'
+import { AnimLayer } from '../components/anim/AnimLayer'
 import { activeChemistries, CHEMISTRY_DEFS, CHEMISTRY_THRESHOLD, countByNation } from '../../game/chemistry'
 import { DraftScreen } from './DraftScreen'
 import { BetweenMatchScreen } from './BetweenMatchScreen'
@@ -208,9 +209,13 @@ function Zone({
   )
 }
 
-function Pitch({ children }: { children: React.ReactNode }) {
+const Pitch = React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(function Pitch(
+  { children },
+  ref,
+) {
   return (
     <div
+      ref={ref}
       className="relative overflow-hidden rounded-xl shadow-md"
       style={{
         background:
@@ -269,7 +274,7 @@ function Pitch({ children }: { children: React.ReactNode }) {
       <div className="relative space-y-1.5 p-3">{children}</div>
     </div>
   )
-}
+})
 
 function GoalOverlay({
   message,
@@ -560,6 +565,7 @@ export function MatchScreen() {
     | null
   >(null)
   const logRef = useRef<HTMLDivElement>(null)
+  const pitchRef = useRef<HTMLDivElement>(null)
   const prevScores = useRef({ my: 0, opp: 0 })
   const prevTurn = useRef(0)
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -878,7 +884,7 @@ export function MatchScreen() {
       </div>
 
       <motion.div animate={pitchShakeControls}>
-      <Pitch>
+      <Pitch ref={pitchRef}>
         <AnimatePresence>
           {ballEvent && ballEvent.kind === 'ball' && ballEvent.outcome && (
             <BallStrike
@@ -892,6 +898,7 @@ export function MatchScreen() {
           )}
           {confettiKey > 0 && <ConfettiBurst key={`confetti-${confettiKey}`} />}
         </AnimatePresence>
+        <AnimLayer pitchRef={pitchRef} match={match} />
         <div className="relative flex justify-center items-end">
           <KeeperCard
             keeper={match.oppKeeper}
