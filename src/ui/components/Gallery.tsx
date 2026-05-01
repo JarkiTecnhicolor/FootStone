@@ -5,7 +5,8 @@ import { KeeperCard } from './KeeperCard'
 import { PLAYER_DECK } from '../../game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../../game/keepers/player-keepers'
 import { SHAKHTAR } from '../../game/cards/opponents/shakhtar'
-import type { Card as CardData, Rarity } from '../../game/types'
+import { keeperPriceOf, priceOf } from '../../game/draft/pricing'
+import type { Card as CardData, Keeper, Rarity } from '../../game/types'
 
 const RARITY_ORDER: Record<Rarity, number> = { bronze: 0, silver: 1, gold: 2, legend: 3 }
 
@@ -23,6 +24,28 @@ interface Props {
 }
 
 type Tab = 'player' | 'opp'
+
+function CardWithPrice({ card }: { card: CardData }) {
+  return (
+    <div className="flex flex-col items-center">
+      <Card card={card} size="lg" showCost />
+      <div className="mt-1 rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
+        💰 {priceOf(card)} M
+      </div>
+    </div>
+  )
+}
+
+function KeeperWithPrice({ keeper }: { keeper: Keeper }) {
+  return (
+    <div className="flex flex-col items-center">
+      <KeeperCard keeper={keeper} size="lg" />
+      <div className="mt-1 rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
+        💰 {keeperPriceOf(keeper)} M
+      </div>
+    </div>
+  )
+}
 
 function groupByRole(cards: readonly CardData[]) {
   return {
@@ -103,7 +126,7 @@ export function Gallery({ open, onClose }: Props) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {keepers.map(k => (
-                      <KeeperCard key={k.id} keeper={k} size="lg" />
+                      <KeeperWithPrice key={k.id} keeper={k} />
                     ))}
                   </div>
                 </div>
@@ -118,7 +141,7 @@ export function Gallery({ open, onClose }: Props) {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {roleCards.map(c => (
-                        <Card key={c.id} card={c} size="lg" showCost />
+                        <CardWithPrice key={c.id} card={c} />
                       ))}
                     </div>
                   </div>

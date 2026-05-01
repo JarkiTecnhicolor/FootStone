@@ -5,6 +5,9 @@ import { KeeperCard } from '../components/KeeperCard'
 import { Gallery } from '../components/Gallery'
 import { ConfettiBurst } from '../components/ConfettiBurst'
 import { DraftScreen } from './DraftScreen'
+import { BetweenMatchScreen } from './BetweenMatchScreen'
+import { SeasonCompleteScreen } from './SeasonCompleteScreen'
+import { isSeasonOver } from '../../game/season/state'
 import { useMatchStore } from '../../store/matchStore'
 import { canAfford } from '../../game/rules/cost'
 import { currentHalf, decideMatchResult, isBlockedInExtraTime, isExtraTime } from '../../game/match'
@@ -378,12 +381,20 @@ function CenterLine() {
 
 function DraftWrapper({ onOpenGallery }: { onOpenGallery: () => void }) {
   const draft = useMatchStore(s => s.draft)
+  const season = useMatchStore(s => s.season)
   const draftPickCard = useMatchStore(s => s.draftPickCard)
   const draftPickKeeper = useMatchStore(s => s.draftPickKeeper)
   const draftSkip = useMatchStore(s => s.draftSkip)
   const draftFinishBench = useMatchStore(s => s.draftFinishBench)
   const draftAbort = useMatchStore(s => s.draftAbort)
-  const startMatchFromDraft = useMatchStore(s => s.startMatchFromDraft)
+  const startSeasonFromDraft = useMatchStore(s => s.startSeasonFromDraft)
+  const proceedToNextMatch = useMatchStore(s => s.proceedToNextMatch)
+  const buyShopCard = useMatchStore(s => s.buyShopCard)
+  const releaseSeasonCard = useMatchStore(s => s.releaseSeasonCard)
+  const rerollShop = useMatchStore(s => s.rerollShop)
+  const abortSeason = useMatchStore(s => s.abortSeason)
+  const resetMatch = useMatchStore(s => s.resetMatch)
+
   if (draft) {
     return (
       <DraftScreen
@@ -392,8 +403,23 @@ function DraftWrapper({ onOpenGallery }: { onOpenGallery: () => void }) {
         onPickKeeper={draftPickKeeper}
         onSkip={draftSkip}
         onFinishBench={draftFinishBench}
-        onStartMatch={() => startMatchFromDraft('shakhtar')}
+        onStartMatch={startSeasonFromDraft}
         onAbort={draftAbort}
+      />
+    )
+  }
+  if (season) {
+    if (isSeasonOver(season)) {
+      return <SeasonCompleteScreen season={season} onRestart={resetMatch} />
+    }
+    return (
+      <BetweenMatchScreen
+        season={season}
+        onProceed={proceedToNextMatch}
+        onBuy={buyShopCard}
+        onRelease={releaseSeasonCard}
+        onReroll={rerollShop}
+        onAbort={abortSeason}
       />
     )
   }
@@ -478,6 +504,8 @@ export function MatchScreen() {
   const resetTurn = useMatchStore(s => s.resetTurn)
   const endTurn = useMatchStore(s => s.endTurn)
   const resetMatch = useMatchStore(s => s.resetMatch)
+  const finalizeMatchResult = useMatchStore(s => s.finalizeMatchResult)
+  const season = useMatchStore(s => s.season)
 
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [muted, setMutedState] = useState(() => isMuted())
@@ -982,7 +1010,15 @@ export function MatchScreen() {
             </button>
           </>
         )}
-        {match.gameOver && (
+        {match.gameOver && season && (
+          <button
+            onClick={finalizeMatchResult}
+            className="flex-1 rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-800"
+          >
+            До трансферного ринку →
+          </button>
+        )}
+        {match.gameOver && !season && (
           <button
             onClick={resetMatch}
             className="flex-1 rounded-md bg-stone-900 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800"

@@ -30,6 +30,16 @@ import {
   skipStep as skipStepOp,
   startDraft as startDraftOp,
 } from '../game/draft/state'
+import type { SeasonState } from '../game/season/types'
+import {
+  buildSeasonOpponent,
+  buyShopCard as buyShopCardOp,
+  isSeasonOver as isSeasonOverFn,
+  recordMatchResult,
+  releaseCard as releaseCardOp,
+  rerollShop as rerollShopOp,
+  startSeason as startSeasonOp,
+} from '../game/season/state'
 
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
 
@@ -37,6 +47,7 @@ interface Store {
   match: MatchState | null
   draft: DraftState | null
   draftedTeam: DraftedTeam | null
+  season: SeasonState | null
   targetingFwdId: string | null
   undoStack: MatchState[]
   turnStartSnapshot: MatchState | null
@@ -50,6 +61,13 @@ interface Store {
   draftFinishBench: () => void
   draftAbort: () => void
   startMatchFromDraft: (kind: 'shakhtar' | 'random') => void
+  startSeasonFromDraft: () => void
+  proceedToNextMatch: () => void
+  finalizeMatchResult: () => void
+  buyShopCard: (cardId: string) => void
+  releaseSeasonCard: (cardId: string) => void
+  rerollShop: () => void
+  abortSeason: () => void
   resetMatch: () => void
   playCard: (handIdx: number) => void
   beginFwdTargeting: (fwdId: string) => void
@@ -73,6 +91,7 @@ export const useMatchStore = create<Store>((set, get) => ({
   match: null,
   draft: null,
   draftedTeam: null,
+  season: null,
   targetingFwdId: null,
   undoStack: [],
   turnStartSnapshot: null,
@@ -133,11 +152,74 @@ export const useMatchStore = create<Store>((set, get) => ({
       turnStartSnapshot: fresh,
     })
   },
+
+  startSeasonFromDraft: () => {
+    const { draft } = get()
+    if (!draft) return
+    const team = finalizeDraft(draft)
+    if (!team) return
+    const season = startSeasonOp(team)
+    set({ draft: null, draftedTeam: team, season })
+    // Auto-launch first match
+    get().proceedToNextMatch()
+  },
+
+  proceedToNextMatch: () => {
+    const { season } = get()
+    if (!season) return
+    if (isSeasonOverFn(season)) return
+    const opp = buildSeasonOpponent(season)
+    if (!opp) return
+    const fresh = makeFreshMatch(season.cards, [season.keeper], opp)
+    set({
+      match: fresh,
+      targetingFwdId: null,
+      undoStack: [],
+      turnStartSnapshot: fresh,
+    })
+  },
+
+  finalizeMatchResult: () => {
+    const { match, season } = get()
+    if (!match || !match.gameOver || !season) return
+    const next = recordMatchResult(season, match.myScore, match.oppScore)
+    set({ match: null, season: next, targetingFwdId: null, undoStack: [], turnStartSnapshot: null })
+  },
+
+  buyShopCard: (cardId) => {
+    const { season } = get()
+    if (!season) return
+    set({ season: buyShopCardOp(season, cardId) })
+  },
+
+  releaseSeasonCard: (cardId) => {
+    const { season } = get()
+    if (!season) return
+    set({ season: releaseCardOp(season, cardId) })
+  },
+
+  rerollShop: () => {
+    const { season } = get()
+    if (!season) return
+    set({ season: rerollShopOp(season) })
+  },
+
+  abortSeason: () => {
+    set({
+      season: null,
+      match: null,
+      draftedTeam: null,
+      targetingFwdId: null,
+      undoStack: [],
+      turnStartSnapshot: null,
+    })
+  },
   resetMatch: () =>
     set({
       match: null,
       draft: null,
       draftedTeam: null,
+      season: null,
       targetingFwdId: null,
       undoStack: [],
       turnStartSnapshot: null,

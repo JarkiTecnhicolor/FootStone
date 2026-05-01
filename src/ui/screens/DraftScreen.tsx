@@ -224,6 +224,9 @@ export function DraftScreen({
           <div className="mt-1 text-[11px] text-emerald-700">
             {state.cards.length} карт + воротар, залишок бюджету {state.budget} M
           </div>
+          <div className="mt-1 text-[10px] text-emerald-600">
+            Попереду 5 матчів. Між матчами — трансферний ринок.
+          </div>
         </div>
       )}
 
@@ -260,9 +263,9 @@ export function DraftScreen({
         {state.step === 'done' && (
           <button
             onClick={onStartMatch}
-            className="flex-1 rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-stone-800"
+            className="flex-1 rounded-md bg-emerald-700 px-3 py-3 text-sm font-medium text-white shadow-sm hover:bg-emerald-800"
           >
-            Грати перший матч →
+            Розпочати сезон →
           </button>
         )}
       </div>
