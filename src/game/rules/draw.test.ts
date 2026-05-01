@@ -55,13 +55,26 @@ describe('drawOne', () => {
     expect(result.shuffled).toBe(false)
   })
 
-  it('відправляє в discard коли рука повна', () => {
+  it('при перевищенні руки спалює випадкову карту (нова карта потрапляє в руку)', () => {
     const fullHand = Array(HAND_LIMIT).fill(find('p_f1')) as Card[]
     const newCard = find('p_f2')
-    const result = drawOne(fullHand, [newCard], [])
+    // random=()=>0 → вигорає індекс 0 з augmented hand (це p_f1)
+    const result = drawOne(fullHand, [newCard], [], () => 0)
     expect(result.toDiscard).toBe(true)
     expect(result.hand).toHaveLength(HAND_LIMIT)
+    expect(result.hand.some(c => c.id === 'p_f2')).toBe(true)
     expect(result.discard).toHaveLength(1)
+    expect(result.discard[0].id).toBe('p_f1')
+  })
+
+  it('при random=()=>1 згоряє drawn-card (остання в augmented hand)', () => {
+    const fullHand = Array(HAND_LIMIT).fill(find('p_f1')) as Card[]
+    const newCard = find('p_f2')
+    // random=()=>0.99 → індекс HAND_LIMIT (=newCard) згоряє
+    const result = drawOne(fullHand, [newCard], [], () => 0.99)
+    expect(result.toDiscard).toBe(true)
+    expect(result.hand).toHaveLength(HAND_LIMIT)
+    expect(result.hand.every(c => c.id === 'p_f1')).toBe(true)
     expect(result.discard[0].id).toBe('p_f2')
   })
 })

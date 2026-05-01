@@ -1,5 +1,5 @@
 export const ACTION_PROGRESSION = [2, 3, 4, 5, 6, 6, 2, 3, 4, 5, 6, 6] as const
-export const HAND_LIMIT = 8
+export const HAND_LIMIT = 7
 export const BASE_DRAW = 1
 export const INITIAL_HAND = 5
 export const OPP_HAND_START = 5

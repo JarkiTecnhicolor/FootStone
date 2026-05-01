@@ -27,6 +27,7 @@ export function drawOne(
   hand: readonly Card[],
   deck: readonly Card[],
   discard: readonly Card[],
+  random: () => number = Math.random,
 ): DrawOneResult {
   let workDeck: Card[] = deck.slice()
   let workDiscard: Card[] = discard.slice()
@@ -49,12 +50,16 @@ export function drawOne(
   }
 
   const drawn = workDeck.shift()!
+  const augmented = [...hand, drawn]
 
-  if (hand.length >= HAND_LIMIT) {
+  if (augmented.length > HAND_LIMIT) {
+    const burnIdx = Math.floor(random() * augmented.length)
+    const burned = augmented[burnIdx]
+    const finalHand = augmented.filter((_, i) => i !== burnIdx)
     return {
-      hand: hand.slice(),
+      hand: finalHand,
       deck: workDeck,
-      discard: [...workDiscard, drawn],
+      discard: [...workDiscard, burned],
       drawn,
       shuffled,
       toDiscard: true,
@@ -62,7 +67,7 @@ export function drawOne(
   }
 
   return {
-    hand: [...hand, drawn],
+    hand: augmented,
     deck: workDeck,
     discard: workDiscard,
     drawn,
