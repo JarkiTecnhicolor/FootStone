@@ -1,6 +1,11 @@
 import type { MatchState } from '../types'
 import { payCost } from '../rules/cost'
-import { placeCardOnField, resolveOppPendingSniper, resolveOppPendingTauntGrant } from '../match'
+import {
+  placeCardOnField,
+  resolveOppPendingInstantGrant,
+  resolveOppPendingSniper,
+  resolveOppPendingTauntGrant,
+} from '../match'
 import { pickBestCardIdx } from './smart-ai'
 
 export function pickAndPlaceOneOppCard(
@@ -20,6 +25,9 @@ export function pickAndPlaceOneOppCard(
   }
   if (newState.pendingTauntGrant) {
     newState = resolveOppPendingTauntGrant(newState)
+  }
+  if (newState.pendingInstantGrant) {
+    newState = resolveOppPendingInstantGrant(newState)
   }
   return { state: newState, remainingActions: newActions, done: false }
 }

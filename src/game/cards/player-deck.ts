@@ -314,6 +314,23 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
+    id: 'p_m19', name: 'Miniesta', role: 'mid', cost: 3,
+    rarity: 'legend',
+    stamina: 2, maxStamina: 2,
+    perks: [
+      {
+        trigger: 'aura',
+        effect: { kind: 'draw_bonus', amount: 1 },
+        label: 'ПЛЕЙМЕЙКЕР: +1 карта щоходу',
+      },
+      {
+        trigger: 'on_place',
+        effect: { kind: 'grant_instant_attack' },
+        label: 'АСИСТ: при виставленні передає АТАКА ПЕРШИМ ТЕМПОМ обраному форварду',
+      },
+    ],
+  },
+  {
     id: 'p_m17', name: 'Erzo', role: 'mid', cost: 4,
     rarity: 'silver',
     stamina: 4, maxStamina: 4,

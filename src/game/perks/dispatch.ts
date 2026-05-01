@@ -24,6 +24,7 @@ export interface PlacementResult {
   log: string[]
   pendingSniperChoice: boolean
   pendingTauntGrantChoice: boolean
+  pendingInstantGrantChoice: boolean
 }
 
 export function unwindHpBuffsFromRemoved(
@@ -80,6 +81,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
   const log: string[] = []
   let pendingSniperChoice = false
   let pendingTauntGrantChoice = false
+  let pendingInstantGrantChoice = false
 
   if (resultCard.role === 'def') {
     const incomingBuffs: { sourceId: string; amount: number }[] = []
@@ -193,6 +195,22 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
       }
       continue
     }
+
+    if (perk.effect.kind === 'grant_instant_attack') {
+      const eligible = field.ownFwds.filter(
+        f =>
+          !f.perks.some(
+            p2 =>
+              p2.trigger === 'self_modifier' && p2.effect.kind === 'instant_attack',
+          ),
+      )
+      if (eligible.length > 0) {
+        pendingInstantGrantChoice = true
+      } else {
+        log.push(`${card.name}: нема кому надати АТАКА ПЕРШИМ ТЕМПОМ.`)
+      }
+      continue
+    }
   }
 
   return {
@@ -205,6 +223,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
     log,
     pendingSniperChoice,
     pendingTauntGrantChoice,
+    pendingInstantGrantChoice,
   }
 }
 

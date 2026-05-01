@@ -43,6 +43,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_m16': 'Andriy Husin',
   'p_m17': 'Enzo Fernández',
   'p_m18': 'Juan Román Riquelme',
+  'p_m19': 'Andrés Iniesta',
   'p_f1': 'Kylian Mbappé',
   'p_f2': 'Erling Haaland',
   'p_f3': 'Vinícius Júnior',

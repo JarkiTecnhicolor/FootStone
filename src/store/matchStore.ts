@@ -7,6 +7,7 @@ import {
   playPlayerCard,
   resolvePendingSniper,
   resolvePendingTauntGrant,
+  resolvePendingInstantGrant,
   attackWithForward,
   activateMorph,
   nextPlayerAutoAttack,
@@ -75,6 +76,7 @@ interface Store {
   cancelTargeting: () => void
   selectSniperTarget: (target: SniperTargetSelection) => void
   selectTauntGrantTarget: (defId: string) => void
+  selectInstantGrantTarget: (fwdId: string) => void
   activateCardPerk: (cardId: string) => void
   undo: () => void
   resetTurn: () => void
@@ -280,6 +282,15 @@ export const useMatchStore = create<Store>((set, get) => ({
     const { match, undoStack } = get()
     if (!match) return
     const r = resolvePendingTauntGrant(match, defId)
+    if (r.ok) {
+      set({ match: r.state, undoStack: pushUndo(undoStack, match) })
+    }
+  },
+
+  selectInstantGrantTarget: (fwdId) => {
+    const { match, undoStack } = get()
+    if (!match) return
+    const r = resolvePendingInstantGrant(match, fwdId)
     if (r.ok) {
       set({ match: r.state, undoStack: pushUndo(undoStack, match) })
     }

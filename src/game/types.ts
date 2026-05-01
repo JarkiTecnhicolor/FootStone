@@ -105,6 +105,7 @@ export interface MatchState {
   firstTurn: boolean
   pendingSniper: PendingSniper | null
   pendingTauntGrant: PendingTauntGrant | null
+  pendingInstantGrant: PendingInstantGrant | null
   pendingDyingCaptainPlayer?: number
   pendingDyingCaptainOpp?: number
 }
@@ -114,5 +115,9 @@ export interface PendingSniper {
 }
 
 export interface PendingTauntGrant {
+  sourceId: string
+}
+
+export interface PendingInstantGrant {
   sourceId: string
 }

@@ -33,6 +33,7 @@ export type PerkEffect =
   | { kind: 'summon_def_from_hand' }
   | { kind: 'keeper_save_reducer'; amount: number }
   | { kind: 'grant_taunt' }
+  | { kind: 'grant_instant_attack' }
 
 export interface Perk {
   trigger: PerkTrigger

@@ -52,7 +52,9 @@ function PhasePill({ match }: { match: MatchState }) {
     ? '🎯 Обери ціль (Sniper)'
     : match.pendingTauntGrant
       ? '🛡 Обери захисника, кому передати ПІДСТРАХОВКА'
-      : match.phase === 'opponent'
+      : match.pendingInstantGrant
+        ? '⚡ Обери форварда, кому надати АТАКА ПЕРШИМ ТЕМПОМ'
+        : match.phase === 'opponent'
       ? extra
         ? `${halfPrefix} · ⏳ Доданий час · опонент…`
         : `${halfPrefix} · Хід опонента…`
@@ -63,11 +65,13 @@ function PhasePill({ match }: { match: MatchState }) {
     ? 'bg-red-100 text-red-800 border-red-200'
     : match.pendingTauntGrant
       ? 'bg-blue-100 text-blue-800 border-blue-300 ring-2 ring-blue-300'
-      : extra
-        ? 'bg-amber-100 text-amber-900 border-amber-200'
-        : match.phase === 'opponent'
-          ? 'bg-stone-100 text-stone-600 border-stone-200'
-          : 'bg-blue-100 text-blue-800 border-blue-200'
+      : match.pendingInstantGrant
+        ? 'bg-amber-100 text-amber-900 border-amber-300 ring-2 ring-amber-300'
+        : extra
+          ? 'bg-amber-100 text-amber-900 border-amber-200'
+          : match.phase === 'opponent'
+            ? 'bg-stone-100 text-stone-600 border-stone-200'
+            : 'bg-blue-100 text-blue-800 border-blue-200'
   return (
     <motion.div
       key={text}
@@ -499,6 +503,7 @@ export function MatchScreen() {
   const cancelTargeting = useMatchStore(s => s.cancelTargeting)
   const selectSniperTarget = useMatchStore(s => s.selectSniperTarget)
   const selectTauntGrantTarget = useMatchStore(s => s.selectTauntGrantTarget)
+  const selectInstantGrantTarget = useMatchStore(s => s.selectInstantGrantTarget)
   const activateCardPerk = useMatchStore(s => s.activateCardPerk)
   const undo = useMatchStore(s => s.undo)
   const resetTurn = useMatchStore(s => s.resetTurn)
@@ -708,8 +713,15 @@ export function MatchScreen() {
   const isPlayerPhase = match.phase === 'player' && !match.gameOver
   const isTauntGrantMode =
     !!match.pendingTauntGrant &&
-    match.myDefenders.some(d => d.id === match.pendingTauntGrant!.sourceId)
-  const canInteract = isPlayerPhase && !match.pendingSniper && !isTauntGrantMode
+    (match.myDefenders.some(d => d.id === match.pendingTauntGrant!.sourceId) ||
+      match.myMids.some(m => m.id === match.pendingTauntGrant!.sourceId))
+  const isInstantGrantMode =
+    !!match.pendingInstantGrant &&
+    (match.myDefenders.some(d => d.id === match.pendingInstantGrant!.sourceId) ||
+      match.myMids.some(m => m.id === match.pendingInstantGrant!.sourceId) ||
+      match.myFwds.some(f => f.id === match.pendingInstantGrant!.sourceId))
+  const canInteract =
+    isPlayerPhase && !match.pendingSniper && !isTauntGrantMode && !isInstantGrantMode
   const isSniperMode = !!match.pendingSniper
   const isAttackTargeting = !!targetingFwdId
 
@@ -751,6 +763,14 @@ export function MatchScreen() {
   }
 
   const myFwdClick = (fwdId: string): (() => void) | undefined => {
+    if (isInstantGrantMode) {
+      const f = match.myFwds.find(x => x.id === fwdId)
+      const alreadyInstant = f?.perks.some(
+        p => p.trigger === 'self_modifier' && p.effect.kind === 'instant_attack',
+      )
+      if (alreadyInstant) return undefined
+      return () => selectInstantGrantTarget(fwdId)
+    }
     if (!canInteract) return undefined
     return () => {
       if (targetingFwdId === fwdId) cancelTargeting()
@@ -882,17 +902,24 @@ export function MatchScreen() {
           label="Твоя атакувальна зона · клік на ⚡-форварда щоб атакувати"
           emptyHint="порожньо"
         >
-          {match.myFwds.map(c => (
+          {match.myFwds.map(c => {
+            const isInstantGrantTarget =
+              isInstantGrantMode &&
+              !c.perks.some(
+                p => p.trigger === 'self_modifier' && p.effect.kind === 'instant_attack',
+              )
+            return (
             <Card
               key={c.id}
               card={c}
               effectiveAtk={calculateAtk(c, match.myMids, match.oppDefenders, match.myFwds.length).finalAtk}
               ready={c.status === 'ready_to_attack' && targetingFwdId !== c.id}
-              targetable={targetingFwdId === c.id}
+              targetable={targetingFwdId === c.id || isInstantGrantTarget}
               dimmed={isAttackTargeting && targetingFwdId !== c.id}
               onClick={myFwdClick(c.id)}
             />
-          ))}
+            )
+          })}
         </Zone>
 
         <Zone label="Твій півзахист" emptyHint="порожньо">

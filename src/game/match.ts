@@ -82,6 +82,7 @@ export function makeFreshMatch(
     firstTurn: true,
     pendingSniper: null,
     pendingTauntGrant: null,
+    pendingInstantGrant: null,
   }
 }
 
@@ -283,6 +284,9 @@ export function placeCardOnField(state: MatchState, side: Side, handIdx: number)
   if (placement.pendingTauntGrantChoice) {
     after = { ...after, pendingTauntGrant: { sourceId: fresh.id } }
   }
+  if (placement.pendingInstantGrantChoice) {
+    after = { ...after, pendingInstantGrant: { sourceId: fresh.id } }
+  }
 
   return after
 }
@@ -398,6 +402,74 @@ export function resolveOppPendingTauntGrant(state: MatchState): MatchState {
   return r.ok ? r.state : { ...state, pendingTauntGrant: null }
 }
 
+export function resolvePendingInstantGrant(
+  state: MatchState,
+  fwdId: string,
+): PlayResult {
+  if (!state.pendingInstantGrant) return { ok: false, reason: 'no_pending_instant' }
+  const sourceId = state.pendingInstantGrant.sourceId
+  const isPlayerSide = state.myFwds.some(f => f.id === fwdId) ||
+    state.myDefenders.some(d => d.id === sourceId) ||
+    state.myMids.some(m => m.id === sourceId)
+  const ownFwds = isPlayerSide ? state.myFwds : state.oppFwds
+  const target = ownFwds.find(f => f.id === fwdId)
+  if (!target) return { ok: false, reason: 'target_not_found' }
+  if (
+    target.perks.some(p => p.trigger === 'self_modifier' && p.effect.kind === 'instant_attack')
+  ) {
+    return { ok: false, reason: 'already_instant' }
+  }
+  const grantedPerk: Perk = {
+    trigger: 'self_modifier',
+    effect: { kind: 'instant_attack' },
+    label: 'АТАКА ПЕРШИМ ТЕМПОМ (від плеймейкера): б\'є на поточному ході',
+  }
+  const updated: ForwardCard = {
+    ...target,
+    perks: [...target.perks, grantedPerk],
+    status: 'ready_to_attack',
+  }
+  const log = `АСИСТ: ${target.name} отримує АТАКА ПЕРШИМ ТЕМПОМ.`
+  if (isPlayerSide) {
+    return {
+      ok: true,
+      state: {
+        ...state,
+        myFwds: state.myFwds.map(f => (f.id === fwdId ? updated : f)),
+        log: [...state.log, log],
+        pendingInstantGrant: null,
+      },
+    }
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      oppFwds: state.oppFwds.map(f => (f.id === fwdId ? updated : f)),
+      log: [...state.log, log],
+      pendingInstantGrant: null,
+    },
+  }
+}
+
+export function resolveOppPendingInstantGrant(state: MatchState): MatchState {
+  if (!state.pendingInstantGrant) return state
+  const eligible = state.oppFwds.filter(
+    f =>
+      !f.perks.some(p => p.trigger === 'self_modifier' && p.effect.kind === 'instant_attack'),
+  )
+  if (eligible.length === 0) {
+    return { ...state, pendingInstantGrant: null }
+  }
+  // Pick highest-atk fwd
+  let best = eligible[0]
+  for (const f of eligible) {
+    if (f.atk > best.atk) best = f
+  }
+  const r = resolvePendingInstantGrant(state, best.id)
+  return r.ok ? r.state : { ...state, pendingInstantGrant: null }
+}
+
 export function resolveOppPendingSniper(state: MatchState): MatchState {
   if (!state.pendingSniper) return state
   const sourceId = state.pendingSniper.sourceId
@@ -469,6 +541,7 @@ export function playPlayerCard(state: MatchState, handIdx: number): PlayResult {
   if (state.phase !== 'player') return { ok: false, reason: 'not_player_turn' }
   if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
   if (state.pendingTauntGrant) return { ok: false, reason: 'pending_taunt_grant' }
+  if (state.pendingInstantGrant) return { ok: false, reason: 'pending_instant_grant' }
   const card = state.hand[handIdx]
   if (!card) return { ok: false, reason: 'invalid_index' }
   if (!canAfford(state.actions, card)) return { ok: false, reason: 'cant_afford' }
@@ -513,6 +586,7 @@ export function activateMorph(
   if (state.phase !== expectedPhase) return { ok: false, reason: 'wrong_phase' }
   if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
   if (state.pendingTauntGrant) return { ok: false, reason: 'pending_taunt_grant' }
+  if (state.pendingInstantGrant) return { ok: false, reason: 'pending_instant_grant' }
   const ownDefs = side === 'player' ? state.myDefenders : state.oppDefenders
   const def = ownDefs.find(d => d.id === cardId)
   if (!def) return { ok: false, reason: 'card_not_found' }
@@ -568,6 +642,7 @@ export function tryOppMorph(state: MatchState): MatchState {
   if (state.phase !== 'opponent') return state
   if (state.pendingSniper) return state
   if (state.pendingTauntGrant) return state
+  if (state.pendingInstantGrant) return state
   if (!isExtraTime(state)) return state
   let s = state
   for (let safety = 0; safety < 5; safety++) {
@@ -590,6 +665,7 @@ export function attackWithForward(
   if (state.phase !== 'player') return { ok: false, reason: 'not_player_turn' }
   if (state.pendingSniper) return { ok: false, reason: 'pending_sniper' }
   if (state.pendingTauntGrant) return { ok: false, reason: 'pending_taunt_grant' }
+  if (state.pendingInstantGrant) return { ok: false, reason: 'pending_instant_grant' }
   const fwd = state.myFwds.find(f => f.id === fwdId)
   if (!fwd) return { ok: false, reason: 'fwd_not_found' }
   if (fwd.status !== 'ready_to_attack') return { ok: false, reason: 'fwd_not_ready' }
