@@ -49,15 +49,21 @@ const ai: PlayerAi = process.env.SMART === '0' ? 'dumb' : 'smart'
 
 const opponents: OpponentDeck[] = [DYNAMO, SHAKHTAR, BARCELONA, REAL, WORLD_ALLSTAR]
 
-function deckCost(opp: OpponentDeck): number {
+function deckTransferCost(opp: OpponentDeck): number {
   const cards = opp.cards.reduce((s, c) => s + priceOf(c), 0)
   const keeper = opp.keepers.length > 0 ? keeperPriceOf(opp.keepers[0]) : 0
   return cards + keeper
 }
 
+function deckAvgActionCost(opp: OpponentDeck): number {
+  if (opp.cards.length === 0) return 0
+  return opp.cards.reduce((s, c) => s + c.cost, 0) / opp.cards.length
+}
+
 interface OppStats {
   name: string
-  cost: number
+  transfer: number
+  avgActionCost: number
   wins: number
   losses: number
   draws: number
@@ -73,7 +79,8 @@ interface OppStats {
 
 const stats: OppStats[] = opponents.map(o => ({
   name: o.name,
-  cost: deckCost(o),
+  transfer: deckTransferCost(o),
+  avgActionCost: deckAvgActionCost(o),
   wins: 0,
   losses: 0,
   draws: 0,
@@ -131,7 +138,7 @@ console.log()
 
 const nameW = Math.max(...stats.map(s => s.name.length))
 const pad = (s: string, n: number) => s + ' '.repeat(Math.max(0, n - s.length))
-const header = `${pad('Суперник', nameW)}  Cost   W%      L%      D%      Гол:Проп   Δ`
+const header = `${pad('Суперник', nameW)}  Transfer  AvgCost  W%      L%      D%      Гол:Проп   Δ`
 console.log(header)
 console.log('-'.repeat(header.length))
 for (const s of stats) {
@@ -142,7 +149,7 @@ for (const s of stats) {
   const avgOpp = s.totalOpp / ROSTERS
   const diff = avgMy - avgOpp
   console.log(
-    `${pad(s.name, nameW)}  ${s.cost.toString().padStart(4)}M  ${winRate.toFixed(1).padStart(5)}%  ${lossRate.toFixed(1).padStart(5)}%  ${drawRate.toFixed(1).padStart(5)}%  ${avgMy.toFixed(2)}:${avgOpp.toFixed(2)}  ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}`,
+    `${pad(s.name, nameW)}    ${s.transfer.toString().padStart(4)}M    ${s.avgActionCost.toFixed(2)}    ${winRate.toFixed(1).padStart(5)}%  ${lossRate.toFixed(1).padStart(5)}%  ${drawRate.toFixed(1).padStart(5)}%  ${avgMy.toFixed(2)}:${avgOpp.toFixed(2)}  ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}`,
   )
 }
 console.log()
