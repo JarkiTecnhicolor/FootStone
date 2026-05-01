@@ -122,10 +122,29 @@ function PickedRoster({ state }: { state: DraftState }) {
           {state.cards.length}/{MAX_DECK_SIZE}, мін {MIN_DECK_SIZE}
         </span>
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {state.keeper && <KeeperCard keeper={state.keeper} />}
+      <div className="flex flex-wrap items-stretch gap-1.5">
+        {state.keeper && (
+          <KeeperCard
+            keeper={state.keeper}
+            stretch
+            footer={
+              <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
+                💰 {keeperPriceOf(state.keeper)} M
+              </div>
+            }
+          />
+        )}
         {state.cards.map((c, i) => (
-          <Card key={`${c.id}-picked-${i}`} card={c} />
+          <Card
+            key={`${c.id}-picked-${i}`}
+            card={c}
+            stretch
+            footer={
+              <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
+                💰 {priceOf(c)} M
+              </div>
+            }
+          />
         ))}
       </div>
     </div>

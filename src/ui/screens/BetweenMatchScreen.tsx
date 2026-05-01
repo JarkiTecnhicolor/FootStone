@@ -470,7 +470,15 @@ function RosterCard({
       exit={{ opacity: 0, scale: 0.85 }}
       className={`relative flex flex-col items-center ${isTradePicked ? 'ring-2 ring-purple-500 rounded-lg' : ''}`}
     >
-      <Card card={card} onClick={tradeMode ? onTradePick : undefined} />
+      <Card
+        card={card}
+        onClick={tradeMode ? onTradePick : undefined}
+        footer={
+          <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
+            💰 {priceOf(card)} M
+          </div>
+        }
+      />
       {!tradeMode && (
         <button
           onClick={onRelease}
@@ -485,9 +493,9 @@ function RosterCard({
           🗑 Розірвати ({releasePrice}M)
         </button>
       )}
-      {tradeMode && (
-        <div className="mt-1 w-[150px] rounded bg-purple-50 px-2 py-0.5 text-center text-[10px] text-purple-900 tabular-nums">
-          {priceOf(card)}M{isTradePicked && ' · обрано'}
+      {tradeMode && isTradePicked && (
+        <div className="mt-1 w-[150px] rounded bg-purple-100 px-2 py-0.5 text-center text-[10px] font-semibold text-purple-900">
+          ✓ обрано для обміну
         </div>
       )}
     </motion.div>
