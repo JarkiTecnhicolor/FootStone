@@ -4,7 +4,7 @@ import type { Card as CardData, Rarity } from '../../game/types'
 import type { Perk } from '../../game/perks/types'
 import { avatarUrl } from '../lib/avatar'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
-import { REAL_PLAYERS } from '../../data/player-real-names'
+import { REAL_PLAYERS, displayName } from '../../data/player-real-names'
 import { FlagImg } from './FlagImg'
 
 function parsePerkLabel(label: string): { name?: string; desc: string } {
@@ -330,7 +330,7 @@ export function Card({
         />
         <div className="min-w-0 flex-1">
           <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
-            {card.name}
+            {displayName(card.id, card.name)}
             <FlagImg cardId={card.id} className="ml-1" />
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">

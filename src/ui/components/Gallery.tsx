@@ -9,6 +9,7 @@ import { BARCELONA } from '../../game/cards/opponents/barcelona'
 import { REAL } from '../../game/cards/opponents/real'
 import { WORLD_ALLSTAR } from '../../game/cards/opponents/world'
 import { keeperPriceOf, priceOf } from '../../game/draft/pricing'
+import { displayName } from '../../data/player-real-names'
 import type { Card as CardData, Keeper, OpponentDeck, Rarity } from '../../game/types'
 
 const RARITY_ORDER: Record<Rarity, number> = { bronze: 0, silver: 1, gold: 2, legend: 3 }
@@ -18,7 +19,7 @@ function compareCards(a: CardData, b: CardData): number {
   const ra = a.rarity ? RARITY_ORDER[a.rarity] : -1
   const rb = b.rarity ? RARITY_ORDER[b.rarity] : -1
   if (ra !== rb) return ra - rb
-  return a.name.localeCompare(b.name)
+  return displayName(a.id, a.name).localeCompare(displayName(b.id, b.name))
 }
 
 interface Props {

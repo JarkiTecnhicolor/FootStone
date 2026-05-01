@@ -11,6 +11,7 @@ import {
 } from '../../game/draft/pricing'
 import { Card } from '../components/Card'
 import { KeeperCard } from '../components/KeeperCard'
+import { displayName } from '../../data/player-real-names'
 
 interface Props {
   season: SeasonState
@@ -165,7 +166,7 @@ export function BetweenMatchScreen({
           </div>
           <div className="flex items-baseline justify-between">
             <div>
-              <span className="text-base font-bold text-amber-950">{lastMvp.cardName}</span>
+              <span className="text-base font-bold text-amber-950">{displayName(lastMvp.cardId, lastMvp.cardName)}</span>
               <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-700">
                 {lastMvp.role}
               </span>
@@ -182,12 +183,12 @@ export function BetweenMatchScreen({
           <div className="mt-2 rounded-md bg-white/70 p-2">
             {lastMvp.reward.kind === 'upgrade' ? (
               <div className="text-[12px] font-semibold text-emerald-900">
-                ✨ {lastMvp.cardName} спрогресував! +1{' '}
+                ✨ {displayName(lastMvp.cardId, lastMvp.cardName)} спрогресував! +1{' '}
                 {lastMvp.reward.stat === 'atk' ? 'ATK' : lastMvp.reward.stat === 'hp' ? 'HP' : 'STM'} ★
               </div>
             ) : lastMvp.reward.reason === 'capped' ? (
               <div className="text-[12px] font-semibold text-amber-900">
-                🛑 {lastMvp.cardName} досяг ліміту росту — ви отримуєте бонус +{lastMvp.reward.amount}M замість апгрейду
+                🛑 {displayName(lastMvp.cardId, lastMvp.cardName)} досяг ліміту росту — ви отримуєте бонус +{lastMvp.reward.amount}M замість апгрейду
               </div>
             ) : (
               <div className="text-[12px] font-semibold text-emerald-900">
@@ -290,7 +291,7 @@ export function BetweenMatchScreen({
               {tradePicked && tradePayment !== null && (
                 <div className="mt-2 rounded-md border border-purple-300 bg-white px-2 py-1.5">
                   <div className="text-[10px] text-purple-700">
-                    Обмін: <strong>{tradePicked.name}</strong> → <strong>{season.tradeOffer.card.name}</strong>
+                    Обмін: <strong>{displayName(tradePicked.id, tradePicked.name)}</strong> → <strong>{displayName(season.tradeOffer.card.id, season.tradeOffer.card.name)}</strong>
                   </div>
                   <div className="mt-1 text-[12px] font-semibold tabular-nums">
                     {tradePayment > 0 ? (

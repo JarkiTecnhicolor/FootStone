@@ -1,3 +1,7 @@
+export function displayName(id: string, fallback: string): string {
+  return REAL_PLAYERS[id] ?? fallback
+}
+
 export const REAL_PLAYERS: Record<string, string> = {
   'k_onana': 'André Onana',
   'k_nojer': 'Manuel Neuer',

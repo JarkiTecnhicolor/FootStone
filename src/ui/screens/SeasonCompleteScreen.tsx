@@ -2,6 +2,7 @@ import { motion } from 'motion/react'
 import type { Role } from '../../game/types'
 import type { SeasonState } from '../../game/season/types'
 import { isSeasonChampion } from '../../game/season/state'
+import { displayName } from '../../data/player-real-names'
 
 interface Props {
   season: SeasonState
@@ -145,7 +146,7 @@ export function SeasonCompleteScreen({ season, onRestart }: Props) {
           <div className="text-[10px] font-bold uppercase tracking-wider text-amber-900">
             ⭐ Гравець сезону
           </div>
-          <div className="mt-1 text-lg font-bold text-amber-950">{bestOverall.cardName}</div>
+          <div className="mt-1 text-lg font-bold text-amber-950">{displayName(bestOverall.cardId, bestOverall.cardName)}</div>
           <div className="text-[11px] text-amber-800">
             {bestOverall.mvpCount}× MVP · сум. score {bestOverall.totalScore.toFixed(0)}
           </div>
@@ -220,7 +221,7 @@ function BestRoleRow({
       <span className="flex-1 text-stone-700">{label}:</span>
       {stat ? (
         <span className="font-semibold text-stone-900">
-          {stat.cardName}
+          {displayName(stat.cardId, stat.cardName)}
           <span className="ml-2 text-[10px] font-normal text-stone-500 tabular-nums">
             ({stat.mvpCount}× MVP, {stat.totalScore.toFixed(0)} pts)
           </span>

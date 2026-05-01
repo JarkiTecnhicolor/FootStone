@@ -44,7 +44,7 @@ describe('applyOnPlacePerks — Rudidiger (hp_buff to other_defs)', () => {
     const updatedAcerbe = result.ownDefenders.find(d => d.id === 'p_d4')
     expect(updatedAcerbe?.hp).toBe(2)
     expect(updatedAcerbe?.maxHp).toBe(2)
-    expect(result.log[0]).toMatch(/Acerbe/)
+    expect(result.log[0]).toMatch(/Acerbi/)
   })
 
   it('Acerbe виставляється коли Rudidiger вже на полі — Acerbe отримує +1 HP', () => {
@@ -66,7 +66,7 @@ describe('applyOnPlacePerks — Rapunskiy (sniper enemy_fwd_first)', () => {
     expect(result.enemyFwds).toHaveLength(0)
     expect(result.enemyDiscard).toHaveLength(1)
     expect(result.enemyDiscard[0].id).toBe('p_f1')
-    expect(result.log[0]).toMatch(/знесе Mbarre/)
+    expect(result.log[0]).toMatch(/знесе Kylian/)
   })
 
   it('коли немає форварда — немає ефекту', () => {

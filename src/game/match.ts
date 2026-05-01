@@ -39,6 +39,7 @@ import type {
   Side,
 } from './types'
 import type { Perk } from './perks/types'
+import { displayName } from '../data/player-real-names'
 
 export type PlayResult =
   | { ok: true; state: MatchState }
@@ -125,7 +126,7 @@ function deployRandomDefFromHand(state: MatchState, side: Side): MatchState {
   const next = placeCardOnField(state, side, pickIdx)
   return {
     ...next,
-    log: [...next.log, `${owner}: ПОМИРАЮЧИЙ КАПІТАН викликає ${card.name} на поле!`],
+    log: [...next.log, `${owner}: ПОМИРАЮЧИЙ КАПІТАН викликає ${displayName(card.id, card.name)} на поле!`],
   }
 }
 
@@ -264,7 +265,7 @@ export function placeCardOnField(state: MatchState, side: Side, handIdx: number)
     [side === 'player' ? 'myDefenders' : 'oppDefenders']: myDefs,
     [side === 'player' ? 'myMids' : 'oppMids']: myMids,
     [side === 'player' ? 'myFwds' : 'oppFwds']: myFwds,
-    log: [...state.log, `${actor}: виставив ${fresh.name} (${fresh.role.toUpperCase()}).`],
+    log: [...state.log, `${actor}: виставив ${displayName(fresh.id, fresh.name)} (${fresh.role.toUpperCase()}).`],
   }
 
   const placement = applyOnPlacePerks(fresh, fieldFor(intermediate, side))
@@ -378,7 +379,7 @@ export function resolvePendingTauntGrant(
     label: 'ВИСУНУТИЙ ЗАХИСНИК (від лідера): форварди змушені атакувати першим',
   }
   const updated: DefenderCard = { ...target, perks: [...target.perks, grantedPerk] }
-  const log = `ПІДСТРАХОВКА: ${target.name} стає ВИСУНУТИМ ЗАХИСНИКОМ.`
+  const log = `ПІДСТРАХОВКА: ${displayName(target.id, target.name)} стає ВИСУНУТИМ ЗАХИСНИКОМ.`
   if (isPlayerSide) {
     return {
       ok: true,
@@ -447,7 +448,7 @@ export function resolvePendingInstantGrant(
     perks: [...target.perks, grantedPerk],
     status: 'ready_to_attack',
   }
-  const log = `АСИСТ: ${target.name} отримує АТАКА ПЕРШИМ ТЕМПОМ.`
+  const log = `АСИСТ: ${displayName(target.id, target.name)} отримує АТАКА ПЕРШИМ ТЕМПОМ.`
   if (isPlayerSide) {
     return {
       ok: true,
@@ -514,7 +515,7 @@ export function resolveOppPendingSniper(state: MatchState): MatchState {
     return {
       ...state,
       pendingSniper: null,
-      log: [...state.log, `${source.name}: немає вразливої цілі — перка пропадає.`],
+      log: [...state.log, `${displayName(source.id, source.name)}: немає вразливої цілі — перка пропадає.`],
     }
   }
 
@@ -637,7 +638,7 @@ export function activateMorph(
     },
   }
   const actor = side === 'player' ? 'Ти' : 'Опонент'
-  const logLine = `${actor}: ${def.name} ВСІ В АТАКУ! Стає форвардом (atk ${newAtk}, з MaxHP ${def.maxHp}).`
+  const logLine = `${actor}: ${displayName(def.id, def.name)} ВСІ В АТАКУ! Стає форвардом (atk ${newAtk}, з MaxHP ${def.maxHp}).`
   if (side === 'player') {
     return {
       ok: true,
@@ -714,11 +715,11 @@ export function attackWithForward(
   })
 
   const log: string[] = []
-  log.push(`Ти: ${fwd.name} б'є на ${result.atk.finalAtk}${result.atk.buffs.length ? ` (${result.atk.buffs.map(b => `${b.source} +${b.amount}`).join(', ')})` : ''}.`)
+  log.push(`Ти: ${displayName(fwd.id, fwd.name)} б'є на ${result.atk.finalAtk}${result.atk.buffs.length ? ` (${result.atk.buffs.map(b => `${b.source} +${b.amount}`).join(', ')})` : ''}.`)
   if (result.bypass) log.push('  Прохід наскрізь.')
   if (result.defenderRemoved) log.push(`  Захисник пробитий.`)
-  if (result.buffsStripped > 0) log.push(`  ${state.oppKeeper.name} зриває aura-бафи (-${result.buffsStripped}).`)
-  if (result.keeperSavedRandom) log.push(`  🧤 ${state.oppKeeper.name} відбиває в стрибку!`)
+  if (result.buffsStripped > 0) log.push(`  ${displayName(state.oppKeeper.id, state.oppKeeper.name)} зриває aura-бафи (-${result.buffsStripped}).`)
+  if (result.keeperSavedRandom) log.push(`  🧤 ${displayName(state.oppKeeper.id, state.oppKeeper.name)} відбиває в стрибку!`)
   else if (result.goal) log.push(`  ⚽ ГОЛ! (${result.keeperDamage} > save ${state.oppKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере (${result.keeperDamage} ≤ save ${state.oppKeeper.save}).`)
 
@@ -834,10 +835,10 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
     target,
   })
   const log: string[] = []
-  log.push(`Опонент: ${ready.name} б'є на ${result.atk.finalAtk}.`)
+  log.push(`Опонент: ${displayName(ready.id, ready.name)} б'є на ${result.atk.finalAtk}.`)
   if (result.defenderRemoved) log.push(`  Захисник пробитий.`)
-  if (result.buffsStripped > 0) log.push(`  ${state.myKeeper.name} зриває aura-бафи (-${result.buffsStripped}).`)
-  if (result.keeperSavedRandom) log.push(`  🧤 ${state.myKeeper.name} відбиває в стрибку!`)
+  if (result.buffsStripped > 0) log.push(`  ${displayName(state.myKeeper.id, state.myKeeper.name)} зриває aura-бафи (-${result.buffsStripped}).`)
+  if (result.keeperSavedRandom) log.push(`  🧤 ${displayName(state.myKeeper.id, state.myKeeper.name)} відбиває в стрибку!`)
   else if (result.goal) log.push(`  ⚽ ОПОНЕНТ ЗАБИВАЄ! (${result.keeperDamage} > save ${state.myKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере.`)
   // Compute damage absorbed per player def
@@ -880,7 +881,7 @@ export function decayPlayerMids(state: MatchState): MatchState {
     return { ...state, myMids: result.remaining }
   }
   const log = [...state.log]
-  for (const m of result.toDiscard) log.push(`${m.name} (твій) у відбій.`)
+  for (const m of result.toDiscard) log.push(`${displayName(m.id, m.name)} (твій) у відбій.`)
   return {
     ...state,
     myMids: result.remaining,
@@ -895,7 +896,7 @@ export function decayOpponentMids(state: MatchState): MatchState {
     return { ...state, oppMids: result.remaining }
   }
   const log = [...state.log]
-  for (const m of result.toDiscard) log.push(`${m.name} (опон.) у відбій.`)
+  for (const m of result.toDiscard) log.push(`${displayName(m.id, m.name)} (опон.) у відбій.`)
   return {
     ...state,
     oppMids: result.remaining,

@@ -1,5 +1,6 @@
 import type { Card, DefenderCard, ForwardCard, MidfielderCard } from '../types'
 import type { PerkCondition } from './types'
+import { displayName } from '../../data/player-real-names'
 
 export function isInvulnerable(card: Card): boolean {
   return card.perks.some(p => p.effect.kind === 'invulnerable')
@@ -109,7 +110,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
       ownDefenders = ownDefenders.map(d =>
         d.id === resultCard.id ? (resultCard as DefenderCard) : d,
       )
-      log.push(`${card.name}: +${totalBonus} HP від капітана.`)
+      log.push(`${displayName(card.id, card.name)}: +${totalBonus} HP від капітана.`)
     }
   }
 
@@ -122,7 +123,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
         const recipients: string[] = []
         ownDefenders = ownDefenders.map(d => {
           if (d.id === resultCard.id) return d
-          recipients.push(d.name)
+          recipients.push(displayName(d.id, d.name))
           return {
             ...d,
             hp: d.hp + amt,
@@ -135,7 +136,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
         })
         if (recipients.length > 0) {
           log.push(
-            `${resultCard.name}: +${amt} HP усім іншим захисникам (${recipients.join(', ')}).`,
+            `${displayName(resultCard.id, resultCard.name)}: +${amt} HP усім іншим захисникам (${recipients.join(', ')}).`,
           )
         }
       } else if (resultCard.role === 'def' && matchesCondition(perk.effect.condition, field)) {
@@ -148,7 +149,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
         ownDefenders = ownDefenders.map(d =>
           d.id === resultCard.id ? (resultCard as DefenderCard) : d,
         )
-        log.push(`${card.name}: +${perk.effect.amount} HP від синергії.`)
+        log.push(`${displayName(card.id, card.name)}: +${perk.effect.amount} HP від синергії.`)
       }
       continue
     }
@@ -160,11 +161,11 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
           const target = enemyFwds[targetIdx]
           enemyFwds = enemyFwds.filter((_, i) => i !== targetIdx)
           enemyDiscard.push(target)
-          log.push(`${card.name} знесе ${target.name}!`)
+          log.push(`${displayName(card.id, card.name)} знесе ${displayName(target.id, target.name)}!`)
         } else if (enemyFwds.length > 0) {
-          log.push(`${card.name}: ціль невразлива — перка пропадає.`)
+          log.push(`${displayName(card.id, card.name)}: ціль невразлива — перка пропадає.`)
         } else {
-          log.push(`${card.name}: немає цілі.`)
+          log.push(`${displayName(card.id, card.name)}: немає цілі.`)
         }
       } else if (perk.effect.target === 'any_enemy') {
         const hasTargets =
@@ -174,7 +175,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
         if (hasTargets) {
           pendingSniperChoice = true
         } else {
-          log.push(`${card.name}: немає вразливої цілі — перка пропадає.`)
+          log.push(`${displayName(card.id, card.name)}: немає вразливої цілі — перка пропадає.`)
         }
       }
       continue
@@ -191,7 +192,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
       if (eligible.length > 0) {
         pendingTauntGrantChoice = true
       } else {
-        log.push(`${card.name}: нема кому передати ПІДСТРАХОВКА.`)
+        log.push(`${displayName(card.id, card.name)}: нема кому передати ПІДСТРАХОВКА.`)
       }
       continue
     }
@@ -207,7 +208,7 @@ export function applyOnPlacePerks(card: Card, field: FieldSnapshot): PlacementRe
       if (eligible.length > 0) {
         pendingInstantGrantChoice = true
       } else {
-        log.push(`${card.name}: нема кому надати АТАКА ПЕРШИМ ТЕМПОМ.`)
+        log.push(`${displayName(card.id, card.name)}: нема кому надати АТАКА ПЕРШИМ ТЕМПОМ.`)
       }
       continue
     }
@@ -273,6 +274,6 @@ export function applySniperChoice(
     enemyMids,
     enemyFwds,
     removed,
-    log: [`${source.name} знесе ${removed.name}!`],
+    log: [`${displayName(source.id, source.name)} знесе ${displayName(removed.id, removed.name)}!`],
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import type { Keeper, Rarity } from '../../game/types'
 import { fetchWikiPhoto, getCachedWikiPhoto } from '../lib/wiki-photo'
-import { REAL_PLAYERS } from '../../data/player-real-names'
+import { REAL_PLAYERS, displayName } from '../../data/player-real-names'
 import { FlagImg } from './FlagImg'
 
 interface RaritySkin {
@@ -133,7 +133,7 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick, footer, 
         />
         <div className="min-w-0 flex-1">
           <div className={`truncate font-medium leading-tight ${isLg ? 'text-sm' : 'text-[12px]'}`}>
-            {keeper.name}
+            {displayName(keeper.id, keeper.name)}
             <FlagImg cardId={keeper.id} className="ml-1" />
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">
