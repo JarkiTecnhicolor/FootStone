@@ -30,6 +30,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_m9': 'Paul Pogba',
   'p_m10': 'Vitaliy Buyalskyi',
   'p_m11': 'Mesut Özil',
+  'p_m12': 'Heorhiy Sudakov',
   'p_m13': 'Serhiy Sydorchuk',
   'p_f1': 'Kylian Mbappé',
   'p_f2': 'Erling Haaland',
