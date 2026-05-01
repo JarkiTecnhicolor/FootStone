@@ -83,9 +83,9 @@ const cards: Card[] = [
     perks: [],
   },
   {
-    id: 'o_f5', name: 'Dentinjo', role: 'fwd', cost: 2,
+    id: 'o_f5', name: 'Allison', role: 'fwd', cost: 2,
     rarity: 'bronze',
-    atk: 3,
+    atk: 2,
     perks: [{
       trigger: 'self_modifier',
       effect: { kind: 'atk_buff', amount: 1, scope: 'self', condition: { kind: 'mid_present' } },

@@ -98,5 +98,5 @@ export const REAL_PLAYERS: Record<string, string> = {
   'o_f2': 'Júnior Moraes',
   'o_f3': 'Facundo Ferreyra',
   'o_f4': 'Manor Solomon',
-  'o_f5': 'Dentinho',
+  'o_f5': 'Alisson Santana',
 }
