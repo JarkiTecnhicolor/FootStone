@@ -25,8 +25,8 @@ export interface MvpAward {
   score: number
   breakdown: Record<string, number>
   reward:
-    | { kind: 'upgrade'; stat: 'atk' | 'hp' | 'stamina'; amount: number; capped?: boolean }
-    | { kind: 'money'; amount: number }
+    | { kind: 'upgrade'; stat: 'atk' | 'hp' | 'stamina'; amount: number }
+    | { kind: 'money'; amount: number; reason: 'rolled' | 'capped' }
 }
 
 export interface SeasonMatchResult {

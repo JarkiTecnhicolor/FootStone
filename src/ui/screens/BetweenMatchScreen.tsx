@@ -181,6 +181,10 @@ export function BetweenMatchScreen({
                 ✨ {lastMvp.cardName} спрогресував! +1{' '}
                 {lastMvp.reward.stat === 'atk' ? 'ATK' : lastMvp.reward.stat === 'hp' ? 'HP' : 'STM'} ★
               </div>
+            ) : lastMvp.reward.reason === 'capped' ? (
+              <div className="text-[12px] font-semibold text-amber-900">
+                🛑 {lastMvp.cardName} досяг ліміту росту — ви отримуєте бонус +{lastMvp.reward.amount}M замість апгрейду
+              </div>
             ) : (
               <div className="text-[12px] font-semibold text-emerald-900">
                 💰 Команда отримала бонус +{lastMvp.reward.amount}M

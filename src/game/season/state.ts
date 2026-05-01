@@ -155,15 +155,15 @@ export function recordMatchResult(
           reward: { kind: 'upgrade', stat: rolled.stat, amount: 1 },
         }
       } else {
-        // Capped or rolled money: give money instead
         reward += MONEY_BONUS
+        const reason: 'rolled' | 'capped' = atCap ? 'capped' : 'rolled'
         mvpAward = {
           cardId: card.id,
           cardName: card.name,
           role: mvpInfo.role,
           score: mvpInfo.score,
           breakdown: mvpInfo.breakdown,
-          reward: { kind: 'money', amount: MONEY_BONUS },
+          reward: { kind: 'money', amount: MONEY_BONUS, reason },
         }
       }
     }
