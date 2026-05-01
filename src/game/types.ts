@@ -15,6 +15,7 @@ export interface BaseCard {
   unique?: boolean
   rarity?: Rarity
   price?: number
+  upgrades?: { stat: 'atk' | 'hp' | 'stamina'; amount: number; matchIdx: number }[]
 }
 
 export interface AppliedHpBuff {
@@ -109,6 +110,11 @@ export interface MatchState {
   pendingDyingCaptainPlayer?: number
   pendingDyingCaptainOpp?: number
   goalsByFwd: Record<string, number>
+  damageDealtByFwd: Record<string, number>
+  damageAbsorbedByDef: Record<string, number>
+  teamGoalsWhileAlive: Record<string, number>
+  oppGoalsWhileAlive: Record<string, number>
+  sniperKillsByCard: Record<string, number>
 }
 
 export interface PendingSniper {

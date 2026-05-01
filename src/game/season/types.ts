@@ -18,6 +18,17 @@ export interface RewardBreakdown {
   blowout: number
 }
 
+export interface MvpAward {
+  cardId: string
+  cardName: string
+  role: 'fwd' | 'mid' | 'def'
+  score: number
+  breakdown: Record<string, number>
+  reward:
+    | { kind: 'upgrade'; stat: 'atk' | 'hp' | 'stamina'; amount: number; capped?: boolean }
+    | { kind: 'money'; amount: number }
+}
+
 export interface SeasonMatchResult {
   idx: number
   oppName: string
@@ -26,6 +37,7 @@ export interface SeasonMatchResult {
   outcome: MatchOutcome
   reward: number
   breakdown: RewardBreakdown
+  mvp: MvpAward | null
 }
 
 export interface ScoutInfo {

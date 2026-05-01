@@ -84,6 +84,11 @@ export function makeFreshMatch(
     pendingTauntGrant: null,
     pendingInstantGrant: null,
     goalsByFwd: {},
+    damageDealtByFwd: {},
+    damageAbsorbedByDef: {},
+    teamGoalsWhileAlive: {},
+    oppGoalsWhileAlive: {},
+    sniperKillsByCard: {},
   }
 }
 
@@ -272,6 +277,15 @@ export function placeCardOnField(state: MatchState, side: Side, handIdx: number)
 
   if (placement.enemyDiscard.length > 0) {
     after = applySniperSideEffects(after, side, placement)
+    if (side === 'player') {
+      after = {
+        ...after,
+        sniperKillsByCard: {
+          ...after.sniperKillsByCard,
+          [fresh.id]: (after.sniperKillsByCard[fresh.id] ?? 0) + placement.enemyDiscard.length,
+        },
+      }
+    }
   }
 
   after = {
@@ -573,6 +587,10 @@ export function resolvePendingSniper(state: MatchState, target: SniperTargetSele
     oppDiscard: [...state.oppDiscard, cleanForDiscard(result.removed)],
     log: [...state.log, ...result.log],
     pendingSniper: null,
+    sniperKillsByCard: {
+      ...state.sniperKillsByCard,
+      [sourceId]: (state.sniperKillsByCard[sourceId] ?? 0) + 1,
+    },
   }
   nextState = queueDyingCaptains(nextState, state.oppDefenders, result.enemyDefenders, 'opp')
   return { ok: true, state: nextState }
@@ -696,6 +714,7 @@ export function attackWithForward(
   else if (result.goal) log.push(`  ⚽ ГОЛ! (${result.keeperDamage} > save ${state.oppKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере (${result.keeperDamage} ≤ save ${state.oppKeeper.save}).`)
 
+  const teamGoalsAfter = result.goal ? bumpAlive(state, state.teamGoalsWhileAlive) : state.teamGoalsWhileAlive
   let nextState: MatchState = {
     ...state,
     myFwds: state.myFwds.filter(f => f.id !== fwdId),
@@ -706,9 +725,21 @@ export function attackWithForward(
     goalsByFwd: result.goal
       ? { ...state.goalsByFwd, [fwd.id]: (state.goalsByFwd[fwd.id] ?? 0) + 1 }
       : state.goalsByFwd,
+    damageDealtByFwd: result.damageDealt > 0
+      ? { ...state.damageDealtByFwd, [fwd.id]: (state.damageDealtByFwd[fwd.id] ?? 0) + result.damageDealt }
+      : state.damageDealtByFwd,
+    teamGoalsWhileAlive: teamGoalsAfter,
   }
   nextState = queueDyingCaptains(nextState, state.oppDefenders, result.newEnemyDefenders, 'opp')
   return { ok: true, state: nextState }
+}
+
+function bumpAlive(state: MatchState, current: Record<string, number>): Record<string, number> {
+  const out = { ...current }
+  for (const c of state.myDefenders) out[c.id] = (out[c.id] ?? 0) + 1
+  for (const c of state.myMids) out[c.id] = (out[c.id] ?? 0) + 1
+  for (const c of state.myFwds) out[c.id] = (out[c.id] ?? 0) + 1
+  return out
 }
 
 export function autoTarget(state: MatchState, attackerSide: Side): AttackTarget {
@@ -767,6 +798,16 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
   if (result.keeperSavedRandom) log.push(`  🧤 ${state.myKeeper.name} відбиває в стрибку!`)
   else if (result.goal) log.push(`  ⚽ ОПОНЕНТ ЗАБИВАЄ! (${result.keeperDamage} > save ${state.myKeeper.save})`)
   else if (result.reachedKeeper) log.push(`  Воротар бере.`)
+  // Compute damage absorbed per player def
+  const damageAbsorbedAfter = { ...state.damageAbsorbedByDef }
+  for (const oldDef of state.myDefenders) {
+    const newDef = result.newEnemyDefenders.find(d => d.id === oldDef.id)
+    const dmg = newDef ? oldDef.hp - newDef.hp : oldDef.hp
+    if (dmg > 0) {
+      damageAbsorbedAfter[oldDef.id] = (damageAbsorbedAfter[oldDef.id] ?? 0) + dmg
+    }
+  }
+  const oppGoalsAfter = result.goal ? bumpAlive(state, state.oppGoalsWhileAlive) : state.oppGoalsWhileAlive
   let nextState: MatchState = {
     ...state,
     oppFwds: state.oppFwds.filter(f => f.id !== ready.id),
@@ -774,6 +815,8 @@ export function resolveOneOpponentForward(state: MatchState): { state: MatchStat
     oppDiscard: [...state.oppDiscard, cleanForDiscard(ready)],
     oppScore: state.oppScore + (result.goal ? 1 : 0),
     log: [...state.log, ...log],
+    damageAbsorbedByDef: damageAbsorbedAfter,
+    oppGoalsWhileAlive: oppGoalsAfter,
   }
   nextState = queueDyingCaptains(nextState, state.myDefenders, result.newEnemyDefenders, 'player')
   return { state: nextState, done: false }

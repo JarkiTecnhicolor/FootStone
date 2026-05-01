@@ -112,24 +112,49 @@ const ROLE_BADGE: Record<CardData['role'], string> = {
 
 const ROLE_LABEL: Record<CardData['role'], string> = { def: 'DEF', mid: 'MID', fwd: 'FWD' }
 
+function upgradeCountFor(card: CardData, stat: 'atk' | 'hp' | 'stamina'): number {
+  return (card.upgrades ?? [])
+    .filter(u => u.stat === stat)
+    .reduce((s, u) => s + u.amount, 0)
+}
+
 function statText(
   card: CardData,
   effectiveAtk?: number,
-): { primary: string; status?: '⏳' | '⚡'; tone: 'normal' | 'buffed' | 'debuffed' } {
+): {
+  primary: string
+  status?: '⏳' | '⚡'
+  tone: 'normal' | 'buffed' | 'debuffed'
+  upgradedCount: number
+} {
   if (card.role === 'def') {
     const base = card.baseMaxHp ?? card.maxHp
     const tone = card.maxHp > base ? 'buffed' : card.maxHp < base ? 'debuffed' : 'normal'
-    return { primary: `${card.hp}/${card.maxHp} DEF`, tone }
+    return {
+      primary: `${card.hp}/${card.maxHp} DEF`,
+      tone,
+      upgradedCount: upgradeCountFor(card, 'hp'),
+    }
   }
   if (card.role === 'mid') {
-    return { primary: `${card.stamina}/${card.maxStamina} STM`, tone: 'normal' }
+    return {
+      primary: `${card.stamina}/${card.maxStamina} STM`,
+      tone: 'normal',
+      upgradedCount: upgradeCountFor(card, 'stamina'),
+    }
   }
   const baseAtk = card.atk
   const eff = effectiveAtk ?? baseAtk
   const tone = eff > baseAtk ? 'buffed' : eff < baseAtk ? 'debuffed' : 'normal'
-  const result: { primary: string; status?: '⏳' | '⚡'; tone: 'normal' | 'buffed' | 'debuffed' } = {
+  const result: {
+    primary: string
+    status?: '⏳' | '⚡'
+    tone: 'normal' | 'buffed' | 'debuffed'
+    upgradedCount: number
+  } = {
     primary: `${eff} ATK`,
     tone,
+    upgradedCount: upgradeCountFor(card, 'atk'),
   }
   if (card.status === 'attacking_next') result.status = '⏳'
   else if (card.status === 'ready_to_attack') result.status = '⚡'
@@ -303,8 +328,17 @@ export function Card({
             {card.name}
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">
-            <span className={`font-medium ${statColor} ${isLg ? 'text-base' : 'text-[13px]'}`}>
+            <span
+              className={`font-medium ${statColor} ${isLg ? 'text-base' : 'text-[13px]'} ${
+                stat.upgradedCount > 0 && stat.tone === 'normal' ? 'text-amber-600' : ''
+              }`}
+            >
               {stat.primary}
+              {stat.upgradedCount > 0 && (
+                <span className="ml-0.5 text-amber-500" title={`Підвищено ${stat.upgradedCount}× (Гравець матчу)`}>
+                  {'★'.repeat(stat.upgradedCount)}
+                </span>
+              )}
             </span>
             {stat.status && <span className="text-sm leading-none">{stat.status}</span>}
           </div>

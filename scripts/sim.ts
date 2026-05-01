@@ -33,3 +33,13 @@ const dist = (label: string, d: Record<number, number>) => {
 dist('Player', result.myScoreDistribution)
 console.log()
 dist('Opponent', result.oppScoreDistribution)
+
+console.log()
+console.log('MVP role distribution:')
+for (const role of ['fwd', 'mid', 'def'] as const) {
+  const count = result.mvpByRole[role] ?? 0
+  const avgScore = result.mvpAvgScoreByRole[role] ?? 0
+  const bar = '█'.repeat(Math.round((count / N) * 50))
+  console.log(`  ${role}: ${count.toString().padStart(5)} (${pct(count)}, avg score ${avgScore.toFixed(1)}) ${bar}`)
+}
+console.log(`  none: ${result.mvpNoneCount.toString().padStart(5)} (${pct(result.mvpNoneCount)})`)

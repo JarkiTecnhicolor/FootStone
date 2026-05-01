@@ -192,7 +192,7 @@ export const useMatchStore = create<Store>((set, get) => ({
   finalizeMatchResult: () => {
     const { match, season } = get()
     if (!match || !match.gameOver || !season) return
-    const next = recordMatchResult(season, match.myScore, match.oppScore, match.goalsByFwd)
+    const next = recordMatchResult(season, match.myScore, match.oppScore, match.goalsByFwd, match)
     set({ match: null, season: next, targetingFwdId: null, undoStack: [], turnStartSnapshot: null })
   },
 

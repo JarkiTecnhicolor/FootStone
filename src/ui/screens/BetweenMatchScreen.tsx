@@ -112,6 +112,7 @@ export function BetweenMatchScreen({
   const [tradePickId, setTradePickId] = useState<string | null>(null)
   const tradePicked = tradePickId ? season.cards.find(c => c.id === tradePickId) : undefined
   const tradePayment = tradePaymentFor(season.tradeOffer, tradePicked)
+  const lastMvp = season.results[season.results.length - 1]?.mvp ?? null
 
   return (
     <div className="space-y-3">
@@ -147,6 +148,47 @@ export function BetweenMatchScreen({
           ))}
         </div>
       </div>
+
+      {lastMvp && (
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+          className="rounded-lg border border-amber-300 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 p-3 shadow-md"
+        >
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-amber-900">
+            🌟 Гравець матчу
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div>
+              <span className="text-base font-bold text-amber-950">{lastMvp.cardName}</span>
+              <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-700">
+                {lastMvp.role}
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold tabular-nums text-amber-800">
+              score {lastMvp.score.toFixed(0)}
+            </span>
+          </div>
+          <div className="mt-1 text-[10px] text-amber-800/80">
+            {Object.entries(lastMvp.breakdown)
+              .map(([k, v]) => `${k}: ${v > 0 ? '+' : ''}${v}`)
+              .join(' · ')}
+          </div>
+          <div className="mt-2 rounded-md bg-white/70 p-2">
+            {lastMvp.reward.kind === 'upgrade' ? (
+              <div className="text-[12px] font-semibold text-emerald-900">
+                ✨ {lastMvp.cardName} спрогресував! +1{' '}
+                {lastMvp.reward.stat === 'atk' ? 'ATK' : lastMvp.reward.stat === 'hp' ? 'HP' : 'STM'} ★
+              </div>
+            ) : (
+              <div className="text-[12px] font-semibold text-emerald-900">
+                💰 Команда отримала бонус +{lastMvp.reward.amount}M
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
         <div className="flex items-baseline gap-1.5">

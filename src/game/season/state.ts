@@ -1,18 +1,22 @@
-import type { Card, OpponentDeck, Role } from '../types'
+import type { Card, MatchState, OpponentDeck, Role } from '../types'
 import { PLAYER_DECK } from '../cards/player-deck'
 import { PLAYER_KEEPERS } from '../keepers/player-keepers'
 import { SHAKHTAR } from '../cards/opponents/shakhtar'
 import { cloneCard, shuffle } from '../lib'
 import { MAX_DECK_SIZE, MIN_DECK_SIZE, priceOf, releasePriceOf } from '../draft/pricing'
 import type { DraftedTeam } from '../draft/types'
+import { computeMvp, MONEY_BONUS, rollMvpReward } from './mvp'
 import type {
   MatchOutcome,
+  MvpAward,
   RewardBreakdown,
   SeasonMatchPlan,
   SeasonMatchResult,
   SeasonState,
   TradeOffer,
 } from './types'
+
+const UPGRADE_CAP_PER_CARD = 2
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
   { idx: 0, oppKind: 'shakhtar', oppName: 'Шахтар' },
@@ -84,11 +88,41 @@ export function totalReward(b: RewardBreakdown): number {
   )
 }
 
+function bumpStat(card: Card, stat: 'atk' | 'hp' | 'stamina', matchIdx: number): Card {
+  const upgrades = [...(card.upgrades ?? []), { stat, amount: 1, matchIdx }]
+  if (stat === 'atk' && card.role === 'fwd') {
+    return { ...card, atk: card.atk + 1, upgrades }
+  }
+  if (stat === 'hp' && card.role === 'def') {
+    const baseMaxHp = card.maxHp + 1
+    return {
+      ...card,
+      hp: baseMaxHp,
+      maxHp: baseMaxHp,
+      upgrades,
+    }
+  }
+  if (stat === 'stamina' && card.role === 'mid') {
+    return {
+      ...card,
+      stamina: card.maxStamina + 1,
+      maxStamina: card.maxStamina + 1,
+      upgrades,
+    }
+  }
+  return card
+}
+
+function totalUpgradesOf(card: Card): number {
+  return (card.upgrades ?? []).reduce((s, u) => s + u.amount, 0)
+}
+
 export function recordMatchResult(
   state: SeasonState,
   myScore: number,
   oppScore: number,
   goalsByFwd: Record<string, number>,
+  match: MatchState,
 ): SeasonState {
   const idx = state.results.length
   if (idx >= state.plan.length) return state
@@ -96,7 +130,45 @@ export function recordMatchResult(
   const outcome: MatchOutcome =
     myScore > oppScore ? 'win' : myScore === oppScore ? 'draw' : 'loss'
   const breakdown = rewardBreakdownFor(outcome, myScore, oppScore, goalsByFwd)
-  const reward = totalReward(breakdown)
+  let reward = totalReward(breakdown)
+
+  // MVP detection
+  const mvpInfo = computeMvp(match, state.cards)
+  let mvpAward: MvpAward | null = null
+  let updatedCards = state.cards
+  if (mvpInfo) {
+    const card = state.cards.find(c => c.id === mvpInfo.cardId)
+    if (card) {
+      const totalUp = totalUpgradesOf(card)
+      const atCap = totalUp >= UPGRADE_CAP_PER_CARD
+      const rolled = rollMvpReward(mvpInfo.role)
+      if (rolled.kind === 'upgrade' && !atCap) {
+        updatedCards = state.cards.map(c =>
+          c.id === card.id ? bumpStat(c, rolled.stat, idx) : c,
+        )
+        mvpAward = {
+          cardId: card.id,
+          cardName: card.name,
+          role: mvpInfo.role,
+          score: mvpInfo.score,
+          breakdown: mvpInfo.breakdown,
+          reward: { kind: 'upgrade', stat: rolled.stat, amount: 1 },
+        }
+      } else {
+        // Capped or rolled money: give money instead
+        reward += MONEY_BONUS
+        mvpAward = {
+          cardId: card.id,
+          cardName: card.name,
+          role: mvpInfo.role,
+          score: mvpInfo.score,
+          breakdown: mvpInfo.breakdown,
+          reward: { kind: 'money', amount: MONEY_BONUS },
+        }
+      }
+    }
+  }
+
   const result: SeasonMatchResult = {
     idx,
     oppName: plan.oppName,
@@ -105,10 +177,12 @@ export function recordMatchResult(
     outcome,
     reward,
     breakdown,
+    mvp: mvpAward,
   }
-  const ownedIds = new Set(state.cards.map(c => c.id))
+  const ownedIds = new Set(updatedCards.map(c => c.id))
   return {
     ...state,
+    cards: updatedCards,
     results: [...state.results, result],
     money: state.money + reward,
     shop: rollShop(ownedIds),
