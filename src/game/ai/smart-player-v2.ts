@@ -6,9 +6,31 @@ import {
   autoTarget,
   isExtraTime,
   playPlayerCard,
+  resolvePendingInstantGrant,
   resolvePendingSniper,
+  resolvePendingTauntGrant,
 } from '../match'
 import { chooseSniperTarget, pickBestCardIdx } from './smart-ai'
+
+function pickTauntTarget(state: MatchState): string | null {
+  const src = state.pendingTauntGrant?.sourceId
+  let best: { id: string; hp: number } | null = null
+  for (const d of state.myDefenders) {
+    if (d.id === src) continue
+    if (d.perks.some(p => p.trigger === 'aura' && p.effect.kind === 'forward_defender')) continue
+    if (!best || d.maxHp > best.hp) best = { id: d.id, hp: d.maxHp }
+  }
+  return best?.id ?? null
+}
+
+function pickInstantTarget(state: MatchState): string | null {
+  let best: { id: string; atk: number } | null = null
+  for (const f of state.myFwds) {
+    if (f.perks.some(p => p.trigger === 'self_modifier' && p.effect.kind === 'instant_attack')) continue
+    if (!best || f.atk > best.atk) best = { id: f.id, atk: f.atk }
+  }
+  return best?.id ?? null
+}
 
 function maybeActivateMorph(state: MatchState): MatchState {
   if (state.phase !== 'player' || state.pendingSniper) return state
@@ -29,6 +51,22 @@ export function smartPlayerActionsV2(state: MatchState): MatchState {
     if (s.pendingSniper) {
       const r = resolvePendingSniper(s, chooseSniperTarget(s, 'player'))
       if (!r.ok) break
+      s = r.state
+      continue
+    }
+    if (s.pendingTauntGrant) {
+      const tid = pickTauntTarget(s)
+      if (!tid) { s = { ...s, pendingTauntGrant: null }; continue }
+      const r = resolvePendingTauntGrant(s, tid)
+      if (!r.ok) { s = { ...s, pendingTauntGrant: null }; continue }
+      s = r.state
+      continue
+    }
+    if (s.pendingInstantGrant) {
+      const fid = pickInstantTarget(s)
+      if (!fid) { s = { ...s, pendingInstantGrant: null }; continue }
+      const r = resolvePendingInstantGrant(s, fid)
+      if (!r.ok) { s = { ...s, pendingInstantGrant: null }; continue }
       s = r.state
       continue
     }

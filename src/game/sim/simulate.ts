@@ -12,8 +12,138 @@ import { runSimpleOpponentTurn } from '../ai/simple'
 import { dumbPlayerActions } from '../ai/dumb-player'
 import { smartPlayerActionsV2 } from '../ai/smart-player-v2'
 import { computeMvp, DEFAULT_COEF, type MvpCoefficients } from '../season/mvp'
+import {
+  isSeasonChampion,
+  isSeasonOver,
+  makeOpponentByBudget,
+  nextMatchPlan,
+  recordMatchResult,
+  startSeason,
+} from '../season/state'
+import { keeperPriceOf, MAX_DECK_SIZE, priceOf, STARTING_BUDGET } from '../draft/pricing'
+import { cloneCard, shuffle } from '../lib'
+import type { DraftedTeam } from '../draft/types'
+import { SHAKHTAR } from '../cards/opponents/shakhtar'
+import { PLAYER_KEEPERS } from '../keepers/player-keepers'
 
 export type PlayerAi = 'dumb' | 'smart'
+
+export interface SeasonSimResult {
+  champion: boolean
+  matchesSurvived: number
+  finalMoney: number
+  totalMyGoals: number
+  totalOppGoals: number
+  upgradesEarned: number
+  results: Array<{ idx: number; outcome: string; myScore: number; oppScore: number }>
+}
+
+function autoDraft(
+  pool: readonly Card[],
+  keepers: readonly Keeper[],
+  budget: number,
+): DraftedTeam {
+  const shuffled = shuffle(pool.map(cloneCard))
+  // Pick a keeper first (random non-legend)
+  const nonLegend = keepers.filter(k => k.rarity !== 'legend')
+  const keeperPool = nonLegend.length > 0 ? nonLegend : keepers
+  const keeper = { ...keeperPool[Math.floor(Math.random() * keeperPool.length)] }
+  let remaining = budget - keeperPriceOf(keeper)
+  const cards: Card[] = []
+  // Try to grab one legend if affordable
+  const legends = shuffled.filter(c => c.rarity === 'legend')
+  for (const c of legends) {
+    const p = priceOf(c)
+    if (p <= remaining) {
+      cards.push(c)
+      remaining -= p
+      break
+    }
+  }
+  // Then position picks (1 def, 1 mid, 1 fwd) prefer gold > silver > bronze
+  for (const role of ['def', 'mid', 'fwd'] as const) {
+    const candidates = shuffled.filter(c =>
+      c.role === role && !cards.some(cc => cc.id === c.id),
+    )
+    candidates.sort((a, b) => priceOf(b) - priceOf(a))
+    for (const c of candidates) {
+      const p = priceOf(c)
+      if (p <= remaining) {
+        cards.push(c)
+        remaining -= p
+        break
+      }
+    }
+  }
+  // One gold reinforcement
+  const golds = shuffled.filter(c => c.rarity === 'gold' && !cards.some(cc => cc.id === c.id))
+  for (const c of golds) {
+    const p = priceOf(c)
+    if (p <= remaining) {
+      cards.push(c)
+      remaining -= p
+      break
+    }
+  }
+  // Fill bench up to 8-10 cards from cheapest available
+  const bench = shuffled
+    .filter(c => !cards.some(cc => cc.id === c.id))
+    .filter(c => c.rarity === 'bronze' || c.rarity === 'silver')
+    .sort((a, b) => priceOf(a) - priceOf(b))
+  for (const c of bench) {
+    if (cards.length >= 10) break
+    const p = priceOf(c)
+    if (p <= remaining) {
+      cards.push(c)
+      remaining -= p
+    }
+  }
+  // If still under min, force-add cheapest
+  while (cards.length < 8) {
+    const fallback = shuffled.find(c => !cards.some(cc => cc.id === c.id))
+    if (!fallback) break
+    cards.push(fallback)
+  }
+  return { cards, keeper, remainingBudget: Math.max(0, remaining) }
+}
+
+export function simulateSeason(
+  pool: readonly Card[],
+  keepers: readonly Keeper[] = PLAYER_KEEPERS,
+  playerAi: PlayerAi = 'smart',
+  mvpCoef: MvpCoefficients = DEFAULT_COEF,
+): SeasonSimResult {
+  const team = autoDraft(pool, keepers, STARTING_BUDGET)
+  let season = startSeason(team)
+  let totalUpgrades = 0
+  let safety = 10
+  while (!isSeasonOver(season) && safety-- > 0) {
+    const plan = nextMatchPlan(season)
+    if (!plan) break
+    const opp =
+      plan.oppKind === 'shakhtar'
+        ? SHAKHTAR
+        : makeOpponentByBudget(plan.oppName, plan.oppBudget!)
+    const final = simulateOne(season.cards, opp, playerAi, [season.keeper])
+    season = recordMatchResult(season, final.myScore, final.oppScore, final.goalsByFwd, final)
+    if (season.results[season.results.length - 1]?.mvp?.reward.kind === 'upgrade') totalUpgrades++
+  }
+  void mvpCoef
+  return {
+    champion: isSeasonChampion(season),
+    matchesSurvived: season.results.length,
+    finalMoney: season.money,
+    totalMyGoals: season.results.reduce((s, r) => s + r.myScore, 0),
+    totalOppGoals: season.results.reduce((s, r) => s + r.oppScore, 0),
+    upgradesEarned: totalUpgrades,
+    results: season.results.map(r => ({
+      idx: r.idx,
+      outcome: r.outcome,
+      myScore: r.myScore,
+      oppScore: r.oppScore,
+    })),
+  }
+}
 
 export interface SimulationResult {
   matches: number

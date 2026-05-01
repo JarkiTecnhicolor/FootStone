@@ -6,7 +6,13 @@ import { PLAYER_DECK } from '../../game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../../game/keepers/player-keepers'
 import { SHAKHTAR } from '../../game/cards/opponents/shakhtar'
 import { keeperPriceOf, priceOf } from '../../game/draft/pricing'
+import { flagOf, NATIONALITY_BY_ID, NATIONALITY_LABELS } from '../../data/player-nationalities'
 import type { Card as CardData, Keeper, Rarity } from '../../game/types'
+
+function labelOf(cardId: string): string {
+  const code = NATIONALITY_BY_ID[cardId]
+  return code ? NATIONALITY_LABELS[code] ?? '' : ''
+}
 
 const RARITY_ORDER: Record<Rarity, number> = { bronze: 0, silver: 1, gold: 2, legend: 3 }
 
@@ -26,22 +32,40 @@ interface Props {
 type Tab = 'player' | 'opp'
 
 function CardWithPrice({ card }: { card: CardData }) {
+  const flag = flagOf(card.id)
+  const label = labelOf(card.id)
   return (
     <div className="flex flex-col items-center">
       <Card card={card} size="lg" showCost />
-      <div className="mt-1 rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
-        💰 {priceOf(card)} M
+      <div className="mt-1 flex flex-col items-center gap-0.5">
+        <div className="rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
+          💰 {priceOf(card)} M
+        </div>
+        {flag && (
+          <div className="rounded bg-blue-50 px-2 py-0.5 text-[10px] text-blue-900">
+            {flag} {label}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 function KeeperWithPrice({ keeper }: { keeper: Keeper }) {
+  const flag = flagOf(keeper.id)
+  const label = labelOf(keeper.id)
   return (
     <div className="flex flex-col items-center">
       <KeeperCard keeper={keeper} size="lg" />
-      <div className="mt-1 rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
-        💰 {keeperPriceOf(keeper)} M
+      <div className="mt-1 flex flex-col items-center gap-0.5">
+        <div className="rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
+          💰 {keeperPriceOf(keeper)} M
+        </div>
+        {flag && (
+          <div className="rounded bg-blue-50 px-2 py-0.5 text-[10px] text-blue-900">
+            {flag} {label}
+          </div>
+        )}
       </div>
     </div>
   )
