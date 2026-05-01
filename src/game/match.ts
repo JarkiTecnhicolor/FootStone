@@ -21,6 +21,7 @@ import {
 import {
   applyOnPlacePerks,
   applySniperChoice,
+  isInvulnerable,
   type FieldSnapshot,
   type SniperTargetSelection,
 } from './perks/dispatch'
@@ -322,6 +323,59 @@ function applySniperSideEffects(
     ],
   }
   next = queueDyingCaptains(next, beforeDefs, placement.enemyDefenders, enemySide)
+  return next
+}
+
+export function resolveOppPendingSniper(state: MatchState): MatchState {
+  if (!state.pendingSniper) return state
+  const sourceId = state.pendingSniper.sourceId
+  const source =
+    state.oppMids.find(c => c.id === sourceId) ??
+    state.oppDefenders.find(c => c.id === sourceId) ??
+    state.oppFwds.find(c => c.id === sourceId)
+  if (!source) {
+    return { ...state, pendingSniper: null }
+  }
+
+  const candidates: Array<{ sel: SniperTargetSelection; card: Card }> = []
+  state.myFwds.forEach((c, i) => {
+    if (!isInvulnerable(c)) candidates.push({ sel: { kind: 'fwd', idx: i }, card: c })
+  })
+  state.myMids.forEach((c, i) => {
+    if (!isInvulnerable(c)) candidates.push({ sel: { kind: 'mid', idx: i }, card: c })
+  })
+  state.myDefenders.forEach((c, i) => {
+    if (!isInvulnerable(c)) candidates.push({ sel: { kind: 'def', idx: i }, card: c })
+  })
+
+  if (candidates.length === 0) {
+    return {
+      ...state,
+      pendingSniper: null,
+      log: [...state.log, `${source.name}: немає вразливої цілі — перка пропадає.`],
+    }
+  }
+
+  const roleScore = (kind: SniperTargetSelection['kind']): number =>
+    kind === 'fwd' ? 1 : kind === 'mid' ? 0.5 : 0
+  let best = candidates[0]
+  for (let i = 1; i < candidates.length; i++) {
+    const a = candidates[i].card.cost + roleScore(candidates[i].sel.kind)
+    const b = best.card.cost + roleScore(best.sel.kind)
+    if (a > b) best = candidates[i]
+  }
+
+  const result = applySniperChoice(source, fieldFor(state, 'opp'), best.sel)
+  let next: MatchState = {
+    ...state,
+    myDefenders: result.enemyDefenders,
+    myMids: result.enemyMids,
+    myFwds: result.enemyFwds,
+    discard: [...state.discard, cleanForDiscard(result.removed)],
+    log: [...state.log, ...result.log],
+    pendingSniper: null,
+  }
+  next = queueDyingCaptains(next, state.myDefenders, result.enemyDefenders, 'player')
   return next
 }
 

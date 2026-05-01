@@ -1,6 +1,6 @@
 import type { Card, MatchState } from '../types'
 import { payCost } from '../rules/cost'
-import { isBlockedInExtraTime, placeCardOnField } from '../match'
+import { isBlockedInExtraTime, placeCardOnField, resolveOppPendingSniper } from '../match'
 
 function isFwdSniper(card: Card): boolean {
   return card.perks.some(
@@ -38,7 +38,10 @@ export function pickAndPlaceOneOppCard(
   if (idx === -1) return { state, remainingActions: oppActionsAvailable, done: true }
   const card = state.oppHand[idx]
   const newActions = payCost(oppActionsAvailable, card)
-  const newState = placeCardOnField(state, 'opp', idx)
+  let newState = placeCardOnField(state, 'opp', idx)
+  if (newState.pendingSniper) {
+    newState = resolveOppPendingSniper(newState)
+  }
   return { state: newState, remainingActions: newActions, done: false }
 }
 
