@@ -64,6 +64,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_f19': 'Robert Lewandowski',
   'p_f20': 'Andriy Yarmolenko',
   'p_f21': 'Gianluca Scamacca',
+  'p_f22': 'Romário',
 
   'o_d1': 'Grzegorz Krychowiak',
   'o_d2': 'Valeriy Bondar',

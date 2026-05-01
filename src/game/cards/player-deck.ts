@@ -499,6 +499,23 @@ export const PLAYER_DECK: Card[] = [
     ],
   },
   {
+    id: 'p_f22', name: 'Rumourio', role: 'fwd', cost: 4,
+    rarity: 'gold',
+    atk: 2,
+    perks: [
+      {
+        trigger: 'self_modifier',
+        effect: { kind: 'bypass_keeper' },
+        label: 'ПРОХІД НАСКРІЗЬ: атакує тільки воротаря',
+      },
+      {
+        trigger: 'self_modifier',
+        effect: { kind: 'instant_attack' },
+        label: 'АТАКА ПЕРШИМ ТЕМПОМ: б\'є на поточному ході',
+      },
+    ],
+  },
+  {
     id: 'p_f21', name: 'Sacamaca', role: 'fwd', cost: 5,
     rarity: 'silver',
     atk: 5,
