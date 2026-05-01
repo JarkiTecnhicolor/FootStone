@@ -27,23 +27,32 @@ type Tab = 'player' | 'opp'
 
 function CardWithPrice({ card }: { card: CardData }) {
   return (
-    <div className="flex h-full flex-col items-center justify-between gap-2">
-      <Card card={card} size="lg" showCost />
-      <div className="rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
-        💰 {priceOf(card)} M
-      </div>
-    </div>
+    <Card
+      card={card}
+      size="lg"
+      showCost
+      stretch
+      footer={
+        <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
+          💰 {priceOf(card)} M
+        </div>
+      }
+    />
   )
 }
 
 function KeeperWithPrice({ keeper }: { keeper: Keeper }) {
   return (
-    <div className="flex h-full flex-col items-center justify-between gap-2">
-      <KeeperCard keeper={keeper} size="lg" />
-      <div className="rounded bg-stone-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
-        💰 {keeperPriceOf(keeper)} M
-      </div>
-    </div>
+    <KeeperCard
+      keeper={keeper}
+      size="lg"
+      stretch
+      footer={
+        <div className="rounded bg-black/10 px-2 py-0.5 text-center text-[10px] font-semibold tabular-nums">
+          💰 {keeperPriceOf(keeper)} M
+        </div>
+      }
+    />
   )
 }
 

@@ -20,11 +20,11 @@ import type {
 const UPGRADE_CAP_PER_CARD = 2
 
 export const SEASON_PLAN: readonly SeasonMatchPlan[] = [
-  { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 160 },
-  { idx: 1, oppKind: 'shakhtar', oppName: 'Шахтар' },
-  { idx: 2, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 200 },
-  { idx: 3, oppKind: 'shakhtar', oppName: 'Шахтар (відплата)' },
-  { idx: 4, oppKind: 'random', oppName: 'Гроссмейстри', oppBudget: 270 },
+  { idx: 0, oppKind: 'random', oppName: 'Юні мрійники', oppBudget: 190 },
+  { idx: 1, oppKind: 'random', oppName: 'Серйозні дядьки', oppBudget: 240 },
+  { idx: 2, oppKind: 'random', oppName: 'Гроссмейстри', oppBudget: 270 },
+  { idx: 3, oppKind: 'shakhtar', oppName: 'Шахтар' },
+  { idx: 4, oppKind: 'random', oppName: 'Чемпіонат світу', oppBudget: 350 },
 ]
 
 const SHOP_OPTIONS = 3

@@ -51,13 +51,15 @@ interface Props {
   size?: 'sm' | 'lg'
   highlighted?: boolean
   onClick?: () => void
+  footer?: React.ReactNode
+  stretch?: boolean
 }
 
 function fallbackAvatar(name: string): string {
   return `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(name)}&backgroundType=gradientLinear&backgroundColor=d9e9ff,a3c8e9`
 }
 
-export function KeeperCard({ keeper, size = 'sm', highlighted, onClick }: Props) {
+export function KeeperCard({ keeper, size = 'sm', highlighted, onClick, footer, stretch = false }: Props) {
   const isLg = size === 'lg'
   const skin = keeper.rarity ? RARITY_SKINS[keeper.rarity] : FALLBACK_SKIN
   const avatarSize = isLg ? 56 : 40
@@ -91,7 +93,7 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick }: Props)
       onClick={onClick}
       title={keeper.label || keeper.rarity}
       whileTap={onClick ? { scale: 0.97 } : undefined}
-      className={`relative ${widthClass} rounded-lg border ${skin.box} ${skin.glow} ${cursor} select-none p-2 shadow-sm`}
+      className={`relative ${widthClass} rounded-lg border ${skin.box} ${skin.glow} ${cursor} select-none p-2 shadow-sm ${stretch ? 'flex h-full flex-col' : ''}`}
     >
       {highlighted && (
         <motion.div
@@ -150,6 +152,11 @@ export function KeeperCard({ keeper, size = 'sm', highlighted, onClick }: Props)
           className={`mt-1.5 border-t border-current/15 pt-1 italic leading-snug ${isLg ? 'text-[11px]' : 'text-[10px]'} opacity-85`}
         >
           {keeper.label}
+        </div>
+      )}
+      {footer && (
+        <div className="mt-auto pt-2">
+          {footer}
         </div>
       )}
     </motion.div>

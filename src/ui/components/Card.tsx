@@ -56,6 +56,8 @@ interface Props {
   onClick?: () => void
   layoutId?: string
   effectiveAtk?: number
+  footer?: React.ReactNode
+  stretch?: boolean
 }
 
 interface RaritySkin {
@@ -189,6 +191,8 @@ export function Card({
   onClick,
   layoutId,
   effectiveAtk,
+  footer,
+  stretch = false,
 }: Props) {
   const skin: RaritySkin = card.rarity ? RARITY_SKINS[card.rarity] : FALLBACK_SKIN
   const isLg = size === 'lg'
@@ -241,7 +245,7 @@ export function Card({
       whileTap={onClick ? { scale: 0.96 } : undefined}
       onClick={onClick}
       title={skin.label || undefined}
-      className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} select-none p-2 shadow-sm ${skin.glow}`}
+      className={`relative ${widthClass} rounded-lg border ${skin.box} ${outline} ${cursor} select-none p-2 shadow-sm ${skin.glow} ${stretch ? 'flex h-full flex-col' : ''}`}
     >
       {ready && (
         <motion.div
@@ -362,6 +366,11 @@ export function Card({
           {card.perks.map((p, i) => (
             <PerkLine key={i} perk={p} size={isLg ? 'lg' : 'sm'} />
           ))}
+        </div>
+      )}
+      {footer && (
+        <div className="mt-auto pt-2">
+          {footer}
         </div>
       )}
     </motion.div>
