@@ -425,7 +425,7 @@ export const PLAYER_DECK: Card[] = [
     }],
   },
   {
-    id: 'p_f13', name: 'Panamerenko', role: 'fwd', cost: 2,
+    id: 'p_f13', name: 'Panamera', role: 'fwd', cost: 2,
     rarity: 'bronze',
     atk: 1,
     perks: [{
