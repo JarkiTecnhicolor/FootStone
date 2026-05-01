@@ -19,7 +19,7 @@ export const REAL_PLAYERS: Record<string, string> = {
   'p_d10': 'Taras Mykhavko',
   'p_d11': 'Oleh Luzhny',
   'p_d12': 'Valeriy Bondar',
-  'p_d13': 'Vitaliy Mykolenko',
+  'p_d13': 'Yukhym Konoplya',
   'p_d14': 'Oleksandr Holovko',
   'p_d15': 'Oleksandr Karavayev',
   'p_d16': 'Raphaël Varane',
