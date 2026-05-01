@@ -10,41 +10,7 @@ import { calculateAtk, validAttackTargetIndices } from '../../game/rules/combat'
 import { isInvulnerable } from '../../game/perks/dispatch'
 import type { Card as CardData, MatchState } from '../../game/types'
 
-function StatBox({
-  label,
-  value,
-  pulse = false,
-}: {
-  label: string
-  value: string | number
-  pulse?: boolean
-}) {
-  return (
-    <div className="rounded-md bg-stone-100 px-3 py-1.5">
-      <div className="text-[10px] text-stone-500">{label}</div>
-      <div className="relative h-6 overflow-hidden">
-        {pulse ? (
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div
-              key={String(value)}
-              initial={{ y: 8, scale: 1.4, color: '#16a34a' }}
-              animate={{ y: 0, scale: 1, color: '#1c1917' }}
-              exit={{ y: -10, opacity: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="absolute inset-0 text-base font-medium"
-            >
-              {value}
-            </motion.div>
-          </AnimatePresence>
-        ) : (
-          <div className="text-base font-medium text-stone-900">{value}</div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function PhaseBanner({ match }: { match: MatchState }) {
+function PhasePill({ match }: { match: MatchState }) {
   if (match.gameOver) {
     const result = decideMatchResult(match)
     const text =
@@ -55,55 +21,87 @@ function PhaseBanner({ match }: { match: MatchState }) {
           : `Нічия ${match.myScore}:${match.oppScore}`
     const cls =
       result === 'win'
-        ? 'bg-green-100 text-green-800'
+        ? 'bg-green-100 text-green-800 border-green-200'
         : result === 'loss'
-          ? 'bg-red-100 text-red-800'
-          : 'bg-stone-100 text-stone-700'
+          ? 'bg-red-100 text-red-800 border-red-200'
+          : 'bg-stone-100 text-stone-700 border-stone-200'
     return (
-      <motion.div
-        layout
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`rounded-md px-3 py-2 text-center text-sm font-medium ${cls}`}
-      >
-        {text}
-      </motion.div>
+      <div className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${cls}`}>{text}</div>
     )
   }
-
   const extra = isExtraTime(match)
   const half = currentHalf(match)
   const halfPrefix = `${half === 1 ? '1-й' : '2-й'} тайм`
   const text = match.pendingSniper
-    ? 'Kosomoto — обери карту опонента, щоб знести'
+    ? '🎯 Обери ціль'
     : match.phase === 'opponent'
       ? extra
-        ? `${halfPrefix} · Доданий час — хід опонента…`
+        ? `${halfPrefix} · ⏳ Доданий час · опонент…`
         : `${halfPrefix} · Хід опонента…`
       : extra
-        ? `${halfPrefix} · Доданий час — нові форварди не виставити`
+        ? `${halfPrefix} · ⏳ Доданий час · твій хід`
         : `${halfPrefix} · Твій хід ${match.turn}`
   const cls = match.pendingSniper
-    ? 'bg-red-100 text-red-800 font-medium'
+    ? 'bg-red-100 text-red-800 border-red-200'
     : extra
-      ? 'bg-amber-100 text-amber-900 font-medium'
+      ? 'bg-amber-100 text-amber-900 border-amber-200'
       : match.phase === 'opponent'
-        ? 'bg-stone-100 text-stone-600'
-        : 'bg-blue-100 text-blue-800'
-
+        ? 'bg-stone-100 text-stone-600 border-stone-200'
+        : 'bg-blue-100 text-blue-800 border-blue-200'
   return (
     <motion.div
-      layout
       key={text}
-      initial={{ opacity: 0, y: -6 }}
+      initial={{ opacity: 0, y: -3 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18 }}
-      className={`rounded-md px-3 py-2 text-center text-xs ${cls}`}
+      className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${cls}`}
     >
       {text}
     </motion.div>
   )
 }
+
+function StatPill({ label, value, pulse = false }: { label: string; value: string | number; pulse?: boolean }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="text-[9px] uppercase tracking-wider text-stone-500">{label}</span>
+      <div className="relative h-4 min-w-[20px]">
+        {pulse ? (
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={String(value)}
+              initial={{ y: 6, scale: 1.4, color: '#16a34a' }}
+              animate={{ y: 0, scale: 1, color: '#1c1917' }}
+              exit={{ y: -8, opacity: 0 }}
+              transition={{ duration: 0.32, ease: 'easeOut' }}
+              className="absolute inset-0 text-sm font-semibold tabular-nums"
+            >
+              {value}
+            </motion.span>
+          </AnimatePresence>
+        ) : (
+          <span className="text-sm font-semibold tabular-nums text-stone-900">{value}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ControlStrip({ match }: { match: MatchState }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+      <StatPill label="Хід" value={`${Math.min(match.turn, match.maxTurn)}/${match.maxTurn}`} />
+      <div className="h-4 w-px bg-stone-200" />
+      <StatPill label="Дії" value={`${match.actions}/${match.maxActions}`} />
+      <div className="h-4 w-px bg-stone-200" />
+      <StatPill label="Рахунок" value={`${match.myScore}:${match.oppScore}`} pulse />
+      <div className="ml-auto">
+        <PhasePill match={match} />
+      </div>
+    </div>
+  )
+}
+
 
 function Zone({
   label,
@@ -664,15 +662,6 @@ export function MatchScreen() {
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5">
-        <StatBox label="Хід" value={`${Math.min(match.turn, match.maxTurn)} / ${match.maxTurn}`} />
-        <StatBox label="Дії" value={`${match.actions} / ${match.maxActions}`} />
-        <StatBox label="Ти" value={match.myScore} pulse />
-        <StatBox label="Опон." value={match.oppScore} pulse />
-      </div>
-
-      <PhaseBanner match={match} />
-
       <Pitch>
         <AnimatePresence>
           {ballEvent && ballEvent.kind === 'ball' && ballEvent.outcome && (
@@ -785,12 +774,19 @@ export function MatchScreen() {
         </div>
       </Pitch>
 
-      <div className="rounded-lg border border-stone-200 p-2.5">
-        <div className="mb-1.5 text-[10px] text-stone-500">
-          Твоя рука · клік для розіграшу · дека: {match.deck.length}
+      <ControlStrip match={match} />
+
+      <div className="rounded-lg border border-stone-200 bg-gradient-to-b from-stone-50 to-white p-3 shadow-sm">
+        <div className="mb-2 flex items-baseline justify-between">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-stone-600">
+            Твоя рука
+          </div>
+          <div className="text-[10px] text-stone-400">
+            клік для розіграшу · дека {match.deck.length}
+          </div>
         </div>
         {match.hand.length === 0 ? (
-          <div className="text-[10px] text-stone-400">рука порожня</div>
+          <div className="text-[10px] italic text-stone-400">рука порожня</div>
         ) : (
           <div className="flex flex-wrap gap-2">
             <AnimatePresence mode="popLayout">
@@ -816,7 +812,7 @@ export function MatchScreen() {
               onClick={undo}
               disabled={!canInteract || undoStackLength === 0}
               title="Відмінити останню дію"
-              className="rounded-md border border-stone-400 px-3 py-2 text-xs hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs text-stone-700 transition hover:bg-stone-50 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
               ◀
             </button>
@@ -824,14 +820,14 @@ export function MatchScreen() {
               onClick={resetTurn}
               disabled={!canInteract || undoStackLength === 0}
               title="Скинути хід"
-              className="rounded-md border border-stone-400 px-3 py-2 text-xs hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs text-stone-700 transition hover:bg-stone-50 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
               ◀◀
             </button>
             {(isAttackTargeting || isSniperMode) && (
               <button
                 onClick={cancelTargeting}
-                className="rounded-md border border-stone-400 px-3 py-2 text-xs hover:bg-stone-100"
+                className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs text-stone-700 transition hover:bg-stone-50"
               >
                 Скасувати
               </button>
@@ -839,16 +835,16 @@ export function MatchScreen() {
             <button
               onClick={endTurn}
               disabled={!canInteract}
-              className="flex-1 rounded-md border border-stone-400 px-3 py-2 text-xs hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex-1 rounded-md bg-stone-900 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400 disabled:shadow-none"
             >
-              Завершити хід
+              Завершити хід →
             </button>
           </>
         )}
         {match.gameOver && (
           <button
             onClick={resetMatch}
-            className="flex-1 rounded-md border border-stone-900 bg-stone-900 px-3 py-2 text-xs text-white"
+            className="flex-1 rounded-md bg-stone-900 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-stone-800"
           >
             Новий матч
           </button>
