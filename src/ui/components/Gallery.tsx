@@ -5,8 +5,11 @@ import { KeeperCard } from './KeeperCard'
 import { PLAYER_DECK } from '../../game/cards/player-deck'
 import { PLAYER_KEEPERS } from '../../game/keepers/player-keepers'
 import { SHAKHTAR } from '../../game/cards/opponents/shakhtar'
+import { BARCELONA } from '../../game/cards/opponents/barcelona'
+import { REAL } from '../../game/cards/opponents/real'
+import { WORLD_ALLSTAR } from '../../game/cards/opponents/world'
 import { keeperPriceOf, priceOf } from '../../game/draft/pricing'
-import type { Card as CardData, Keeper, Rarity } from '../../game/types'
+import type { Card as CardData, Keeper, OpponentDeck, Rarity } from '../../game/types'
 
 const RARITY_ORDER: Record<Rarity, number> = { bronze: 0, silver: 1, gold: 2, legend: 3 }
 
@@ -23,7 +26,22 @@ interface Props {
   onClose: () => void
 }
 
-type Tab = 'player' | 'opp'
+type Tab = 'player' | 'shakhtar' | 'barcelona' | 'real' | 'world'
+
+const OPP_DECKS: Record<Exclude<Tab, 'player'>, OpponentDeck> = {
+  shakhtar: SHAKHTAR,
+  barcelona: BARCELONA,
+  real: REAL,
+  world: WORLD_ALLSTAR,
+}
+
+const TAB_LABELS: Record<Tab, string> = {
+  player: 'Твоя дека',
+  shakhtar: 'Shakhtar',
+  barcelona: 'Barcelona',
+  real: 'Real',
+  world: 'World All-star',
+}
 
 function CardWithPrice({ card }: { card: CardData }) {
   return (
@@ -72,8 +90,8 @@ const ROLE_TITLE: Record<CardData['role'], string> = {
 
 export function Gallery({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('player')
-  const cards = tab === 'player' ? PLAYER_DECK : SHAKHTAR.cards
-  const keepers = tab === 'player' ? PLAYER_KEEPERS : SHAKHTAR.keepers
+  const cards = tab === 'player' ? PLAYER_DECK : OPP_DECKS[tab].cards
+  const keepers = tab === 'player' ? PLAYER_KEEPERS : OPP_DECKS[tab].keepers
   const grouped = groupByRole(cards)
 
   return (
@@ -96,27 +114,30 @@ export function Gallery({ open, onClose }: Props) {
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
           >
             <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   onClick={() => setTab('player')}
-                  className={`rounded-md px-3 py-1.5 text-sm transition ${
+                  className={`rounded-md px-3 py-1.5 text-xs transition ${
                     tab === 'player'
                       ? 'bg-stone-900 text-white'
                       : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                   }`}
                 >
-                  Твоя дека · {PLAYER_DECK.length}
+                  {TAB_LABELS.player} · {PLAYER_DECK.length}
                 </button>
-                <button
-                  onClick={() => setTab('opp')}
-                  className={`rounded-md px-3 py-1.5 text-sm transition ${
-                    tab === 'opp'
-                      ? 'bg-stone-900 text-white'
-                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                  }`}
-                >
-                  {SHAKHTAR.name} · {SHAKHTAR.cards.length}
-                </button>
+                {(['shakhtar', 'barcelona', 'real', 'world'] as const).map(key => (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    className={`rounded-md px-3 py-1.5 text-xs transition ${
+                      tab === key
+                        ? 'bg-stone-900 text-white'
+                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                    }`}
+                  >
+                    {TAB_LABELS[key]} · {OPP_DECKS[key].cards.length}
+                  </button>
+                ))}
               </div>
               <button
                 onClick={onClose}
