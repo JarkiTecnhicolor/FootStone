@@ -110,8 +110,15 @@ function KeeperOption({
   )
 }
 
+const ROLE_ORDER: Record<'def' | 'mid' | 'fwd', number> = { def: 0, mid: 1, fwd: 2 }
+
 function PickedRoster({ state }: { state: DraftState }) {
   if (state.cards.length === 0 && !state.keeper) return null
+  const sortedCards = state.cards.slice().sort((a, b) => {
+    const r = ROLE_ORDER[a.role] - ROLE_ORDER[b.role]
+    if (r !== 0) return r
+    return priceOf(b) - priceOf(a)
+  })
   return (
     <div className="rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
       <div className="mb-1.5 flex items-baseline justify-between">
@@ -133,7 +140,7 @@ function PickedRoster({ state }: { state: DraftState }) {
             }
           />
         )}
-        {state.cards.map((c, i) => (
+        {sortedCards.map((c, i) => (
           <Card
             key={`${c.id}-picked-${i}`}
             card={c}
